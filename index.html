@@ -501,7 +501,20 @@
 
     // Variável global para armazenar os exames encontrados na última análise
     let examesEncontradosGlobal = [];
-    const LABELS_EXAMES = ["Hemograma Completo", "Eritrócitos", "Hemoglobina", "Hematocrito", "Plaquetas", "Leucocitos", "Neutrofilos", "Tempo e atividade Protrombina", "RNI", "TTPA - Tempo de Tromboplastina Parcial Ativada", "Relacao paciente/normal", "Gasometria Arterial", "Gasometria Venosa", "Ureia, sérica", "Ureia", "Dosagem sérica de Creatinina", "Creatinina", "Sódio", "Potássio", "Magnésio", "Bilirrubinas", "Bilirrubina Total", "Bilirrubina Direta", "Bilirrubina Indireta", "TGO/AST", "TGP/ALT", "Gama Glutamil Transferase - GGT", "Fosfatase Alcalina", "Lactato Arterial", "Proteína C Reativa - PCR", "Calcio Ionizado", "PH", "Saturacao de O2", "Bicarbonato", "Base Exces", "Troponina I"];
+    const LABELS_EXAMES = [
+        "Hemograma Completo", "Eritrócitos", "Hemoglobina", "Hematocrito", "Plaquetas", "Leucocitos", "Neutrofilos", 
+        "Tempo e atividade Protrombina", "RNI", "TTPA - Tempo de Tromboplastina Parcial Ativada", "Relacao paciente/normal", 
+        "Gasometria Arterial", "Gasometria Venosa", 
+        "Ureia, sérica", "Ureia", "Dosagem sérica de Creatinina", "Creatinina", 
+        "Glicose", "Glicemia", 
+        "Sódio", "Potássio", "Magnésio", "Calcio Ionizado", "Fosforo", 
+        "Bilirrubinas", "Bilirrubina Total", "Bilirrubina Direta", "Bilirrubina Indireta", 
+        "TGO/AST", "TGP/ALT", "Gama Glutamil Transferase - GGT", "Fosfatase Alcalina", "Albumina",
+        "Amilase", "Lipase",
+        "Lactato Arterial", "Lactato", "Proteína C Reativa - PCR", 
+        "Troponina I", "CK-MB", "CK Total", "BNP", "NT-proBNP", "D-Dimero",
+        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces"
+    ];
 
     function removerAcentos(str) {
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -630,30 +643,48 @@
 
   // Separa os blocos de gasometria para análise individual
   const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
-  // Separa o bloco de Urina para análise individual
-  const blocoUrina = (texto.match(/Urina tipo I|EAS([\s\S]*?)(?=Liberado por|$)/i) || [])[0] || "";
-
-  // Define os textos específicos para cada tipo de exame. Se o bloco não for encontrado, o texto será vazio.
+  const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
+  
+  // MODIFICADO: Não usar o texto todo como fallback para evitar contaminação
   const textoArterial = blocoGasometriaArterial;
+  const textoVenoso = blocoGasometriaVenosa;
+  // Separa o bloco de Urina para análise individual
+  const blocoUrina = (texto.match(/(Urina tipo I|EAS)([\s\S]*?)(?=Liberado por|$)/i) || [])[0] || "";
 
   // --- LÓGICA DE ANÁLISE ---
   // Estrutura de configuração para todos os exames conhecidos
   let configExames = [
+      // --- DADOS BÁSICOS ---
       { id: 'data', label: 'Data', value: pegarData(texto), selected: true, template: (v) => `${v}: ` },
+      
+      // --- HEMOGRAMA ---
       { id: 'hb', label: 'Hb', labelBusca: "Hemoglobina", template: (v) => `Hb ${v} / ` },
       { id: 'ht', label: 'Ht', labelBusca: "Hematocrito", template: (v) => `Ht ${v} / ` },
       { id: 'leuco', label: 'Leuco', labelBusca: "Leucocitos", template: (v) => `Leuco ${v} / ` },
-      { id: 'n', label: 'N', labelBusca: "Neutrofilos", template: (v) => `N ${v} / ` },
+      { id: 'n', label: 'N', labelBusca: "Neutrofilos", template: (v) => `N ${v} / ` }, // Lembre-se: isso pode pegar % ou absoluto
       { id: 'plaq', label: 'PLAQ', labelBusca: "Plaquetas", template: (v) => `PLAQ ${v} / ` },
+      
+      // --- COAGULAÇÃO ---
       { id: 'inr', label: 'INR', labelBusca: "RNI", template: (v) => `INR ${v} / ` },
-      { id: 'r', label: 'R', labelBusca: "Relacao paciente/normal", template: (v) => `R ${v} / ` },
+      { id: 'r', label: 'R', labelBusca: "Relacao paciente/normal", template: (v) => `R ${v} / ` }, // R do TTPA
+      { id: 'dimd', label: 'D-Dim', labelBusca: "D-Dimero", template: (v) => `D-Dim ${v} / ` },
+
+      // --- FUNÇÃO RENAL E ELETRÓLITOS ---
       { id: 'u', label: 'U', labelBusca: "Ureia", template: (v) => `U ${v} / ` },
       { id: 'cr', label: 'Cr', labelBusca: "Creatinina", labelBuscaAlternativo: "Dosagem sérica de Creatinina", template: (v) => `Cr ${v} / ` },
       { id: 'na', label: 'Na', labelBusca: "Sódio", template: (v) => `Na ${v} / ` },
       { id: 'k', label: 'K', labelBusca: "Potassio", template: (v) => `K ${v} / ` },
       { id: 'mg', label: 'Mg', labelBusca: "Magnésio", template: (v) => `Mg ${v} / ` },
-      { id: 'pcr', label: 'PCR', labelBusca: "Proteína C Reativa - PCR", template: (v) => `PCR ${v} / ` },
       { id: 'cai', label: 'Cai', labelBusca: "Calcio Ionizado", template: (v) => `Cai ${v} / ` },
+      { id: 'p', label: 'P', labelBusca: "Fosforo", template: (v) => `P ${v} / ` },
+      
+      // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
+      { id: 'glic', label: 'Glic', labelBusca: "Glicose", labelBuscaAlternativo: "Glicemia", template: (v) => `Glic ${v} / ` },
+      { id: 'pcr', label: 'PCR', labelBusca: "Proteína C Reativa - PCR", template: (v) => `PCR ${v} / ` },
+      { id: 'lact', label: 'Lact', labelBusca: "Lactato", template: (v) => `Lact ${v} / ` }, // Lactato venoso/geral
+      { id: 'alb', label: 'Alb', labelBusca: "Albumina", template: (v) => `Alb ${v} / ` },
+
+      // --- FUNÇÃO HEPÁTICA / BILI ---
       { id: 'bt', label: 'BT', labelBusca: "Bilirrubina Total", template: (v) => `BT ${v} / ` },
       { id: 'bd', label: 'BD', labelBusca: "Bilirrubina Direta", optional: true, template: (v) => `BD ${v} / ` },
       { id: 'bi', label: 'BI', labelBusca: "Bilirrubina Indireta", optional: true, template: (v) => `BI ${v} / ` },
@@ -661,33 +692,67 @@
       { id: 'tgp', label: 'TGP', labelBusca: "TGP/ALT", template: (v) => `TGP ${v} / ` },
       { id: 'fal', label: 'FAL', labelBusca: "Fosfatase Alcalina", template: (v) => `FAL ${v} / ` },
       { id: 'ggt', label: 'GGT', labelBusca: "Gama Glutamil Transferase", template: (v) => `GGT ${v} / ` },
+
+      // --- ENZIMAS CARDÍACAS ---
       { id: 'trop', label: 'Trop', labelBusca: "Troponina I", template: (v) => `Trop ${v} / ` },
+      { id: 'ckmb', label: 'CKMB', labelBusca: "CK-MB", template: (v) => `CKMB ${v} / ` },
+      { id: 'ck', label: 'CK', labelBusca: "CK Total", labelBuscaAlternativo: "Creatinoquinase", template: (v) => `CK ${v} / ` },
+      { id: 'bnp', label: 'BNP', labelBusca: "BNP", labelBuscaAlternativo: "NT-proBNP", template: (v) => `BNP ${v} / ` },
+
+      // --- ENZIMAS PANCREÁTICAS ---
+      { id: 'amil', label: 'Amil', labelBusca: "Amilase", template: (v) => `Amil ${v} / ` },
+      { id: 'lip', label: 'Lip', labelBusca: "Lipase", template: (v) => `Lip ${v} / ` },
+
+      // --- GASOMETRIA ARTERIAL ---
       { id: 'phart', label: 'pHart', labelBusca: "PH", usaTextoArterial: true, template: (v) => `pHart ${v} / ` },
+      { id: 'po2art', label: 'pO2art', labelBusca: "PO2", usaTextoArterial: true, template: (v) => `pO2art ${v} / ` },
+      { id: 'pco2art', label: 'pCO2art', labelBusca: "PCO2", usaTextoArterial: true, template: (v) => `pCO2art ${v} / ` },
       { id: 'so2art', label: 'SO2art', labelBusca: "Saturacao de O2", usaTextoArterial: true, template: (v) => `SO2art ${v} / ` },
       { id: 'hco3art', label: 'HCO3art', labelBusca: "Bicarbonato", usaTextoArterial: true, template: (v) => `HCO3art ${v} / ` },
       { id: 'beart', label: 'BEart', labelBusca: "Base Exces", usaTextoArterial: true, template: (v) => `BEart ${v} / ` },
-      // Exames de Urina Tipo I (lógica antiga mantida por simplicidade)
-      { id: 'u1ph', label: 'U1 pH', labelBusca: "pH", usaTextoUrina: true, template: (v) => `U1 pH ${v} / ` },
+      { id: 'lactart', label: 'Lactart', labelBusca: "Lactato Arterial", usaTextoArterial: true, template: (v) => `Lactart ${v} / ` },
+      
+      // --- GASOMETRIA VENOSA ---
+      { id: 'phven', label: 'pHven', labelBusca: "PH", usaTextoVenoso: true, template: (v) => `pHven ${v} / ` },
+      { id: 'po2ven', label: 'pO2ven', labelBusca: "PO2", usaTextoVenoso: true, template: (v) => `pO2ven ${v} / ` },
+      { id: 'pco2ven', label: 'pCO2ven', labelBusca: "PCO2", usaTextoVenoso: true, template: (v) => `pCO2ven ${v} / ` },
+      { id: 'so2ven', label: 'SO2ven', labelBusca: "Saturacao de O2", usaTextoVenoso: true, template: (v) => `SO2ven ${v} / ` },
+      { id: 'hco3ven', label: 'HCO3ven', labelBusca: "Bicarbonato", usaTextoVenoso: true, template: (v) => `HCO3ven ${v} / ` },
+      { id: 'beven', label: 'BEven', labelBusca: "Base Exces", usaTextoVenoso: true, template: (v) => `BEven ${v} / ` },
+
+      // --- EXAMES DE URINA (mantidos) ---
+      { id: 'u1ph', label: 'U1 pH', labelBusca: "pH", labelBuscaAlternativo: "Urina tipo I", usaTextoUrina: true, template: (v) => `U1 pH ${v} / ` },
       { id: 'u1nitrito', label: 'U1 nitrito', labelBusca: "Nitrito", usaTextoUrina: true, template: (v) => `U1 nitrito ${v} / ` },
-      { id: 'u1leuco', label: 'U1 leuco', labelBusca: "Leucocitos", usaTextoUrina: true, template: (v) => `U1 leuco ${v} / ` },
+      { id: 'u1leuco', label: 'U1 leuco', labelBusca: "Leucocitos", labelBuscaAlternativo: "Leucócitos", usaTextoUrina: true, template: (v) => `U1 leuco ${v} / ` },
   ];
 
+  // =========================================================
+  // ADICIONANDO O BLOCO DE VOLTA:
   // Condição para evitar preenchimento indevido de Urina Tipo I
   if (!temUrina) {
       configExames = configExames.filter(e => !e.id.startsWith('u1'));
   }
-
+  // =========================================================
   // Agora, processa a lista de configuração para encontrar os valores
   const todosExames = configExames.map(exame => {
       if (exame.labelBusca) { // Se for um exame que usa a análise padrão
-          console.log(`[DEBUG] Analisando exame: "${exame.labelBusca}"`);
+          
           let textoParaAnalisar = texto; // Padrão é o texto completo
           if (exame.usaTextoArterial) {
               textoParaAnalisar = textoArterial;
+          } else if (exame.usaTextoVenoso) {
+              textoParaAnalisar = textoVenoso;
           } else if (exame.usaTextoUrina) {
               textoParaAnalisar = blocoUrina;
           }
 
+          // Se o texto específico (arterial/venoso) estiver vazio, não adianta nem tentar
+          if (!textoParaAnalisar && (exame.usaTextoArterial || exame.usaTextoVenoso || exame.usaTextoUrina)) {
+                console.log(`[DEBUG] Pulando exame: "${exame.labelBusca}" (bloco de texto específico não encontrado)`);
+                return { ...exame, value: null, status: 'nao_encontrado' };
+          }
+          
+          console.log(`[DEBUG] Analisando exame: "${exame.labelBusca}"`);
           const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo);
           
           if (analise.valor !== null) {
@@ -699,8 +764,7 @@
           // Garante compatibilidade de nome do campo (valor → value)
           return { 
               ...exame, 
-              value: analise.valor, 
-              status: analise.status 
+              value: analise.valor, status: analise.status 
           };
       }
       return exame; // Retorna exames já processados (Data, Urina I)
