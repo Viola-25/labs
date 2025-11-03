@@ -513,7 +513,8 @@
         "Amilase", "Lipase",
         "Lactato Arterial", "Lactato", "Proteína C Reativa - PCR", 
         "Troponina I", "CK-MB", "CK Total", "BNP", "NT-proBNP", "D-Dimero",
-        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces", "Hemocultura"
+        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces", "Hemocultura", 
+        "Alfa-fetoproteína", "CA 19-9", "CA 125"
     ];
 
     function removerAcentos(str) {
@@ -548,26 +549,37 @@
             const blocoCreat = textoSemAcentos.match(regexBlocoCreat);
 
             if (blocoCreat) {
-                console.log("[DEBUG] Bloco de Creatinina isolado:");
-                console.log(blocoCreat[0].substring(0, 300)); // Exibe só o início para facilitar leitura
                 const valorMatch = blocoCreat[0].match(/Creatinina[\s\S]*?([\d]+[.,]?\d*)\s*mg\/dL/i);
                 if (valorMatch) {
-                    console.log("[DEBUG] Valor de Creatinina encontrado:", valorMatch[1]);
                     // Retorna um status 'normal' provisório, pois a lógica de verificação de intervalo não é aplicada aqui.
                     return { valor: valorMatch[1].replace(',', '.'), status: 'normal' };
                 }
-            } else {
-                console.warn("[DEBUG] Bloco de Creatinina não encontrado com a regex específica!");
             }
         }
         
         let labelDeBusca = label;
-        let re = new RegExp(`(${removerAcentos(label).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\n^Liberado por|$)`, "i");
+
+        // --- CORREÇÃO: Lógica para "Lactato" não capturar "Lactato Arterial" ---
+        let regexPadraoLabel = removerAcentos(label).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        if (label.toLowerCase() === 'lactato') {
+            regexPadraoLabel = 'Lactato(?! Arterial)'; // Só captura "Lactato" se NÃO for seguido por " Arterial"
+        }
+        // --- FIM DA CORREÇÃO ---
+
+        let re = new RegExp(`(${regexPadraoLabel}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\n^Liberado por|$)`, "i");
         let blocoExame = textoSemAcentos.match(re);
 
         if ((!blocoExame || !blocoExame[0]) && labelAlternativo) {
             labelDeBusca = labelAlternativo;
-            re = new RegExp(`(${removerAcentos(labelAlternativo).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\n^Liberado por|$)`, "i");
+
+            // --- CORREÇÃO 2: Lógica para o label alternativo ---
+            let regexPadraoAlternativo = removerAcentos(labelAlternativo).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            if (labelAlternativo.toLowerCase() === 'lactato') {
+                regexPadraoAlternativo = 'Lactato(?! Arterial)';
+            }
+            // --- FIM DA CORREÇÃO ---
+
+            re = new RegExp(`(${regexPadraoAlternativo}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\n^Liberado por|$)`, "i");
             blocoExame = textoSemAcentos.match(re);
         }
 
@@ -590,7 +602,6 @@
                 // Retorna o valor de texto limpo (removendo um ponto final, se houver)
                 return { valor: valorTexto.replace(/\.$/, '').trim(), status: 'normal' };
             }
-            console.log(`[DEBUG] Texto não encontrado para ${label}`);
             return { valor: null, status: 'nao_encontrado' };
         }
         // =========================================================
@@ -641,20 +652,11 @@
     }
 
   function processar() {
-  console.clear();
-  console.log("--- [DEBUG] INICIANDO PROCESSAMENTO ---");
-
   const texto = document.getElementById("input").value;
   if (!texto.trim()) {
       showToast("A área de texto está vazia.");
       return;
   }
-
-  const dataLaudo = pegarData(texto);
-  const nomePaciente = pegarNomePaciente(texto);
-  console.log("[DEBUG] Paciente:", nomePaciente);
-  console.log("[DEBUG] Data do laudo:", dataLaudo);
-  console.log("[DEBUG] Tamanho do texto:", texto.length);
 
   // Verifica se o laudo contém Urina tipo I (para evitar falsos positivos)
   const temUrina = /Urina tipo I|EAS|Exame de urina/i.test(texto);
@@ -742,6 +744,11 @@
       },
       // =========================================================
 
+      // --- MARCADORES TUMORAIS ---
+      { id: 'afp', label: 'AFP', labelBusca: "Alfa-fetoproteína", template: (v) => `AFP ${v} / ` },
+      { id: 'ca199', label: 'CA19-9', labelBusca: "CA 19-9", template: (v) => `CA19-9 ${v.replace(/\.(?=.*\d{3},)/g, '')} / ` }, // Remove o ponto de milhar
+      { id: 'ca125', label: 'CA125', labelBusca: "CA 125", template: (v) => `CA125 ${v} / ` },
+
       // --- GASOMETRIA ARTERIAL ---
       { id: 'phart', label: 'pHart', labelBusca: "PH", usaTextoArterial: true, template: (v) => `pHart ${v} / ` },
       { id: 'po2art', label: 'pO2art', labelBusca: "PO2", usaTextoArterial: true, template: (v) => `pO2art ${v} / ` },
@@ -749,7 +756,7 @@
       { id: 'so2art', label: 'SO2art', labelBusca: "Saturacao de O2", usaTextoArterial: true, template: (v) => `SO2art ${v} / ` },
       { id: 'hco3art', label: 'HCO3art', labelBusca: "Bicarbonato", usaTextoArterial: true, template: (v) => `HCO3art ${v} / ` },
       { id: 'beart', label: 'BEart', labelBusca: "Base Exces", usaTextoArterial: true, template: (v) => `BEart ${v} / ` },
-      { id: 'lactart', label: 'Lactart', labelBusca: "Lactato Arterial", usaTextoArterial: true, template: (v) => `Lactart ${v} / ` },
+      { id: 'lactart', label: 'Lactart', labelBusca: "Lactato Arterial", template: (v) => `Lactart ${v} / ` },
       
       // --- GASOMETRIA VENOSA ---
       { id: 'phven', label: 'pHven', labelBusca: "PH", usaTextoVenoso: true, template: (v) => `pHven ${v} / ` },
@@ -787,18 +794,10 @@
 
           // Se o texto específico (arterial/venoso) estiver vazio, não adianta nem tentar
           if (!textoParaAnalisar && (exame.usaTextoArterial || exame.usaTextoVenoso || exame.usaTextoUrina)) {
-                console.log(`[DEBUG] Pulando exame: "${exame.labelBusca}" (bloco de texto específico não encontrado)`);
                 return { ...exame, value: null, status: 'nao_encontrado' };
           }
           
-          console.log(`[DEBUG] Analisando exame: "${exame.labelBusca}"`);
           const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo, exame.tipo);
-          
-          if (analise.valor !== null) {
-              console.log(`  -> Valor encontrado: ${analise.valor}`);
-          } else {
-              console.log(`  -> Nenhum valor encontrado para ${exame.labelBusca}`);
-          }
 
           // Garante compatibilidade de nome do campo (valor → value)
           return { 
@@ -817,8 +816,7 @@
   });
   
   const examesEncontrados = examesEncontradosGlobal;
-  // Lógica experimental para encontrar exames não previstos foi removida para estabilidade
-
+  
   renderizarSidebar(examesEncontrados);
   gerarTextoFinal();
   salvarNoHistorico(examesEncontrados); // Salva automaticamente após análise
@@ -827,14 +825,13 @@
 function renderizarSidebar(examesEncontrados) {
     const listaExamesUl = document.getElementById('lista-exames');
     if (examesEncontrados.length === 0) {
-        listaExamesUl.innerHTML = '<li class="instructions">Nenhum exame reconhecido.</li>';
+        listaExamesUl.innerHTML = '<li class="instructions">Nenhum exame conhecido foi encontrado.</li>';
         return;
     }
     listaExamesUl.innerHTML = examesEncontrados.map(exame => `
         <li>
             <input type="checkbox" id="${exame.id}" onchange="atualizarSelecao('${exame.id}', this.checked)" ${exame.selected ? 'checked' : ''}>
             <label for="${exame.id}">${exame.label} (<span class="${exame.status === 'alterado' ? 'valor-alterado' : ''}">${exame.value}</span>)</label>
-            ${exame.isNew ? '<span class="novo-exame-tag">NOVO</span>' : ''}
         </li>
     `).join('');
 }
