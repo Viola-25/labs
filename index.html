@@ -529,6 +529,24 @@
         // Cria uma regex que ignora acentos para encontrar o label
         const todosOsLabels = LABELS_EXAMES.map(l => removerAcentos(l).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
         const textoSemAcentos = removerAcentos(texto);
+
+        if (label.toLowerCase().includes("creatinina")) {
+            const regexBlocoCreat = /Dosagem serica de Creatinina[\s\S]*?(?=(?:Taxa de Filtracao|TFG|Sodio|Potassio|Magn|Bilirrubina|Liberado por|$))/i;
+            const blocoCreat = textoSemAcentos.match(regexBlocoCreat);
+
+            if (blocoCreat) {
+                console.log("[DEBUG] Bloco de Creatinina isolado:");
+                console.log(blocoCreat[0].substring(0, 300)); // Exibe só o início para facilitar leitura
+                const valorMatch = blocoCreat[0].match(/Creatinina[\s\S]*?([\d]+[.,]?\d*)\s*mg\/dL/i);
+                if (valorMatch) {
+                    console.log("[DEBUG] Valor de Creatinina encontrado:", valorMatch[1]);
+                    // Retorna um status 'normal' provisório, pois a lógica de verificação de intervalo não é aplicada aqui.
+                    return { valor: valorMatch[1].replace(',', '.'), status: 'normal' };
+                }
+            } else {
+                console.warn("[DEBUG] Bloco de Creatinina não encontrado com a regex específica!");
+            }
+        }
         
         let labelDeBusca = label;
         let re = new RegExp(`(${removerAcentos(label).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\n^Liberado por|$)`, "i");
@@ -548,21 +566,16 @@
 
         let valorMatch;
         // Estratégia 1: Procurar o valor após a palavra "Resultado". É mais confiável.
-        const resultadoRegex = /Resultado\s*([\d,.-]+)/i;
-        valorMatch = textoBloco.match(resultadoRegex);
+        if (!valorMatch) {
+            const resultadoRegex = /Resultado\s*([\d,.-]+)/i;
+            valorMatch = textoBloco.match(resultadoRegex);
+        }
 
         // Estratégia 2 (Fallback): Se não achar "Resultado", procura o primeiro número em uma nova linha após o label.
         if (!valorMatch) {
             const labelSemAcentos = removerAcentos(labelDeBusca).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             const fallbackRegex = new RegExp(`${labelSemAcentos}[\\s\\S]*?\\n\\s*([\\d,.-]+(?![:/]))`, "i");
             valorMatch = textoBloco.match(fallbackRegex);
-        }
-
-        // Caso especial para Neutrófilos: tenta pegar o segundo valor (absoluto) se houver dois.
-        if (label.toLowerCase().includes("neutrofilos")) {
-            const neutrofilosRegex = /[\\d,.-]+\\s*\\n+\\s*([\\d,.-]+)/i; // Procura o segundo número em uma nova linha
-            const neutrofilosMatch = textoBloco.match(neutrofilosRegex);
-            if (neutrofilosMatch && neutrofilosMatch[1]) valorMatch = neutrofilosMatch; // Sobrescreve o valor encontrado se o segundo valor existir
         }
 
         if (!valorMatch || !valorMatch[1]) { 
@@ -590,11 +603,23 @@
     }
 
   function processar() {
+  console.clear();
+  console.log("--- [DEBUG] INICIANDO PROCESSAMENTO ---");
+
   const texto = document.getElementById("input").value;
   if (!texto.trim()) {
       showToast("A área de texto está vazia.");
       return;
   }
+
+  const dataLaudo = pegarData(texto);
+  const nomePaciente = pegarNomePaciente(texto);
+  console.log("[DEBUG] Paciente:", nomePaciente);
+  console.log("[DEBUG] Data do laudo:", dataLaudo);
+  console.log("[DEBUG] Tamanho do texto:", texto.length);
+
+  // Verifica se o laudo contém Urina tipo I (para evitar falsos positivos)
+  const temUrina = /Urina tipo I|EAS|Exame de urina/i.test(texto);
 
   // Separa os blocos de gasometria para análise individual
   const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
@@ -604,7 +629,7 @@
 
   // --- LÓGICA DE ANÁLISE ---
   // Estrutura de configuração para todos os exames conhecidos
-  const configExames = [
+  let configExames = [
       { id: 'data', label: 'Data', value: pegarData(texto), selected: true, template: (v) => `${v}: ` },
       { id: 'hb', label: 'Hb', labelBusca: "Hemoglobina", template: (v) => `Hb ${v} / ` },
       { id: 'ht', label: 'Ht', labelBusca: "Hematocrito", template: (v) => `Ht ${v} / ` },
@@ -637,11 +662,24 @@
       { id: 'u1leuco', label: 'U1 leuco', labelBusca: "Leucocitos", labelBuscaAlternativo: "Leucócitos", template: (v) => `U1 leuco ${v} / ` },
   ];
 
+  // Condição para evitar preenchimento indevido de Urina Tipo I
+  if (!temUrina) {
+      configExames = configExames.filter(e => !e.id.startsWith('u1'));
+  }
+
   // Agora, processa a lista de configuração para encontrar os valores
   const todosExames = configExames.map(exame => {
       if (exame.labelBusca) { // Se for um exame que usa a análise padrão
+          console.log(`[DEBUG] Analisando exame: "${exame.labelBusca}"`);
           const textoParaAnalisar = exame.usaTextoArterial ? textoArterial : texto;
           const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo);
+          
+          if (analise.valor !== null) {
+              console.log(`  -> Valor encontrado: ${analise.valor}`);
+          } else {
+              console.log(`  -> Nenhum valor encontrado para ${exame.labelBusca}`);
+          }
+
           // Garante compatibilidade de nome do campo (valor → value)
           return { 
               ...exame, 
