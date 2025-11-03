@@ -513,7 +513,7 @@
         "Amilase", "Lipase",
         "Lactato Arterial", "Lactato", "Proteína C Reativa - PCR", 
         "Troponina I", "CK-MB", "CK Total", "BNP", "NT-proBNP", "D-Dimero",
-        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces"
+        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces", "Hemocultura"
     ];
 
     function removerAcentos(str) {
@@ -538,7 +538,7 @@
         return `${ano}-${mes}-${dia}`; // Formato YYYY-MM-DD para fácil ordenação
     }
 
-    function analisarExame(label, texto, labelAlternativo = null) {
+    function analisarExame(label, texto, labelAlternativo = null, tipo = 'numero') {
         // Cria uma regex que ignora acentos para encontrar o label
         const todosOsLabels = LABELS_EXAMES.map(l => removerAcentos(l).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
         const textoSemAcentos = removerAcentos(texto);
@@ -576,6 +576,24 @@
         }
 
         const textoBloco = blocoExame[0];
+
+        // =========================================================
+        // ADICIONE ESTE BLOCO NOVO:
+        if (tipo === 'texto') {
+            // Estratégia 1 (Texto): Procurar por "Microrganismo:" OU "Resultado"
+            // Captura todo o texto na mesma linha
+            const textoRegex = /(?:Microrganismo:|Resultado)\s*([^\n]+)/i;
+            let textoMatch = textoBloco.match(textoRegex);
+            
+            if (textoMatch && textoMatch[1]) {
+                const valorTexto = textoMatch[1].trim();
+                // Retorna o valor de texto limpo (removendo um ponto final, se houver)
+                return { valor: valorTexto.replace(/\.$/, '').trim(), status: 'normal' };
+            }
+            console.log(`[DEBUG] Texto não encontrado para ${label}`);
+            return { valor: null, status: 'nao_encontrado' };
+        }
+        // =========================================================
 
         let valorMatch;
         // Estratégia 1: Procurar o valor após a palavra "Resultado". É mais confiável.
@@ -703,6 +721,27 @@
       { id: 'amil', label: 'Amil', labelBusca: "Amilase", template: (v) => `Amil ${v} / ` },
       { id: 'lip', label: 'Lip', labelBusca: "Lipase", template: (v) => `Lip ${v} / ` },
 
+      // =========================================================
+      // ADICIONE ESTE BLOCO NOVO:
+      // --- MICROBIOLOGIA ---
+      { 
+        id: 'hmc', 
+        label: 'HMC', 
+        labelBusca: "Hemocultura", 
+        tipo: 'texto', // Informa que o valor esperado é um texto
+        template: (v) => {
+            const valorLimpo = v.toLowerCase();
+            if (valorLimpo.includes("não houve crescimento") || valorLimpo.includes("nao houve crescimento")) {
+                return 'HMC SCB / '; // A abreviação que você pediu
+            }
+            if (valorLimpo.includes("crescimento")) { // Pega qualquer outro tipo de crescimento
+                return 'HMC POS / '; // Sugestão para positivo
+            }
+            return `HMC ${v} / `; // Fallback se for um texto inesperado
+        } 
+      },
+      // =========================================================
+
       // --- GASOMETRIA ARTERIAL ---
       { id: 'phart', label: 'pHart', labelBusca: "PH", usaTextoArterial: true, template: (v) => `pHart ${v} / ` },
       { id: 'po2art', label: 'pO2art', labelBusca: "PO2", usaTextoArterial: true, template: (v) => `pO2art ${v} / ` },
@@ -753,7 +792,7 @@
           }
           
           console.log(`[DEBUG] Analisando exame: "${exame.labelBusca}"`);
-          const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo);
+          const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo, exame.tipo);
           
           if (analise.valor !== null) {
               console.log(`  -> Valor encontrado: ${analise.valor}`);
