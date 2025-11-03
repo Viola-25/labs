@@ -578,6 +578,13 @@
             valorMatch = textoBloco.match(fallbackRegex);
         }
 
+        // Caso especial para Neutrófilos: tenta pegar o segundo valor (absoluto) se houver dois.
+        if (label.toLowerCase().includes("neutrofilos")) {
+            const neutrofilosRegex = /[\d,.-]+\s*\n+\s*([\d,.-]+)/i; // Procura o segundo número em uma nova linha
+            const neutrofilosMatch = textoBloco.match(neutrofilosRegex);
+            if (neutrofilosMatch && neutrofilosMatch[1]) valorMatch = neutrofilosMatch; // Sobrescreve o valor encontrado se o segundo valor existir
+        }
+
         if (!valorMatch || !valorMatch[1]) { 
             return { valor: null, status: 'nao_encontrado' }; 
         }
@@ -623,9 +630,11 @@
 
   // Separa os blocos de gasometria para análise individual
   const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
-  const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
-  // Se não encontrar blocos específicos, usa o texto todo para retrocompatibilidade
-  const textoArterial = blocoGasometriaArterial || texto;
+  // Separa o bloco de Urina para análise individual
+  const blocoUrina = (texto.match(/Urina tipo I|EAS([\s\S]*?)(?=Liberado por|$)/i) || [])[0] || "";
+
+  // Define os textos específicos para cada tipo de exame. Se o bloco não for encontrado, o texto será vazio.
+  const textoArterial = blocoGasometriaArterial;
 
   // --- LÓGICA DE ANÁLISE ---
   // Estrutura de configuração para todos os exames conhecidos
@@ -657,9 +666,9 @@
       { id: 'hco3art', label: 'HCO3art', labelBusca: "Bicarbonato", usaTextoArterial: true, template: (v) => `HCO3art ${v} / ` },
       { id: 'beart', label: 'BEart', labelBusca: "Base Exces", usaTextoArterial: true, template: (v) => `BEart ${v} / ` },
       // Exames de Urina Tipo I (lógica antiga mantida por simplicidade)
-      { id: 'u1ph', label: 'U1 pH', labelBusca: "pH", labelBuscaAlternativo: "Urina tipo I", template: (v) => `U1 pH ${v} / ` },
-      { id: 'u1nitrito', label: 'U1 nitrito', labelBusca: "Nitrito", template: (v) => `U1 nitrito ${v} / ` },
-      { id: 'u1leuco', label: 'U1 leuco', labelBusca: "Leucocitos", labelBuscaAlternativo: "Leucócitos", template: (v) => `U1 leuco ${v} / ` },
+      { id: 'u1ph', label: 'U1 pH', labelBusca: "pH", usaTextoUrina: true, template: (v) => `U1 pH ${v} / ` },
+      { id: 'u1nitrito', label: 'U1 nitrito', labelBusca: "Nitrito", usaTextoUrina: true, template: (v) => `U1 nitrito ${v} / ` },
+      { id: 'u1leuco', label: 'U1 leuco', labelBusca: "Leucocitos", usaTextoUrina: true, template: (v) => `U1 leuco ${v} / ` },
   ];
 
   // Condição para evitar preenchimento indevido de Urina Tipo I
@@ -671,7 +680,13 @@
   const todosExames = configExames.map(exame => {
       if (exame.labelBusca) { // Se for um exame que usa a análise padrão
           console.log(`[DEBUG] Analisando exame: "${exame.labelBusca}"`);
-          const textoParaAnalisar = exame.usaTextoArterial ? textoArterial : texto;
+          let textoParaAnalisar = texto; // Padrão é o texto completo
+          if (exame.usaTextoArterial) {
+              textoParaAnalisar = textoArterial;
+          } else if (exame.usaTextoUrina) {
+              textoParaAnalisar = blocoUrina;
+          }
+
           const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo);
           
           if (analise.valor !== null) {
