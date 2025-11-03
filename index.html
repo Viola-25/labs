@@ -501,7 +501,7 @@
 
     // Variável global para armazenar os exames encontrados na última análise
     let examesEncontradosGlobal = [];
-    const LABELS_EXAMES = ["Hemograma Completo", "Eritrócitos", "Hemoglobina", "Hematocrito", "Plaquetas", "Leucocitos", "Neutrofilos", "Tempo e atividade Protrombina", "RNI", "TTPA - Tempo de Tromboplastina Parcial Ativada", "Relacao paciente/normal", "Gasometria Arterial", "Gasometria Venosa", "Ureia, sérica", "Ureia", "Dosagem sérica de Creatinina", "Creatinina", "Sódio", "Potássio", "Magnésio", "Bilirrubinas", "Bilirrubina Total", "Bilirrubina Direta", "Bilirrubina Indireta", "TGO/AST", "TGP/ALT", "Gama Glutamil Transferase - GGT", "Fosfatase Alcalina", "Lactato Arterial", "Proteína C Reativa - PCR", "Calcio Ionizado", "PH", "Saturacao de O2", "Bicarbonato", "Base Exces"];
+    const LABELS_EXAMES = ["Hemograma Completo", "Eritrócitos", "Hemoglobina", "Hematocrito", "Plaquetas", "Leucocitos", "Neutrofilos", "Tempo e atividade Protrombina", "RNI", "TTPA - Tempo de Tromboplastina Parcial Ativada", "Relacao paciente/normal", "Gasometria Arterial", "Gasometria Venosa", "Ureia, sérica", "Ureia", "Dosagem sérica de Creatinina", "Creatinina", "Sódio", "Potássio", "Magnésio", "Bilirrubinas", "Bilirrubina Total", "Bilirrubina Direta", "Bilirrubina Indireta", "TGO/AST", "TGP/ALT", "Gama Glutamil Transferase - GGT", "Fosfatase Alcalina", "Lactato Arterial", "Proteína C Reativa - PCR", "Calcio Ionizado", "PH", "Saturacao de O2", "Bicarbonato", "Base Exces", "Troponina I"];
 
     function removerAcentos(str) {
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -661,6 +661,7 @@
       { id: 'tgp', label: 'TGP', labelBusca: "TGP/ALT", template: (v) => `TGP ${v} / ` },
       { id: 'fal', label: 'FAL', labelBusca: "Fosfatase Alcalina", template: (v) => `FAL ${v} / ` },
       { id: 'ggt', label: 'GGT', labelBusca: "Gama Glutamil Transferase", template: (v) => `GGT ${v} / ` },
+      { id: 'trop', label: 'Trop', labelBusca: "Troponina I", template: (v) => `Trop ${v} / ` },
       { id: 'phart', label: 'pHart', labelBusca: "PH", usaTextoArterial: true, template: (v) => `pHart ${v} / ` },
       { id: 'so2art', label: 'SO2art', labelBusca: "Saturacao de O2", usaTextoArterial: true, template: (v) => `SO2art ${v} / ` },
       { id: 'hco3art', label: 'HCO3art', labelBusca: "Bicarbonato", usaTextoArterial: true, template: (v) => `HCO3art ${v} / ` },
