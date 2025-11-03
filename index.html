@@ -40,6 +40,12 @@
             padding: 24px;
             transition: background-color 0.3s, color 0.3s;
         }
+        /* Otimização para telas menores (celulares) */
+        @media (max-width: 992px) {
+            body { padding: 16px; }
+            .page-wrapper { flex-direction: column; }
+            .container, .sidebar { flex: none; width: 100%; }
+        }
         .page-wrapper {
             display: flex;
             gap: 24px;
@@ -233,7 +239,7 @@
         #btn-limpar-historico {
             background: transparent;
             border: none;
-            color: var(--secondary-hover);
+            color: var(--secondary-color);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -404,8 +410,8 @@
     </style>
 </head>
 <body>
-    <div class="page-wrapper">
-        <div class="container">
+    <main class="page-wrapper">
+        <div class="container"> <!-- Conteúdo Principal -->
             <div class="header">
                 <div>
                     <h1>Processador de Laudos</h1>
@@ -439,7 +445,13 @@
             <div id="recentes-container">
                 <div class="header-recentes">
                     <h2>Resultados Recentes</h2>
-                    <button id="btn-limpar-historico" onclick="limparHistorico()">Limpar Histórico</button>
+                    <button id="btn-limpar-historico">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        </svg>
+                        Limpar Histórico
+                    </button>
                 </div>
                 <div id="lista-recentes"></div>
             </div>
@@ -448,14 +460,14 @@
             <div id="toast"></div>
         </div>
 
-        <div class="sidebar">
+        <aside class="sidebar">
             <h2>Exames Encontrados</h2>
             <input type="text" id="filtro-exames" class="search-input" placeholder="Buscar exame..." oninput="filtrarExames()">
             <ul id="lista-exames">
                 <li class="instructions">Analise um laudo para ver os exames aqui.</li>
             </ul>
-        </div>
-    </div>
+        </aside>
+    </main>
 
     <!-- Modal de Confirmação -->
     <div id="confirmation-modal-overlay">
@@ -477,6 +489,11 @@
     const resultadoDiv = document.getElementById('resultado');
     const listaExamesUl = document.getElementById('lista-exames');
     const filtroExamesInput = document.getElementById('filtro-exames');
+    const listaRecentesDiv = document.getElementById('lista-recentes');
+    const modalOverlay = document.getElementById('confirmation-modal-overlay');
+    const btnLimparHistorico = document.getElementById('btn-limpar-historico');
+    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+    const btnCancelDelete = document.getElementById('btn-cancel-delete');
 
     // Verifica o tema salvo no localStorage quando a página carrega
     if (localStorage.getItem('darkMode') === 'enabled') {
@@ -527,32 +544,25 @@
         resultadoDiv.innerText = '';
     }
 
-    function limparHistorico() {
-        showConfirmationModal();
-    }
-
     function showConfirmationModal() {
-        document.getElementById('confirmation-modal-overlay').classList.add('show');
+        modalOverlay.classList.add('show');
     }
 
     function hideConfirmationModal() {
-        document.getElementById('confirmation-modal-overlay').classList.remove('show');
+        modalOverlay.classList.remove('show');
     }
 
-    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+    btnLimparHistorico.addEventListener('click', showConfirmationModal);
+    btnConfirmDelete.addEventListener('click', () => {
         localStorage.removeItem('resultadosRecentes');
         renderizarResultadosRecentes();
         hideConfirmationModal();
         showToast('Histórico limpo com sucesso!');
     });
-
-    document.getElementById('btn-cancel-delete').addEventListener('click', () => {
-        hideConfirmationModal();
-    });
+    btnCancelDelete.addEventListener('click', hideConfirmationModal);
     // Fim da lógica do Modal
 
     function renderizarResultadosRecentes() {
-        const listaRecentesDiv = document.getElementById('lista-recentes');
         const resultados = JSON.parse(localStorage.getItem('resultadosRecentes') || '[]');
         
         if (resultados.length === 0) {
@@ -841,69 +851,144 @@
         return { valor: valorStr, status: status };
     }
 
-  function processar() {
-  const texto = inputArea.value;
-  if (!texto.trim()) {
-      showToast("A área de texto está vazia.");
-      return;
-  }
+    function processar() {
+        const texto = inputArea.value;
+        if (!texto.trim()) {
+            showToast("A área de texto está vazia.");
+            return;
+        }
 
-  const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
-  const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
-  const blocoUrina = (texto.match(/(Urina tipo I|EAS)([\s\S]*?)(?=Liberado por|$)/i) || [])[0] || "";
+        const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
+        const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
+        const blocoUrina = (texto.match(/(Urina tipo I|EAS)([\s\S]*?)(?=Liberado por|$)/i) || [])[0] || "";
 
-  let configExames = [...CONFIG_EXAMES_BASE];
-  if (!blocoUrina) {
-      configExames = configExames.filter(e => !e.usaTextoUrina);
-  }
+        let configExames = [...CONFIG_EXAMES_BASE];
+        if (!blocoUrina) {
+            configExames = configExames.filter(e => !e.usaTextoUrina);
+        }
 
-  const todosExames = configExames.map(exame => {
-      if (exame.labelBusca) { // Se for um exame que usa a análise padrão
-          
-          let textoParaAnalisar = texto; // Padrão é o texto completo
-          if (exame.usaTextoArterial) {
-              textoParaAnalisar = blocoGasometriaArterial;
-          } else if (exame.usaTextoVenoso) {
-              textoParaAnalisar = blocoGasometriaVenosa;
-          } else if (exame.usaTextoUrina) {
-              textoParaAnalisar = blocoUrina;
-          }
+        const todosExames = configExames.map(exame => {
+            if (exame.labelBusca) { // Se for um exame que usa a análise padrão
+                
+                let textoParaAnalisar = texto; // Padrão é o texto completo
+                if (exame.usaTextoArterial) {
+                    textoParaAnalisar = blocoGasometriaArterial;
+                } else if (exame.usaTextoVenoso) {
+                    textoParaAnalisar = blocoGasometriaVenosa;
+                } else if (exame.usaTextoUrina) {
+                    textoParaAnalisar = blocoUrina;
+                }
 
-          // Se o texto específico (arterial/venoso) estiver vazio, não adianta nem tentar
-          if (!textoParaAnalisar && (exame.usaTextoArterial || exame.usaTextoVenoso || exame.usaTextoUrina)) {
-                return { ...exame, value: null, status: 'nao_encontrado' };
-          }
-          
-          const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo, exame.tipo);
+                // Se o texto específico (arterial/venoso) estiver vazio, não adianta nem tentar
+                if (!textoParaAnalisar && (exame.usaTextoArterial || exame.usaTextoVenoso || exame.usaTextoUrina)) {
+                        return { ...exame, value: null, status: 'nao_encontrado' };
+                }
+                
+                const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo, exame.tipo);
 
-          // Garante compatibilidade de nome do campo (valor → value)
-          return { 
-              ...exame, 
-              value: analise.valor, status: analise.status 
-          };
-      }
-      return exame; // Retorna exames que não usam a análise padrão
-  });
+                // Garante compatibilidade de nome do campo (valor → value)
+                return { 
+                    ...exame, 
+                    value: analise.valor, status: analise.status 
+                };
+            }
+            return exame; // Retorna exames que não usam a análise padrão
+        });
 
-  // Filtra exames encontrados e ajusta a seleção para opcionais
-  examesEncontradosGlobal = todosExames.filter(exame => exame.value !== null && exame.value !== undefined).map(exame => {
-      // Define a seleção padrão: selecionado se NÃO for opcional. Se 'selected' já estiver definido (ex: Data), mantém.
-      exame.selected = exame.selected !== undefined ? exame.selected : !exame.optional;
-      return exame;
-  });
-  
-  const examesEncontrados = examesEncontradosGlobal;
-  
-  renderizarSidebar(examesEncontrados);
-  gerarTextoFinal();
-  salvarNoHistorico(examesEncontrados); // Salva automaticamente após análise
-}
+        // Filtra exames encontrados e ajusta a seleção para opcionais
+        examesEncontradosGlobal = todosExames.filter(exame => exame.value !== null && exame.value !== undefined).map(exame => {
+            // Define a seleção padrão: selecionado se NÃO for opcional. Se 'selected' já estiver definido (ex: Data), mantém.
+            exame.selected = exame.selected !== undefined ? exame.selected : !exame.optional;
+            return exame;
+        });
+        
+        renderizarSidebar(examesEncontradosGlobal);
+        gerarTextoFinal();
+        salvarNoHistorico(); // Salva automaticamente após análise
+    }
 
-function filtrarExames() {
-    const termoBusca = filtroExamesInput.value.toLowerCase();
+    function filtrarExames() {
+        const termoBusca = filtroExamesInput.value.toLowerCase();
+        
+        if (!termoBusca) {
+            renderizarSidebar(examesEncontradosGlobal); // Se a busca estiver vazia, mostra todos
+            return;
+        }
+
+        const examesFiltrados = examesEncontradosGlobal.filter(exame => 
+            exame.label.toLowerCase().includes(termoBusca)
+        );
+        renderizarSidebar(examesFiltrados);
+    }
+
+    function renderizarSidebar(exames) {
+        if (!exames || exames.length === 0) {
+            listaExamesUl.innerHTML = '<li class="instructions">Nenhum exame conhecido foi encontrado.</li>';
+            return;
+        }
+        listaExamesUl.innerHTML = exames.map(exame => `
+            <li>
+                <input type="checkbox" id="${exame.id}" onchange="atualizarSelecao('${exame.id}', this.checked)" ${exame.selected ? 'checked' : ''}>
+                <label for="${exame.id}">${exame.label}</label>
+                <span class="exame-valor ${exame.status === 'alterado' ? 'valor-alterado' : ''}">${exame.value}</span>
+            </li>
+        `).join('');
+    }
+
+    function atualizarSelecao(id, isSelected) {
+        const exame = examesEncontradosGlobal.find(e => e.id === id);
+        if (exame) {
+            exame.selected = isSelected;
+        }
+        gerarTextoFinal();
+    }
+
+    function gerarTextoFinal() {
+    const texto = inputArea.value;
+    const dataLaudo = pegarData(texto);
+
+    const partesResultado = examesEncontradosGlobal
+        .filter(exame => exame.selected)
+        .map(exame => exame.template(exame.value));
+
+    let resultado = `>> ${dataLaudo ? dataLaudo + ': ' : ''}${partesResultado.join('')}`;
     
-    if (!termoBusca) {
-        renderizarSidebar(examesEncontradosGlobal); // Se a busca estiver vazia, mostra todos
+    resultado = resultado.trim().replace(/\/$/, '').trim(); // Remove última barra e espaços
+
+    resultadoDiv.innerText = resultado.toUpperCase();
+    }
+
+    function salvarNoHistorico() {
+    // Salvar resultado no histórico
+    const texto = inputArea.value;
+    const nomePaciente = pegarNomePaciente(texto);
+    const dataCompleta = pegarDataCompleta(texto);
+    const resultadoFinal = resultadoDiv.innerText;
+
+    if (dataCompleta && resultadoFinal.length > 10) { // Só salva se tiver data e resultado
+        const resultadosRecentes = JSON.parse(localStorage.getItem('resultadosRecentes') || '[]');
+        const novoResultado = {
+            id: Date.now(), // ID único para ordenação de grupos
+            paciente: nomePaciente,
+            dataCompleta: dataCompleta,
+            resultado: resultadoFinal
+        };
+        resultadosRecentes.push(novoResultado);
+        // Limita o histórico aos últimos 50 resultados para não sobrecarregar
+        localStorage.setItem('resultadosRecentes', JSON.stringify(resultadosRecentes.slice(-50)));
+        renderizarResultadosRecentes();
+    }
+    }
+
+    // Funções auxiliares para cópia individual
+    function copiarTexto(texto) {
+        navigator.clipboard.writeText(texto)
+            .then(() => showToast('Resultado copiado!'))
+            .catch(() => showToast('Falha ao copiar.'));
+    }
+  </script>
+</body>
+</html>
         return;
     }
 
