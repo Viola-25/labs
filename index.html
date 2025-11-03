@@ -70,6 +70,19 @@
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
         }
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 14px;
+        }
+        .search-input:focus {
+            outline: 2px solid var(--primary-color);
+        }
         #lista-exames {
             list-style: none;
             padding: 0;
@@ -79,12 +92,21 @@
         }
         #lista-exames li {
             padding: 8px 4px;
-            display: flex;
+            display: grid; /* Usar grid para melhor alinhamento */
+            grid-template-columns: auto 1fr auto; /* Checkbox | Label | Valor */
             align-items: center;
-            gap: 8px;
+            gap: 12px; /* Aumenta o espaçamento */
+        }
+        #lista-exames label {
+            cursor: pointer; /* Melhora UX */
+        }
+        #lista-exames .exame-valor {
+            font-weight: 500;
+            justify-self: end; /* Alinha o valor à direita */
         }
         #lista-exames li:not(:last-child) {
             border-bottom: 1px solid var(--border-color);
+            display: flex;
         }
         #lista-exames input[type="checkbox"] {
             width: 18px;
@@ -92,7 +114,7 @@
         }
         #lista-exames .valor-alterado {
             color: #e74c3c; /* Vermelho para alerta */
-            font-weight: 700;
+            font-weight: bold;
         }
         #lista-exames .valor-alterado::before {
             content: '⚠️ ';
@@ -136,7 +158,7 @@
         .actions {
             display: flex;
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 24px; /* Padronizando espaçamento (múltiplo de 8) */
             flex-wrap: wrap;
         }
         button {
@@ -231,8 +253,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background-color 0.2s; /* Adiciona transição suave */
         }
-        .accordion-header:hover { filter: brightness(95%); }
+        .accordion-header:hover { 
+            background-color: var(--border-color); /* Feedback visual mais claro */
+        }
         .accordion-content {
             padding: 8px 16px;
             display: none; /* Escondido por padrão */
@@ -308,8 +333,8 @@
         #toast {
             visibility: hidden;
             min-width: 250px;
-            background-color: #34495e; /* Fundo escuro no modo claro */
-            color: #ecf0f1;
+            background-color: var(--card-bg); /* Usa variável para consistência */
+            color: var(--text-color); /* Usa variável para consistência */
             text-align: center;
             border-radius: 8px;
             padding: 16px;
@@ -327,10 +352,47 @@
             opacity: 1;
             bottom: 50px; /* Efeito de deslizar para cima */
         }
-        html.dark-mode #toast {
-            background-color: #ecf0f1; /* Fundo claro no modo escuro */
-            color: #34495e;
+
+        /* Estilos para o Modal de Confirmação */
+        #confirmation-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Escondido por padrão */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
+        #confirmation-modal-overlay.show {
+            display: flex; /* Mostra o modal */
+        }
+        #confirmation-modal {
+            background-color: var(--card-bg);
+            padding: 24px 32px;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        #confirmation-modal h3 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+        #confirmation-modal p {
+            margin-bottom: 24px;
+            color: var(--secondary-hover);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        /* Fim dos estilos do Modal */
+
     </style>
 </head>
 <body>
@@ -376,9 +438,22 @@
 
         <div class="sidebar">
             <h2>Exames Encontrados</h2>
+            <input type="text" id="filtro-exames" class="search-input" placeholder="Buscar exame..." oninput="filtrarExames()">
             <ul id="lista-exames">
                 <li class="instructions">Analise um laudo para ver os exames aqui.</li>
             </ul>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmation-modal-overlay">
+        <div id="confirmation-modal">
+            <h3>Confirmar Ação</h3>
+            <p>Tem certeza que deseja apagar todo o histórico de resultados? Esta ação não pode ser desfeita.</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-delete" class="btn-primary">Sim, apagar</button>
+                <button id="btn-cancel-delete" class="btn-secondary">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -436,12 +511,28 @@
     }
 
     function limparHistorico() {
-        if (confirm('Tem certeza que deseja apagar todo o histórico de resultados? Esta ação não pode ser desfeita.')) {
-            localStorage.removeItem('resultadosRecentes');
-            renderizarResultadosRecentes();
-            showToast('Histórico limpo com sucesso!');
-        }
+        showConfirmationModal();
     }
+
+    function showConfirmationModal() {
+        document.getElementById('confirmation-modal-overlay').classList.add('show');
+    }
+
+    function hideConfirmationModal() {
+        document.getElementById('confirmation-modal-overlay').classList.remove('show');
+    }
+
+    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+        localStorage.removeItem('resultadosRecentes');
+        renderizarResultadosRecentes();
+        hideConfirmationModal();
+        showToast('Histórico limpo com sucesso!');
+    });
+
+    document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+        hideConfirmationModal();
+    });
+    // Fim da lógica do Modal
 
     function renderizarResultadosRecentes() {
         const listaRecentesDiv = document.getElementById('lista-recentes');
@@ -674,9 +765,6 @@
   // --- LÓGICA DE ANÁLISE ---
   // Estrutura de configuração para todos os exames conhecidos
   let configExames = [
-      // --- DADOS BÁSICOS ---
-      { id: 'data', label: 'Data', value: pegarData(texto), selected: true, template: (v) => `${v}: ` },
-      
       // --- HEMOGRAMA ---
       { id: 'hb', label: 'Hb', labelBusca: "Hemoglobina", template: (v) => `Hb ${v} / ` },
       { id: 'ht', label: 'Ht', labelBusca: "Hematocrito", template: (v) => `Ht ${v} / ` },
@@ -805,7 +893,7 @@
               value: analise.valor, status: analise.status 
           };
       }
-      return exame; // Retorna exames já processados (Data, Urina I)
+      return exame; // Retorna exames que não usam a análise padrão
   });
 
   // Filtra exames encontrados e ajusta a seleção para opcionais
@@ -822,6 +910,20 @@
   salvarNoHistorico(examesEncontrados); // Salva automaticamente após análise
 }
 
+function filtrarExames() {
+    const termoBusca = document.getElementById('filtro-exames').value.toLowerCase();
+    
+    if (!termoBusca) {
+        renderizarSidebar(examesEncontradosGlobal); // Se a busca estiver vazia, mostra todos
+        return;
+    }
+
+    const examesFiltrados = examesEncontradosGlobal.filter(exame => 
+        exame.label.toLowerCase().includes(termoBusca)
+    );
+    renderizarSidebar(examesFiltrados);
+}
+
 function renderizarSidebar(examesEncontrados) {
     const listaExamesUl = document.getElementById('lista-exames');
     if (examesEncontrados.length === 0) {
@@ -831,7 +933,8 @@ function renderizarSidebar(examesEncontrados) {
     listaExamesUl.innerHTML = examesEncontrados.map(exame => `
         <li>
             <input type="checkbox" id="${exame.id}" onchange="atualizarSelecao('${exame.id}', this.checked)" ${exame.selected ? 'checked' : ''}>
-            <label for="${exame.id}">${exame.label} (<span class="${exame.status === 'alterado' ? 'valor-alterado' : ''}">${exame.value}</span>)</label>
+            <label for="${exame.id}">${exame.label}</label>
+            <span class="exame-valor ${exame.status === 'alterado' ? 'valor-alterado' : ''}">${exame.value}</span>
         </li>
     `).join('');
 }
@@ -845,13 +948,18 @@ function atualizarSelecao(id, isSelected) {
 }
 
 function gerarTextoFinal() {
+  const texto = document.getElementById("input").value;
+  const dataLaudo = pegarData(texto);
+
   // Compor string final
   let resultado = ">> ";
+  if (dataLaudo) {
+    resultado += `${dataLaudo}: `;
+  }
+
   // Usa a variável global que é a fonte da verdade
   examesEncontradosGlobal.forEach(exame => {
-      if (exame.selected && exame.value !== null && exame.value !== undefined) {
-          resultado += exame.template(exame.value);
-      }
+      if (exame.selected) resultado += exame.template(exame.value);
   });
   resultado = resultado.replace(/\/ $/, ''); // Remove última barra
   resultadoDiv.innerText = resultado.toUpperCase();
