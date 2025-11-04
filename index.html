@@ -406,6 +406,20 @@
             margin-top: 4px; /* Pequeno espaço abaixo do título */
             text-align: left; /* Alinhado com o título */
         }
+        .download-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .download-section button {
+            max-width: 300px; /* Limita a largura do botão */
+        }
+        .download-disclaimer {
+            font-size: 13px;
+            color: var(--secondary-hover);
+            margin-top: 12px;
+        }
 
     </style>
 </head>
@@ -438,8 +452,24 @@
                 <button onclick="limparTudo()" class="btn-secondary">Limpar Campos</button>
             </div>
             <div class="resultado-wrapper">
-                <p><strong>Resultado Final:</strong></p>
+                <div class="header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0; align-items: center;">
+                    <p style="margin: 0;"><strong>Resultado Final:</strong></p>
+                    <div class="theme-switch-wrapper" style="font-size: 14px;">
+                        <span>Marcar alterados</span>
+                        <label class="theme-switch" for="marcar-alterados-toggle" title="Adicionar '*' aos resultados alterados">
+                            <input type="checkbox" id="marcar-alterados-toggle" onchange="gerarTextoFinal()">
+                            <div class="slider round"></div>
+                        </label>
+                    </div>
+                </div>
                 <div id="resultado"></div>
+            </div>
+
+            <div class="download-section">
+                <button onclick="baixarScript()" class="btn-secondary">Baixar para Uso Offline</button>
+                <p class="download-disclaimer">
+                    <strong>Atenção:</strong> O script baixado não recebe atualizações automáticas. A versão mais recente, com correções e novos exames, está sempre disponível em <a href="https://bit.ly/labsfacil" target="_blank" rel="noopener noreferrer">bit.ly/labsfacil</a>. Recomendamos baixar uma nova versão periodicamente.
+                </p>
             </div>
     
             <div id="recentes-container">
@@ -866,18 +896,49 @@
         const valorStr = valorMatch[1].replace(',', '.');
         const valorNum = parseFloat(valorStr);
 
-        // Lógica para verificar se está alterado (mantida)
-        const refMatch = textoBloco.match(/(\d+[,.]\d+)\s*(?:a|ate|até|-)\s*(\d+[,.]\d+)/i);
-        const refInferior = textoBloco.match(/(?:Inferior a|Menor que)\s*(\d+[,.]\d+)/i);
+        // Lógica aprimorada para verificar se o valor está alterado
+        const textoRef = textoBloco.match(/Referencia[:\s\S]*/i);
+        let status = 'normal'; // Padrão é normal
 
-        let status = 'normal';
+        if (isNaN(valorNum)) { // Se o valor não for um número, não podemos comparar
+            return { valor: valorStr, status: 'normal' };
+        }
+        
+        // Ajustando as regex para serem mais flexíveis com números inteiros ou decimais (ex: 100 ou 100.5)
+        // Usamos (\d+[,.]?\d*) para capturar números com ou sem parte decimal
+
+        // 1. Intervalo (ex: 100 a 200, 100 - 200, 100.5 a 200.5)
+        const refMatch = textoBloco.match(/(\d+[,.]?\d*)\s*(?:a|ate|até|-)\s*(\d+[,.]?\d*)/i);
+        // 2. Limite superior (ex: Inferior a 100, Menor que 100, Até 100)
+        const refInferior = textoBloco.match(/(?:Inferior a|Menor que|Ate)\s*(\d+[,.]?\d*)/i);
+        // 3. Limite inferior (ex: Superior a 10, Maior que 10)
+        const refSuperior = textoBloco.match(/(?:Superior a|Maior que)\s*(\d+[,.]?\d*)/i);
+        // 4. Valor único (ex: Referencia: ate 150 U/L - comum em alguns exames onde o valor é o máximo)
+        const refUnico = textoBloco.match(/Referencia:\s*ate\s*(\d+[,.]?\d*)/i);
+        // 5. Limite com operadores (<, >) (ex: Referencia: < 150, Referencia: > 10)
+        const refOperadorMenor = textoBloco.match(/Referencia:\s*<\s*(\d+[,.]?\d*)/i);
+        const refOperadorMaior = textoBloco.match(/Referencia:\s*>\s*(\d+[,.]?\d*)/i);
+
+        
         if (refMatch) {
             const min = parseFloat(refMatch[1].replace(',', '.'));
             const max = parseFloat(refMatch[2].replace(',', '.'));
             if (valorNum < min || valorNum > max) status = 'alterado';
         } else if (refInferior) {
             const max = parseFloat(refInferior[1].replace(',', '.'));
+            if (valorNum >= max) status = 'alterado'; // Se for "Até 100", 100 já pode ser considerado alterado
+        } else if (refSuperior) {
+            const min = parseFloat(refSuperior[1].replace(',', '.'));
+            if (valorNum <= min) status = 'alterado';
+        } else if (refUnico) {
+            const max = parseFloat(refUnico[1].replace(',', '.'));
             if (valorNum > max) status = 'alterado';
+        } else if (refOperadorMenor) { // Nova condição para "< X"
+            const max = parseFloat(refOperadorMenor[1].replace(',', '.'));
+            if (valorNum >= max) status = 'alterado';
+        } else if (refOperadorMaior) { // Nova condição para "> X"
+            const min = parseFloat(refOperadorMaior[1].replace(',', '.'));
+            if (valorNum <= min) status = 'alterado';
         }
 
         return { valor: valorStr, status: status };
@@ -978,15 +1039,24 @@
     function gerarTextoFinal() {
     const texto = inputArea.value;
     const dataLaudo = pegarData(texto);
-
+    const marcarAlterados = document.getElementById('marcar-alterados-toggle').checked;
+    
     const partesResultado = examesEncontradosGlobal
         .filter(exame => exame.selected)
-        .map(exame => exame.template(exame.value));
+        .map(exame => {
+            let parte = exame.template(exame.value);
+            // Se a opção estiver marcada e o status for 'alterado', adiciona o asterisco
+            if (marcarAlterados && exame.status === 'alterado') {
+                // Insere o asterisco antes da barra final
+                parte = parte.replace(/ \/ $/, '* / ');
+            }
+            return parte;
+        });
 
     let resultado = `>> ${dataLaudo ? dataLaudo + ': ' : ''}${partesResultado.join('')}`;
     
     resultado = resultado.trim().replace(/\/$/, '').trim(); // Remove última barra e espaços
-
+    
     resultadoDiv.innerText = resultado.toUpperCase();
     }
 
@@ -1017,6 +1087,28 @@
         navigator.clipboard.writeText(texto)
             .then(() => showToast('Resultado copiado!'))
             .catch(() => showToast('Falha ao copiar.'));
+    }
+  </script>
+
+  <script>
+    // Função para baixar o script
+    function baixarScript() {
+        // Pega todo o conteúdo HTML da página atual
+        const conteudoHtml = document.documentElement.outerHTML;
+        // Cria um objeto Blob, que é um objeto semelhante a um arquivo
+        const blob = new Blob([conteudoHtml], { type: 'text/html' });
+        // Cria uma URL temporária para o Blob
+        const url = URL.createObjectURL(blob);
+
+        // Cria um link <a> invisível para iniciar o download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'processador_laudos.html'; // Nome do arquivo que será baixado
+        document.body.appendChild(a); // Adiciona o link ao corpo do documento
+        a.click(); // Simula o clique no link para iniciar o download
+        document.body.removeChild(a); // Remove o link após o clique
+        URL.revokeObjectURL(url); // Libera a memória da URL criada
+        showToast('Download iniciado!');
     }
   </script>
 </body>
