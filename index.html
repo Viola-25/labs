@@ -831,15 +831,18 @@
         
         // --- OTIMIZAÇÃO: Função auxiliar para criar a regex e evitar repetição ---
         const criarRegexBusca = (lbl) => {
-            let regexStr = removerAcentos(lbl).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const lblSemAcentos = removerAcentos(lbl);
+            let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             if (lbl.toLowerCase() === 'lactato') {
                 regexStr = 'Lactato(?! Arterial)'; // Negative lookahead para não capturar "Lactato Arterial"
             }
-            return new RegExp(`(^|\\n)(${regexStr}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\nLiberado por|$)`, "i");
+            const finalRegex = new RegExp(`(^|\\n)(\\b${regexStr}\\b[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\nLiberado por|$)`, "i");
+            return finalRegex;
         };
 
         let re = criarRegexBusca(label);
         let blocoExame = textoSemAcentos.match(re);
+
         if (!blocoExame && labelAlternativo) {
             re = criarRegexBusca(labelAlternativo);
             blocoExame = textoSemAcentos.match(re);
@@ -861,7 +864,7 @@
                 // Retorna o valor de texto limpo (removendo um ponto final, se houver)
                 return { valor: valorTexto.replace(/\.$/, '').trim(), status: 'normal' };
             }
-            return { valor: null, status: 'nao_encontrado' };
+            return { valor: null, status: 'nao_encontrado' }; // Não encontrou valor de texto
         }
 
         let valorMatch;
@@ -919,7 +922,6 @@
         const refOperadorMenor = textoBloco.match(/Referencia:\s*<\s*(\d+[,.]?\d*)/i);
         const refOperadorMaior = textoBloco.match(/Referencia:\s*>\s*(\d+[,.]?\d*)/i);
 
-        
         if (refMatch) {
             const min = parseFloat(refMatch[1].replace(',', '.'));
             const max = parseFloat(refMatch[2].replace(',', '.'));
