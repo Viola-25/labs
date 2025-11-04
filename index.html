@@ -622,17 +622,20 @@
     const LABELS_EXAMES = [
         "Hemograma Completo", "Eritrócitos", "Hemoglobina", "Hematocrito", "Plaquetas", "Leucocitos", "Neutrofilos", 
         "Tempo e atividade Protrombina", "RNI", "TTPA - Tempo de Tromboplastina Parcial Ativada", "Relacao paciente/normal", 
-        "Gasometria Arterial", "Gasometria Venosa", 
-        "Ureia, sérica", "Ureia", "Dosagem sérica de Creatinina", "Creatinina", 
-        "Glicose", "Glicemia", 
-        "Sódio", "Potássio", "Magnésio", "Calcio Ionizado", "Fosforo", 
+        "Gasometria Arterial", "Gasometria Venosa", "Urina tipo I", "EAS",
+        "Ureia, sérica", "Ureia", "Dosagem sérica de Creatinina", "Creatinina", "Acido Urico",
+        "Glicose", "Glicemia", "Hemoglobina Glicada", "HbA1c",
+        "Colesterol Total", "Colesterol HDL", "Colesterol LDL", "Colesterol VLDL", "Triglicerideos",
+        "Sódio", "Potássio", "Cloro", "Magnésio", "Calcio Ionizado", "Calcio Total", "Fosforo", 
         "Bilirrubinas", "Bilirrubina Total", "Bilirrubina Direta", "Bilirrubina Indireta", 
-        "TGO/AST", "TGP/ALT", "Gama Glutamil Transferase - GGT", "Fosfatase Alcalina", "Albumina",
+        "TGO/AST", "TGP/ALT", "Gama Glutamil Transferase - GGT", "Fosfatase Alcalina", "Proteinas Totais", "Albumina", "Globulina", "DHL", "Desidrogenase Lática",
         "Amilase", "Lipase",
         "Lactato Arterial", "Lactato", "Proteína C Reativa - PCR", 
         "Troponina I", "CK-MB", "CK Total", "BNP", "NT-proBNP", "D-Dimero",
-        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces", "Hemocultura", 
-        "Alfa-fetoproteína", "CA 19-9", "CA 125"
+        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces", "Hemocultura", "Urocultura",
+        "TSH", "T4 Livre", "T3 Livre", "T3 Total", "Anti-TPO", "Anti-Tireoglobulina",
+        "Vitamina D", "25-hidroxivitamina D", "PTH", "Paratormonio",
+        "PSA", "CEA", "Alfa-fetoproteína", "CA 19-9", "CA 125", "CA 15-3", "Beta-HCG"
     ];
 
     // Estrutura de configuração para todos os exames conhecidos
@@ -652,12 +655,21 @@
         // --- FUNÇÃO RENAL E ELETRÓLITOS ---
         { id: 'u', label: 'U', labelBusca: "Ureia", template: (v) => `U ${v} / ` },
         { id: 'cr', label: 'Cr', labelBusca: "Creatinina", labelBuscaAlternativo: "Dosagem sérica de Creatinina", template: (v) => `Cr ${v} / ` },
+        { id: 'au', label: 'AU', labelBusca: "Acido Urico", template: (v) => `AU ${v} / ` },
         { id: 'na', label: 'Na', labelBusca: "Sódio", template: (v) => `Na ${v} / ` },
         { id: 'k', label: 'K', labelBusca: "Potassio", template: (v) => `K ${v} / ` },
+        { id: 'cl', label: 'Cl', labelBusca: "Cloro", template: (v) => `Cl ${v} / ` },
         { id: 'mg', label: 'Mg', labelBusca: "Magnésio", template: (v) => `Mg ${v} / ` },
         { id: 'cai', label: 'Cai', labelBusca: "Calcio Ionizado", template: (v) => `Cai ${v} / ` },
+        { id: 'cat', label: 'CaT', labelBusca: "Calcio Total", template: (v) => `CaT ${v} / ` },
         { id: 'p', label: 'P', labelBusca: "Fosforo", template: (v) => `P ${v} / ` },
         
+        // --- PERFIL LIPÍDICO ---
+        { id: 'ct', label: 'CT', labelBusca: "Colesterol Total", template: (v) => `CT ${v} / ` },
+        { id: 'hdl', label: 'HDL', labelBusca: "Colesterol HDL", template: (v) => `HDL ${v} / ` },
+        { id: 'ldl', label: 'LDL', labelBusca: "Colesterol LDL", template: (v) => `LDL ${v} / ` },
+        { id: 'tg', label: 'TG', labelBusca: "Triglicerideos", template: (v) => `TG ${v} / ` },
+
         // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
         { id: 'glic', label: 'Glic', labelBusca: "Glicose", labelBuscaAlternativo: "Glicemia", template: (v) => `Glic ${v} / ` },
         { id: 'pcr', label: 'PCR', labelBusca: "Proteína C Reativa - PCR", template: (v) => `PCR ${v} / ` },
@@ -671,6 +683,8 @@
         { id: 'tgo', label: 'TGO', labelBusca: "TGO/AST", template: (v) => `TGO ${v} / ` },
         { id: 'tgp', label: 'TGP', labelBusca: "TGP/ALT", template: (v) => `TGP ${v} / ` },
         { id: 'fal', label: 'FAL', labelBusca: "Fosfatase Alcalina", template: (v) => `FAL ${v} / ` },
+        { id: 'dhl', label: 'DHL', labelBusca: "DHL", labelBuscaAlternativo: "Desidrogenase Lática", template: (v) => `DHL ${v} / ` },
+        { id: 'hba1c', label: 'HbA1c', labelBusca: "Hemoglobina Glicada", labelBuscaAlternativo: "HbA1c", template: (v) => `HbA1c ${v} / ` },
         { id: 'ggt', label: 'GGT', labelBusca: "Gama Glutamil Transferase", template: (v) => `GGT ${v} / ` },
 
         // --- ENZIMAS CARDÍACAS ---
@@ -701,10 +715,23 @@
             } 
         },
 
+        // --- ENDOCRINOLOGIA ---
+        { id: 'tsh', label: 'TSH', labelBusca: "TSH", template: (v) => `TSH ${v} / ` },
+        { id: 't4l', label: 'T4L', labelBusca: "T4 Livre", template: (v) => `T4L ${v} / ` },
+        { id: 'vitd', label: 'Vit.D', labelBusca: "Vitamina D", labelBuscaAlternativo: "25-hidroxivitamina D", template: (v) => `Vit.D ${v} / ` },
+        { id: 'pth', label: 'PTH', labelBusca: "PTH", labelBuscaAlternativo: "Paratormonio", template: (v) => `PTH ${v} / ` },
+
         // --- MARCADORES TUMORAIS ---
+        { id: 'psa', label: 'PSA', labelBusca: "PSA", template: (v) => `PSA ${v} / ` },
+        { id: 'cea', label: 'CEA', labelBusca: "CEA", template: (v) => `CEA ${v} / ` },
         { id: 'afp', label: 'AFP', labelBusca: "Alfa-fetoproteína", template: (v) => `AFP ${v} / ` },
         { id: 'ca199', label: 'CA19-9', labelBusca: "CA 19-9", template: (v) => `CA19-9 ${v.replace(/\.(?=.*\d{3},)/g, '')} / ` },
         { id: 'ca125', label: 'CA125', labelBusca: "CA 125", template: (v) => `CA125 ${v} / ` },
+        { id: 'ca153', label: 'CA15-3', labelBusca: "CA 15-3", template: (v) => `CA15-3 ${v} / ` },
+        { id: 'bhcg', label: 'Beta-HCG', labelBusca: "Beta-HCG", template: (v) => `Beta-HCG ${v} / ` },
+
+        // --- SOROLOGIAS (Exemplos) ---
+        // Adicionar sorologias aqui conforme necessário, podem precisar de lógica de texto (Positivo/Negativo)
 
         // --- GASOMETRIA ARTERIAL ---
         { id: 'phart', label: 'pHart', labelBusca: "PH", usaTextoArterial: true, template: (v) => `pHart ${v} / ` },
@@ -722,6 +749,7 @@
         { id: 'so2ven', label: 'SO2ven', labelBusca: "Saturacao de O2", usaTextoVenoso: true, template: (v) => `SO2ven ${v} / ` },
         { id: 'hco3ven', label: 'HCO3ven', labelBusca: "Bicarbonato", usaTextoVenoso: true, template: (v) => `HCO3ven ${v} / ` },
         { id: 'beven', label: 'BEven', labelBusca: "Base Exces", usaTextoVenoso: true, template: (v) => `BEven ${v} / ` },
+        { id: 'lactven', label: 'Lactven', labelBusca: "Lactato", usaTextoVenoso: true, template: (v) => `Lactven ${v} / ` },
 
         // --- EXAMES DE URINA ---
         { id: 'u1ph', label: 'U1 pH', labelBusca: "pH", labelBuscaAlternativo: "Urina tipo I", usaTextoUrina: true, template: (v) => `U1 pH ${v} / ` },
@@ -777,7 +805,7 @@
             if (lbl.toLowerCase() === 'lactato') {
                 regexStr = 'Lactato(?! Arterial)'; // Negative lookahead para não capturar "Lactato Arterial"
             }
-            return new RegExp(`(${regexStr}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\n^Liberado por|$)`, "i");
+            return new RegExp(`(^|\\n)(${regexStr}[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\nLiberado por|$)`, "i");
         };
 
         let re = criarRegexBusca(label);
@@ -787,11 +815,11 @@
             blocoExame = textoSemAcentos.match(re);
         }
 
-        if (!blocoExame || !blocoExame[0]) { 
+        if (!blocoExame || !blocoExame[2]) { 
             return { valor: null, status: 'nao_encontrado' }; 
         }
 
-        const textoBloco = blocoExame[0];
+        const textoBloco = blocoExame[2];
         if (tipo === 'texto') {
             // Estratégia 1 (Texto): Procurar por "Microrganismo:" OU "Resultado"
             // Captura todo o texto na mesma linha
@@ -808,16 +836,20 @@
 
         let valorMatch;
         // Estratégia 1: Procurar o valor após a palavra "Resultado". É mais confiável.
-        if (!valorMatch) {
-            const resultadoRegex = /Resultado\s*([\d,.-]+)/i;
-            valorMatch = textoBloco.match(resultadoRegex);
-        }
+        const resultadoRegex = /Resultado\s*([\d,.-]+)/i;
+        valorMatch = textoBloco.match(resultadoRegex);
 
         // Estratégia 2 (Fallback): Se não achar "Resultado", procura o primeiro número em uma nova linha após o label.
         if (!valorMatch) {
             const labelSemAcentos = removerAcentos(label).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-            const fallbackRegex = new RegExp(`${labelSemAcentos}[\\s\\S]*?\\n\\s*([\\d,.-]+(?![:/]))`, "i");
+            // Regex ajustada para ser menos "gananciosa" e não capturar números de OS
+            const fallbackRegex = new RegExp(`${labelSemAcentos}[\\s\\S]*?\\n\\s*([\\d,.-]+(?![:/-]))`, "i");
             valorMatch = textoBloco.match(fallbackRegex);
+        }
+
+        // Estratégia 3 (Fallback mais simples): Se ainda não achou, pega o primeiro número que encontrar no bloco.
+        if (!valorMatch) {
+            valorMatch = textoBloco.match(/[\d,.-]+/);
         }
 
         // Caso especial para Neutrófilos: tenta pegar o segundo valor (absoluto) se houver dois.
