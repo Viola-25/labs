@@ -29,6 +29,11 @@
             --secondary-hover: #95a5a6;
             --border-color: #4a6572;
         }
+        html.dark-mode .disclaimer {
+            background-color: #4d442a;
+            border-color: #a18849;
+            color: #f7e8c3;
+        }
         * {
             box-sizing: border-box; /* Garante que padding não aumente a largura total */
         }
@@ -420,6 +425,17 @@
             color: var(--secondary-hover);
             margin-top: 12px;
         }
+        .disclaimer {
+            background-color: #fffbe6; /* Amarelo claro */
+            border: 1px solid #ffe58f;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #8a6d3b;
+            line-height: 1.5;
+            text-align: center;
+        }
 
     </style>
 </head>
@@ -444,6 +460,9 @@
                 1. Na página do laudo, aperte <strong>CTRL+A</strong> (para selecionar tudo) e depois <strong>CTRL+C</strong> (para copiar).<br>
                 2. Cole na caixa abaixo e clique em <strong>Analisar Laudo</strong>. Selecione os exames na barra lateral para gerar o resultado formatado, pronto para colar no prontuário.<br>
                 <small><strong>Atenção:</strong> No momento, o script é otimizado para laudos da <strong>AFIP</strong>.</small></p>
+            </div>
+            <div class="disclaimer">
+                <strong>Atenção (BETA):</strong> Esta ferramenta é um auxílio e está em fase de testes. Sempre confira os resultados e os valores de referência com o laudo original antes de tomar qualquer decisão clínica.
             </div>
             <textarea id="input" placeholder="Aguardando dados do laudo..."></textarea>
             <div class="actions">
@@ -647,91 +666,73 @@
     // Renderiza os resultados recentes ao carregar a página
     document.addEventListener('DOMContentLoaded', renderizarResultadosRecentes);
 
-    // Variável global para armazenar os exames encontrados na última análise
-    // --- OTIMIZAÇÃO: Mover constantes para fora das funções ---
-    const LABELS_EXAMES = [
-        "Hemograma Completo", "Eritrócitos", "Hemoglobina", "Hematocrito", "Plaquetas", "Leucocitos", "Neutrofilos", 
-        "Tempo e atividade Protrombina", "RNI", "TTPA - Tempo de Tromboplastina Parcial Ativada", "Relacao paciente/normal", 
-        "Gasometria Arterial", "Gasometria Venosa", "Urina tipo I", "EAS",
-        "Ureia, sérica", "Ureia", "Dosagem sérica de Creatinina", "Creatinina", "Acido Urico",
-        "Glicose", "Glicemia", "Hemoglobina Glicada", "HbA1c",
-        "Colesterol Total", "Colesterol HDL", "Colesterol LDL", "Colesterol VLDL", "Triglicerideos",
-        "Sódio", "Potássio", "Cloro", "Magnésio", "Calcio Ionizado", "Calcio Total", "Fosforo", 
-        "Bilirrubinas", "Bilirrubina Total", "Bilirrubina Direta", "Bilirrubina Indireta", 
-        "TGO/AST", "TGP/ALT", "Gama Glutamil Transferase - GGT", "Fosfatase Alcalina", "Proteinas Totais", "Albumina", "Globulina", "DHL", "Desidrogenase Lática",
-        "Amilase", "Lipase",
-        "Lactato Arterial", "Lactato", "Proteína C Reativa - PCR", 
-        "Troponina I", "CK-MB", "CK Total", "BNP", "NT-proBNP", "D-Dimero",
-        "PH", "PO2", "PCO2", "Saturacao de O2", "Bicarbonato", "Base Exces", "Hemocultura", "Urocultura",
-        "TSH", "T4 Livre", "T3 Livre", "T3 Total", "Anti-TPO", "Anti-Tireoglobulina",
-        "Vitamina D", "25-hidroxivitamina D", "PTH", "Paratormonio",
-        "PSA", "CEA", "Alfa-fetoproteína", "CA 19-9", "CA 125", "CA 15-3", "Beta-HCG"
-    ];
-
     // Estrutura de configuração para todos os exames conhecidos
     const CONFIG_EXAMES_BASE = [
-        // --- HEMOGRAMA ---
-        { id: 'hb', label: 'Hb', labelBusca: "Hemoglobina", template: (v) => `Hb ${v} / ` },
-        { id: 'ht', label: 'Ht', labelBusca: "Hematocrito", template: (v) => `Ht ${v} / ` },
-        { id: 'leuco', label: 'Leuco', labelBusca: "Leucocitos", template: (v) => `Leuco ${v} / ` },
-        { id: 'n', label: 'N', labelBusca: "Neutrofilos", template: (v) => `N ${v} / ` },
-        { id: 'plaq', label: 'PLAQ', labelBusca: "Plaquetas", template: (v) => `PLAQ ${v} / ` },
+    // --- HEMOGRAMA ---
+        { id: 'hb', label: 'Hb', nomesBusca: ["Hemoglobina"], template: (v) => `Hb ${v} / `, ref: { M: { min: 13.5, max: 17.5 }, F: { min: 12.0, max: 15.5 } } },
+        { id: 'ht', label: 'Ht', nomesBusca: ["Hematocrito"], template: (v) => `Ht ${v} / `, ref: { M: { min: 40, max: 50 }, F: { min: 36, max: 46 } } },
+        { id: 'leuco', label: 'Leuco', nomesBusca: ["Leucocitos"], template: (v) => `Leuco ${v} / `, ref: { min: 4.0, max: 11.0 } }, // Em 10^3/mm³
+        { id: 'n', label: 'N', nomesBusca: ["Neutrofilos"], template: (v) => `N ${v} / `, ref: { min: 1.8, max: 7.7 } }, // Em 10^3/mm³
+        { id: 'plaq', label: 'PLAQ', nomesBusca: ["Plaquetas"], template: (v) => `PLAQ ${v} / `, ref: { min: 150, max: 450 } }, // Em 10^3/mm³
         
         // --- COAGULAÇÃO ---
-        { id: 'inr', label: 'INR', labelBusca: "RNI", template: (v) => `INR ${v} / ` },
-        { id: 'r', label: 'R', labelBusca: "Relacao paciente/normal", template: (v) => `R ${v} / ` },
-        { id: 'dimd', label: 'D-Dim', labelBusca: "D-Dimero", template: (v) => `D-Dim ${v} / ` },
+        { id: 'inr', label: 'INR', nomesBusca: ["RNI"], template: (v) => `INR ${v} / `, ref: { min: 1.0, max: 1.2 } }, // Ref laboratorial. Lógica especial trata a faixa terapêutica.
+        { id: 'r', label: 'R', nomesBusca: ["Relacao paciente/normal"], template: (v) => `R ${v} / `, ref: { min: 0.85, max: 1.20 } },
+        { id: 'dimd', label: 'D-Dim', nomesBusca: ["D-Dimero"], template: (v) => `D-Dim ${v} / `, ref: { min: -Infinity, max: 500 } },
 
         // --- FUNÇÃO RENAL E ELETRÓLITOS ---
-        { id: 'u', label: 'U', labelBusca: "Ureia", template: (v) => `U ${v} / ` },
-        { id: 'cr', label: 'Cr', labelBusca: "Creatinina", labelBuscaAlternativo: "Dosagem sérica de Creatinina", template: (v) => `Cr ${v} / ` },
-        { id: 'au', label: 'AU', labelBusca: "Acido Urico", template: (v) => `AU ${v} / ` },
-        { id: 'na', label: 'Na', labelBusca: "Sódio", template: (v) => `Na ${v} / ` },
-        { id: 'k', label: 'K', labelBusca: "Potassio", template: (v) => `K ${v} / ` },
-        { id: 'cl', label: 'Cl', labelBusca: "Cloro", template: (v) => `Cl ${v} / ` },
-        { id: 'mg', label: 'Mg', labelBusca: "Magnésio", template: (v) => `Mg ${v} / ` },
-        { id: 'cai', label: 'Cai', labelBusca: "Calcio Ionizado", template: (v) => `Cai ${v} / ` },
-        { id: 'cat', label: 'CaT', labelBusca: "Calcio Total", template: (v) => `CaT ${v} / ` },
-        { id: 'p', label: 'P', labelBusca: "Fosforo", template: (v) => `P ${v} / ` },
+        { id: 'u', label: 'U', nomesBusca: ["Ureia", "Ureia, sérica"], template: (v) => `U ${v} / `, ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } } },
+        { id: 'cr', label: 'Cr', nomesBusca: ["Creatinina", "Dosagem sérica de Creatinina"], template: (v) => `Cr ${v} / `, ref: { min: 0.7, max: 1.3 } },
+        { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], template: (v) => `AU ${v} / `, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } } },
+        { id: 'na', label: 'Na', nomesBusca: ["Sódio"], template: (v) => `Na ${v} / `, ref: { min: 135, max: 145 } },
+        { id: 'k', label: 'K', nomesBusca: ["Potassio"], template: (v) => `K ${v} / `, ref: { min: 3.5, max: 5.0 } },
+        { id: 'cl', label: 'Cl', nomesBusca: ["Cloro"], template: (v) => `Cl ${v} / `, ref: { min: 98, max: 107 } },
+        { id: 'mg', label: 'Mg', nomesBusca: ["Magnésio"], template: (v) => `Mg ${v} / `, ref: { min: 1.8, max: 2.4 } },
+        { id: 'cai', label: 'Cai', nomesBusca: ["Calcio Ionizado"], template: (v) => `Cai ${v} / `, ref: { min: 1.12, max: 1.30 } },
+        { id: 'cat', label: 'CaT', nomesBusca: ["Calcio Total"], template: (v) => `CaT ${v} / `, ref: { min: 8.5, max: 10.2 } },
+        { id: 'p', label: 'P', nomesBusca: ["Fosforo"], template: (v) => `P ${v} / `, ref: { min: 2.5, max: 4.5 } },
         
         // --- PERFIL LIPÍDICO ---
-        { id: 'ct', label: 'CT', labelBusca: "Colesterol Total", template: (v) => `CT ${v} / ` },
-        { id: 'hdl', label: 'HDL', labelBusca: "Colesterol HDL", template: (v) => `HDL ${v} / ` },
-        { id: 'ldl', label: 'LDL', labelBusca: "Colesterol LDL", template: (v) => `LDL ${v} / ` },
-        { id: 'tg', label: 'TG', labelBusca: "Triglicerideos", template: (v) => `TG ${v} / ` },
+        { id: 'ct', label: 'CT', nomesBusca: ["Colesterol Total"], template: (v) => `CT ${v} / `, ref: { min: -Infinity, max: 190 } },
+        { id: 'hdl', label: 'HDL', nomesBusca: ["Colesterol HDL"], template: (v) => `HDL ${v} / `, ref: { M: { min: 40, max: Infinity }, F: { min: 50, max: Infinity } } },
+        { id: 'ldl', label: 'LDL', nomesBusca: ["Colesterol LDL"], template: (v) => `LDL ${v} / `, ref: { min: -Infinity, max: 130 } },
+        { id: 'tg', label: 'TGL', nomesBusca: ["Triglicerides", "TGL"], template: (v) => `TGL ${v} / `, ref: { min: -Infinity, max: 175 } }, // Usando valor de sem jejum como teto
+        { id: 'vldl', label: 'VLDL', nomesBusca: ["Colesterol VLDL"], template: (v) => `VLDL ${v} / `, ref: { min: -Infinity, max: 30 } },
 
         // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
-        { id: 'glic', label: 'Glic', labelBusca: "Glicose", labelBuscaAlternativo: "Glicemia", template: (v) => `Glic ${v} / ` },
-        { id: 'pcr', label: 'PCR', labelBusca: "Proteína C Reativa - PCR", template: (v) => `PCR ${v} / ` },
-        { id: 'lact', label: 'Lact', labelBusca: "Lactato", template: (v) => `Lact ${v} / ` },
-        { id: 'alb', label: 'Alb', labelBusca: "Albumina", template: (v) => `Alb ${v} / ` },
+        { id: 'glic', label: 'Glic', nomesBusca: ["Glicose", "Glicemia"], template: (v) => `Glic ${v} / `, ref: { min: 70, max: 99 } },
+        { id: 'pcr', label: 'PCR', nomesBusca: ["Proteína C Reativa - PCR"], template: (v) => `PCR ${v} / `, ref: { min: -Infinity, max: 0.5 } }, // Em mg/dL
+        { id: 'lact', label: 'Lact', nomesBusca: ["Lactato"], template: (v) => `Lact ${v} / `, ref: { min: 0.5, max: 2.2 } },
+        { id: 'alb', label: 'Alb', nomesBusca: ["Albumina"], template: (v) => `Alb ${v} / `, ref: { min: 3.5, max: 5.0 } },
+        { id: 'pt', label: 'PT', nomesBusca: ["Proteinas Totais"], template: (v) => `PT ${v} / `, ref: { min: 6.0, max: 8.3 } },
+        { id: 'glob', label: 'Glob', nomesBusca: ["Globulina"], template: (v) => `Glob ${v} / `, ref: { min: 2.0, max: 3.5 } },
 
         // --- FUNÇÃO HEPÁTICA / BILI ---
-        { id: 'bt', label: 'BT', labelBusca: "Bilirrubina Total", template: (v) => `BT ${v} / ` },
-        { id: 'bd', label: 'BD', labelBusca: "Bilirrubina Direta", optional: true, template: (v) => `BD ${v} / ` },
-        { id: 'bi', label: 'BI', labelBusca: "Bilirrubina Indireta", optional: true, template: (v) => `BI ${v} / ` },
-        { id: 'tgo', label: 'TGO', labelBusca: "TGO/AST", template: (v) => `TGO ${v} / ` },
-        { id: 'tgp', label: 'TGP', labelBusca: "TGP/ALT", template: (v) => `TGP ${v} / ` },
-        { id: 'fal', label: 'FAL', labelBusca: "Fosfatase Alcalina", template: (v) => `FAL ${v} / ` },
-        { id: 'dhl', label: 'DHL', labelBusca: "DHL", labelBuscaAlternativo: "Desidrogenase Lática", template: (v) => `DHL ${v} / ` },
-        { id: 'hba1c', label: 'HbA1c', labelBusca: "Hemoglobina Glicada", labelBuscaAlternativo: "HbA1c", template: (v) => `HbA1c ${v} / ` },
-        { id: 'ggt', label: 'GGT', labelBusca: "Gama Glutamil Transferase", template: (v) => `GGT ${v} / ` },
+        { id: 'bt', label: 'BT', nomesBusca: ["Bilirrubina Total"], template: (v) => `BT ${v} / `, ref: { min: 0.2, max: 1.2 }, ignorarBaixo: true },
+        { id: 'bd', label: 'BD', nomesBusca: ["Bilirrubina Direta"], optional: true, template: (v) => `BD ${v} / `, ref: { min: 0.0, max: 0.3 } },
+        { id: 'bi', label: 'BI', nomesBusca: ["Bilirrubina Indireta"], optional: true, template: (v) => `BI ${v} / `, ref: { min: 0.1, max: 0.8 } },
+        { id: 'tgo', label: 'TGO', nomesBusca: ["TGO/AST"], template: (v) => `TGO ${v} / `, ref: { M: { min: 10, max: 40 }, F: { min: 14, max: 36 } } },
+        { id: 'tgp', label: 'TGP', nomesBusca: ["TGP/ALT"], template: (v) => `TGP ${v} / `, ref: { min: 10, max: 40 } },
+        { id: 'fal', label: 'FAL', nomesBusca: ["Fosfatase Alcalina"], template: (v) => `FAL ${v} / `, ref: { min: 30, max: 120 } },
+        { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lática"], template: (v) => `DHL ${v} / `, ref: { min: 140, max: 280 } },
+        { id: 'hba1c', label: 'HbA1c', nomesBusca: ["Hemoglobina Glicada", "HbA1c"], template: (v) => `HbA1c ${v} / `, ref: { min: -Infinity, max: 5.7 } },
+        { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase"], template: (v) => `GGT ${v} / `, ref: { min: 5, max: 40 } },
 
         // --- ENZIMAS CARDÍACAS ---
-        { id: 'trop', label: 'Trop', labelBusca: "Troponina I", template: (v) => `Trop ${v} / ` },
-        { id: 'ckmb', label: 'CKMB', labelBusca: "CK-MB", template: (v) => `CKMB ${v} / ` },
-        { id: 'ck', label: 'CK', labelBusca: "CK Total", labelBuscaAlternativo: "Creatinoquinase", template: (v) => `CK ${v} / ` },
-        { id: 'bnp', label: 'BNP', labelBusca: "BNP", labelBuscaAlternativo: "NT-proBNP", template: (v) => `BNP ${v} / ` },
+        { id: 'trop', label: 'Trop', nomesBusca: ["Troponina I"], template: (v) => `Trop ${v} / `, ref: { min: -Infinity, max: 0.014 } }, // ng/mL
+        { id: 'ckmb', label: 'CKMB', nomesBusca: ["CK-MB"], template: (v) => `CKMB ${v} / `, ref: { min: -Infinity, max: 25 } },
+        { id: 'ck', label: 'CK', nomesBusca: ["CK Total", "Creatinoquinase"], template: (v) => `CK ${v} / `, ref: { M: { min: 35, max: 200 }, F: { min: 30, max: 150 } } },
+        { id: 'bnp', label: 'BNP', nomesBusca: ["BNP", "NT-proBNP"], template: (v) => `BNP ${v} / `, ref: { min: -Infinity, max: 100 } }, // Para BNP, NT-proBNP é diferente
 
         // --- ENZIMAS PANCREÁTICAS ---
-        { id: 'amil', label: 'Amil', labelBusca: "Amilase", template: (v) => `Amil ${v} / ` },
-        { id: 'lip', label: 'Lip', labelBusca: "Lipase", template: (v) => `Lip ${v} / ` },
+        { id: 'amil', label: 'Amil', nomesBusca: ["Amilase"], template: (v) => `Amil ${v} / `, ref: { min: 25, max: 125 } },
+        { id: 'lip', label: 'Lip', nomesBusca: ["Lipase"], template: (v) => `Lip ${v} / `, ref: { min: 10, max: 140 } },
 
         // --- MICROBIOLOGIA ---
         { 
             id: 'hmc', 
             label: 'HMC', 
-            labelBusca: "Hemocultura", 
+            nomesBusca: ["Hemocultura"], 
             tipo: 'texto',
             template: (v) => {
                 const valorLimpo = v.toLowerCase();
@@ -746,45 +747,49 @@
         },
 
         // --- ENDOCRINOLOGIA ---
-        { id: 'tsh', label: 'TSH', labelBusca: "TSH", template: (v) => `TSH ${v} / ` },
-        { id: 't4l', label: 'T4L', labelBusca: "T4 Livre", template: (v) => `T4L ${v} / ` },
-        { id: 'vitd', label: 'Vit.D', labelBusca: "Vitamina D", labelBuscaAlternativo: "25-hidroxivitamina D", template: (v) => `Vit.D ${v} / ` },
-        { id: 'pth', label: 'PTH', labelBusca: "PTH", labelBuscaAlternativo: "Paratormonio", template: (v) => `PTH ${v} / ` },
+        { id: 'tsh', label: 'TSH', nomesBusca: ["TSH"], template: (v) => `TSH ${v} / `, ref: { min: 0.4, max: 4.5 } },
+        { id: 't4l', label: 'T4L', nomesBusca: ["T4 Livre"], template: (v) => `T4L ${v} / `, ref: { min: 0.8, max: 1.8 } },
+        { id: 't3l', label: 'T3L', nomesBusca: ["T3 Livre"], template: (v) => `T3L ${v} / `, ref: { min: 2.0, max: 4.4 } },
+        { id: 't3t', label: 'T3T', nomesBusca: ["T3 Total"], template: (v) => `T3T ${v} / `, ref: { min: 80, max: 200 } },
+        { id: 'atpo', label: 'Anti-TPO', nomesBusca: ["Anti-TPO"], template: (v) => `Anti-TPO ${v} / `, ref: { min: -Infinity, max: 35 } },
+        { id: 'atg', label: 'Anti-TG', nomesBusca: ["Anti-Tireoglobulina"], template: (v) => `Anti-TG ${v} / `, ref: { min: -Infinity, max: 40 } },
+        { id: 'vitd', label: 'Vit.D', nomesBusca: ["Vitamina D", "25-hidroxivitamina D"], template: (v) => `Vit.D ${v} / `, ref: { min: 20, max: 50 } },
+        { id: 'pth', label: 'PTH', nomesBusca: ["PTH", "Paratormonio"], template: (v) => `PTH ${v} / `, ref: { min: 15, max: 65 } },
 
         // --- MARCADORES TUMORAIS ---
-        { id: 'psa', label: 'PSA', labelBusca: "PSA", template: (v) => `PSA ${v} / ` },
-        { id: 'cea', label: 'CEA', labelBusca: "CEA", template: (v) => `CEA ${v} / ` },
-        { id: 'afp', label: 'AFP', labelBusca: "Alfa-fetoproteína", template: (v) => `AFP ${v} / ` },
-        { id: 'ca199', label: 'CA19-9', labelBusca: "CA 19-9", template: (v) => `CA19-9 ${v.replace(/\.(?=.*\d{3},)/g, '')} / ` },
-        { id: 'ca125', label: 'CA125', labelBusca: "CA 125", template: (v) => `CA125 ${v} / ` },
-        { id: 'ca153', label: 'CA15-3', labelBusca: "CA 15-3", template: (v) => `CA15-3 ${v} / ` },
-        { id: 'bhcg', label: 'Beta-HCG', labelBusca: "Beta-HCG", template: (v) => `Beta-HCG ${v} / ` },
+        { id: 'psa', label: 'PSA', nomesBusca: ["PSA"], template: (v) => `PSA ${v} / `, ref: { min: -Infinity, max: 4.0 } },
+        { id: 'cea', label: 'CEA', nomesBusca: ["CEA"], template: (v) => `CEA ${v} / `, ref: { min: -Infinity, max: 5.0 } },
+        { id: 'afp', label: 'AFP', nomesBusca: ["Alfa-fetoproteína"], template: (v) => `AFP ${v} / `, ref: { min: -Infinity, max: 10 } },
+        { id: 'ca199', label: 'CA19-9', nomesBusca: ["CA 19-9"], template: (v) => `CA19-9 ${v.replace(/\.(?=.*\d{3},)/g, '')} / `, ref: { min: -Infinity, max: 37 } },
+        { id: 'ca125', label: 'CA125', nomesBusca: ["CA 125"], template: (v) => `CA125 ${v} / `, ref: { min: -Infinity, max: 35 } },
+        { id: 'ca153', label: 'CA15-3', nomesBusca: ["CA 15-3"], template: (v) => `CA15-3 ${v} / `, ref: { min: -Infinity, max: 30 } },
+        { id: 'bhcg', label: 'Beta-HCG', nomesBusca: ["Beta-HCG"], template: (v) => `Beta-HCG ${v} / `, ref: { min: -Infinity, max: 5 } },
 
         // --- SOROLOGIAS (Exemplos) ---
         // Adicionar sorologias aqui conforme necessário, podem precisar de lógica de texto (Positivo/Negativo)
 
         // --- GASOMETRIA ARTERIAL ---
-        { id: 'phart', label: 'pHart', labelBusca: "PH", usaTextoArterial: true, template: (v) => `pHart ${v} / ` },
-        { id: 'po2art', label: 'pO2art', labelBusca: "PO2", usaTextoArterial: true, template: (v) => `pO2art ${v} / ` },
-        { id: 'pco2art', label: 'pCO2art', labelBusca: "PCO2", usaTextoArterial: true, template: (v) => `pCO2art ${v} / ` },
-        { id: 'so2art', label: 'SO2art', labelBusca: "Saturacao de O2", usaTextoArterial: true, template: (v) => `SO2art ${v} / ` },
-        { id: 'hco3art', label: 'HCO3art', labelBusca: "Bicarbonato", usaTextoArterial: true, template: (v) => `HCO3art ${v} / ` },
-        { id: 'beart', label: 'BEart', labelBusca: "Base Exces", usaTextoArterial: true, template: (v) => `BEart ${v} / ` },
-        { id: 'lactart', label: 'Lactart', labelBusca: "Lactato Arterial", template: (v) => `Lactart ${v} / ` },
+        { id: 'phart', label: 'pHart', nomesBusca: ["PH"], usaTextoArterial: true, template: (v) => `pHart ${v} / `, ref: { min: 7.35, max: 7.45 } },
+        { id: 'po2art', label: 'pO2art', nomesBusca: ["PO2"], usaTextoArterial: true, template: (v) => `pO2art ${v} / `, ref: { min: 80, max: 100 } },
+        { id: 'pco2art', label: 'pCO2art', nomesBusca: ["PCO2"], usaTextoArterial: true, template: (v) => `pCO2art ${v} / `, ref: { min: 35, max: 40 } },
+        { id: 'so2art', label: 'SO2art', nomesBusca: ["Saturacao de O2"], usaTextoArterial: true, template: (v) => `SO2art ${v} / `, ref: { min: 95, max: 100 } },
+        { id: 'hco3art', label: 'HCO3art', nomesBusca: ["Bicarbonato"], usaTextoArterial: true, template: (v) => `HCO3art ${v} / `, ref: { min: 22, max: 26 } },
+        { id: 'beart', label: 'BEart', nomesBusca: ["Base Exces"], usaTextoArterial: true, template: (v) => `BEart ${v} / `, ref: { min: -2, max: 2 } },
+        { id: 'lactart', label: 'Lactart', nomesBusca: ["Lactato Arterial"], template: (v) => `Lactart ${v} / `, ref: { min: 0.5, max: 1.6 } },
         
         // --- GASOMETRIA VENOSA ---
-        { id: 'phven', label: 'pHven', labelBusca: "PH", usaTextoVenoso: true, template: (v) => `pHven ${v} / ` },
-        { id: 'po2ven', label: 'pO2ven', labelBusca: "PO2", usaTextoVenoso: true, template: (v) => `pO2ven ${v} / ` },
-        { id: 'pco2ven', label: 'pCO2ven', labelBusca: "PCO2", usaTextoVenoso: true, template: (v) => `pCO2ven ${v} / ` },
-        { id: 'so2ven', label: 'SO2ven', labelBusca: "Saturacao de O2", usaTextoVenoso: true, template: (v) => `SO2ven ${v} / ` },
-        { id: 'hco3ven', label: 'HCO3ven', labelBusca: "Bicarbonato", usaTextoVenoso: true, template: (v) => `HCO3ven ${v} / ` },
-        { id: 'beven', label: 'BEven', labelBusca: "Base Exces", usaTextoVenoso: true, template: (v) => `BEven ${v} / ` },
-        { id: 'lactven', label: 'Lactven', labelBusca: "Lactato", usaTextoVenoso: true, template: (v) => `Lactven ${v} / ` },
+        { id: 'phven', label: 'pHven', nomesBusca: ["PH"], usaTextoVenoso: true, template: (v) => `pHven ${v} / `, ref: { min: 7.31, max: 7.41 } },
+        { id: 'po2ven', label: 'pO2ven', nomesBusca: ["PO2"], usaTextoVenoso: true, template: (v) => `pO2ven ${v} / `, ref: { min: 30, max: 40 } },
+        { id: 'pco2ven', label: 'pCO2ven', nomesBusca: ["PCO2"], usaTextoVenoso: true, template: (v) => `pCO2ven ${v} / `, ref: { min: 41, max: 51 } },
+        { id: 'so2ven', label: 'SO2ven', nomesBusca: ["Saturacao de O2"], usaTextoVenoso: true, template: (v) => `SO2ven ${v} / ` }, // Sem ref padrão
+        { id: 'hco3ven', label: 'HCO3ven', nomesBusca: ["Bicarbonato"], usaTextoVenoso: true, template: (v) => `HCO3ven ${v} / `, ref: { min: 23, max: 29 } },
+        { id: 'beven', label: 'BEven', nomesBusca: ["Base Exces"], usaTextoVenoso: true, template: (v) => `BEven ${v} / `, ref: { min: -2, max: 2 } },
+        { id: 'lactven', label: 'Lactven', nomesBusca: ["Lactato"], usaTextoVenoso: true, template: (v) => `Lactven ${v} / `, ref: { min: 0.5, max: 2.2 } },
 
         // --- EXAMES DE URINA ---
-        { id: 'u1ph', label: 'U1 pH', labelBusca: "pH", labelBuscaAlternativo: "Urina tipo I", usaTextoUrina: true, template: (v) => `U1 pH ${v} / ` },
-        { id: 'u1nitrito', label: 'U1 nitrito', labelBusca: "Nitrito", usaTextoUrina: true, template: (v) => `U1 nitrito ${v} / ` },
-        { id: 'u1leuco', label: 'U1 leuco', labelBusca: "Leucocitos", labelBuscaAlternativo: "Leucócitos", usaTextoUrina: true, template: (v) => `U1 leuco ${v} / ` },
+        { id: 'u1ph', label: 'U1 pH', nomesBusca: ["pH", "Urina tipo I"], usaTextoUrina: true, template: (v) => `U1 pH ${v} / `, ref: { min: 4.5, max: 8.0 } },
+        { id: 'u1nitrito', label: 'U1 nitrito', nomesBusca: ["Nitrito"], usaTextoUrina: true, tipo: 'texto', template: (v) => `U1 nitrito ${v} / ` },
+        { id: 'u1leuco', label: 'U1 leuco', nomesBusca: ["Leucocitos", "Leucócitos"], usaTextoUrina: true, tipo: 'texto', template: (v) => `U1 leuco ${v} / ` },
     ];
 
     let examesEncontradosGlobal = [];
@@ -811,139 +816,104 @@
         return `${ano}-${mes}-${dia}`; // Formato YYYY-MM-DD para fácil ordenação
     }
 
-    function analisarExame(label, texto, labelAlternativo = null, tipo = 'numero') {
-        // Cria uma regex que ignora acentos para encontrar o label
-        const todosOsLabels = LABELS_EXAMES.map(l => removerAcentos(l).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-        const textoSemAcentos = removerAcentos(texto);
-
-        if (label.toLowerCase().includes("creatinina")) {
-            const regexBlocoCreat = /Dosagem serica de Creatinina[\s\S]*?(?=(?:Taxa de Filtracao|TFG|Sodio|Potassio|Magn|Bilirrubina|Liberado por|$))/i;
-            const blocoCreat = textoSemAcentos.match(regexBlocoCreat);
-
-            if (blocoCreat) {
-                const valorMatch = blocoCreat[0].match(/Creatinina[\s\S]*?([\d]+[.,]?\d*)\s*mg\/dL/i);
-                if (valorMatch) {
-                    // Retorna um status 'normal' provisório, pois a lógica de verificação de intervalo não é aplicada aqui.
-                    return { valor: valorMatch[1].replace(',', '.'), status: 'normal' };
-                }
-            }
+    function pegarSexoPaciente(texto) {
+        const m = texto.match(/Sexo:\s*(Masculino|Feminino)/i);
+        // Retorna 'M' para Masculino, 'F' para Feminino, ou null se não encontrar
+        if (m && m[1]) {
+            return m[1].toUpperCase().startsWith('M') ? 'M' : 'F';
         }
+        return null;
+    }
+
+    function isForaDoIntervalo(valor, referencia, ignorarBaixo = false) {
+        if (!referencia) return false;
+        const abaixoDoMinimo = !ignorarBaixo && valor < referencia.min;
+        return (
+            (referencia.min === -Infinity && valor >= referencia.max) || // Limite superior (ex: < 100)
+            (referencia.max === Infinity && valor <= referencia.min) || // Limite inferior (ex: > 10)
+            (abaixoDoMinimo || valor > referencia.max)                   // Intervalo (ex: 10-20)
+        );
+    }
+
+    function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, todosNomesBusca) {
+        const { nomesBusca, tipo, ignorarBaixo } = exameConfig;
         
-        // --- OTIMIZAÇÃO: Função auxiliar para criar a regex e evitar repetição ---
         const criarRegexBusca = (lbl) => {
             const lblSemAcentos = removerAcentos(lbl);
             let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-            if (lbl.toLowerCase() === 'lactato') {
-                regexStr = 'Lactato(?! Arterial)'; // Negative lookahead para não capturar "Lactato Arterial"
-            }
-            const finalRegex = new RegExp(`(^|\\n)(\\b${regexStr}\\b[\\s\\S]*?)(?=\\n(?:${todosOsLabels})|\\nLiberado por|$)`, "i");
-            return finalRegex;
+            if (lbl.toLowerCase() === 'lactato') regexStr = 'Lactato(?! Arterial)';
+            return new RegExp(`(^|\\n)(${regexStr}\\b[\\s\\S]*?)(?=(?:\\n|\\s{2,})(?:${todosNomesBusca})|\\nLiberado por|$)`, "i");
         };
-
-        let re = criarRegexBusca(label);
-        let blocoExame = textoSemAcentos.match(re);
-
-        if (!blocoExame && labelAlternativo) {
-            re = criarRegexBusca(labelAlternativo);
-            blocoExame = textoSemAcentos.match(re);
+        let blocoExame = null;
+        for (const nome of nomesBusca) {
+            const re = criarRegexBusca(nome);
+            blocoExame = textoParaAnalisar.match(re);
+            if (blocoExame) break;
         }
 
-        if (!blocoExame || !blocoExame[2]) { 
-            return { valor: null, status: 'nao_encontrado' }; 
-        }
-
+        if (!blocoExame || !blocoExame[2]) return { ...exameConfig, value: null, status: 'nao_encontrado' };
+        
         const textoBloco = blocoExame[2];
-        if (tipo === 'texto') {
-            // Estratégia 1 (Texto): Procurar por "Microrganismo:" OU "Resultado"
-            // Captura todo o texto na mesma linha
+
+        if (tipo === 'texto') { // Lógica para exames qualitativos (ex: Hemocultura)
             const textoRegex = /(?:Microrganismo:|Resultado)\s*([^\n]+)/i;
             let textoMatch = textoBloco.match(textoRegex);
-            
             if (textoMatch && textoMatch[1]) {
-                const valorTexto = textoMatch[1].trim();
-                // Retorna o valor de texto limpo (removendo um ponto final, se houver)
-                return { valor: valorTexto.replace(/\.$/, '').trim(), status: 'normal' };
+                const valorTexto = textoMatch[1].trim().replace(/\.$/, '').trim();
+                return { ...exameConfig, value: valorTexto, status: 'normal' };
             }
-            return { valor: null, status: 'nao_encontrado' }; // Não encontrou valor de texto
+            return { ...exameConfig, value: null, status: 'nao_encontrado' };
         }
 
+        // Lógica para exames quantitativos
         let valorMatch;
-        // Estratégia 1: Procurar o valor após a palavra "Resultado". É mais confiável.
         const resultadoRegex = /Resultado\s*([\d,.-]+)/i;
         valorMatch = textoBloco.match(resultadoRegex);
 
-        // Estratégia 2 (Fallback): Se não achar "Resultado", procura o primeiro número em uma nova linha após o label.
         if (!valorMatch) {
-            const labelSemAcentos = removerAcentos(label).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-            // Regex ajustada para ser menos "gananciosa" e não capturar números de OS
-            const fallbackRegex = new RegExp(`${labelSemAcentos}[\\s\\S]*?\\n\\s*([\\d,.-]+(?![:/-]))`, "i");
-            valorMatch = textoBloco.match(fallbackRegex);
+            for (const nome of nomesBusca) {
+                const mesmaLinhaRegex = new RegExp(`^${removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*([\\d,.-]+)`, "im");
+                valorMatch = textoBloco.match(mesmaLinhaRegex);
+                if (valorMatch) break;
+            }
         }
 
-        // Estratégia 3 (Fallback mais simples): Se ainda não achou, pega o primeiro número que encontrar no bloco.
         if (!valorMatch) {
             valorMatch = textoBloco.match(/[\d,.-]+/);
         }
 
-        // Caso especial para Neutrófilos: tenta pegar o segundo valor (absoluto) se houver dois.
-        if (label.toLowerCase().includes("neutrofilos")) {
-            const neutrofilosRegex = /[\d,.-]+\s*\n+\s*([\d,.-]+)/i; // Procura o segundo número em uma nova linha
+        if (nomesBusca.some(n => n.toLowerCase().includes("neutrofilos"))) {
+            const neutrofilosRegex = /[\d,.-]+\s*\n+\s*([\d,.-]+)/i;
             const neutrofilosMatch = textoBloco.match(neutrofilosRegex);
-            if (neutrofilosMatch && neutrofilosMatch[1]) valorMatch = neutrofilosMatch; // Sobrescreve o valor encontrado se o segundo valor existir
+            if (neutrofilosMatch && neutrofilosMatch[1]) valorMatch = neutrofilosMatch;
         }
 
-        if (!valorMatch || !valorMatch[1]) { 
-            return { valor: null, status: 'nao_encontrado' }; 
-        }
-
+        if (!valorMatch || !valorMatch[1]) return { ...exameConfig, value: null, status: 'nao_encontrado' };
+        
         const valorStr = valorMatch[1].replace(',', '.');
         const valorNum = parseFloat(valorStr);
+        let status = 'normal';
 
-        // Lógica aprimorada para verificar se o valor está alterado
-        const textoRef = textoBloco.match(/Referencia[:\s\S]*/i);
-        let status = 'normal'; // Padrão é normal
-
-        if (isNaN(valorNum)) { // Se o valor não for um número, não podemos comparar
-            return { valor: valorStr, status: 'normal' };
-        }
-        
-        // Ajustando as regex para serem mais flexíveis com números inteiros ou decimais (ex: 100 ou 100.5)
-        // Usamos (\d+[,.]?\d*) para capturar números com ou sem parte decimal
-
-        // 1. Intervalo (ex: 100 a 200, 100 - 200, 100.5 a 200.5)
-        const refMatch = textoBloco.match(/(\d+[,.]?\d*)\s*(?:a|ate|até|-)\s*(\d+[,.]?\d*)/i);
-        // 2. Limite superior (ex: Inferior a 100, Menor que 100, Até 100)
-        const refInferior = textoBloco.match(/(?:Inferior a|Menor que|Ate)\s*(\d+[,.]?\d*)/i);
-        // 3. Limite inferior (ex: Superior a 10, Maior que 10)
-        const refSuperior = textoBloco.match(/(?:Superior a|Maior que)\s*(\d+[,.]?\d*)/i);
-        // 4. Valor único (ex: Referencia: ate 150 U/L - comum em alguns exames onde o valor é o máximo)
-        const refUnico = textoBloco.match(/Referencia:\s*ate\s*(\d+[,.]?\d*)/i);
-        // 5. Limite com operadores (<, >) (ex: Referencia: < 150, Referencia: > 10)
-        const refOperadorMenor = textoBloco.match(/Referencia:\s*<\s*(\d+[,.]?\d*)/i);
-        const refOperadorMaior = textoBloco.match(/Referencia:\s*>\s*(\d+[,.]?\d*)/i);
-
-        if (refMatch) {
-            const min = parseFloat(refMatch[1].replace(',', '.'));
-            const max = parseFloat(refMatch[2].replace(',', '.'));
-            if (valorNum < min || valorNum > max) status = 'alterado';
-        } else if (refInferior) {
-            const max = parseFloat(refInferior[1].replace(',', '.'));
-            if (valorNum >= max) status = 'alterado'; // Se for "Até 100", 100 já pode ser considerado alterado
-        } else if (refSuperior) {
-            const min = parseFloat(refSuperior[1].replace(',', '.'));
-            if (valorNum <= min) status = 'alterado';
-        } else if (refUnico) {
-            const max = parseFloat(refUnico[1].replace(',', '.'));
-            if (valorNum > max) status = 'alterado';
-        } else if (refOperadorMenor) { // Nova condição para "< X"
-            const max = parseFloat(refOperadorMenor[1].replace(',', '.'));
-            if (valorNum >= max) status = 'alterado';
-        } else if (refOperadorMaior) { // Nova condição para "> X"
-            const min = parseFloat(refOperadorMaior[1].replace(',', '.'));
-            if (valorNum <= min) status = 'alterado';
+        if (isNaN(valorNum)) {
+            return { ...exameConfig, value: valorStr, status: 'normal' };
         }
 
-        return { valor: valorStr, status: status };
+        let referencia = exameConfig.ref;
+        if (referencia && (referencia.M || referencia.F)) { // Se a referência depende do sexo
+            referencia = sexoPaciente ? referencia[sexoPaciente] : (referencia.M || referencia.F);
+        }
+
+        // Regra especial para INR: considera a faixa terapêutica
+        if (exameConfig.id === 'inr' && valorNum >= 2.0 && valorNum <= 3.0) {
+            status = 'normal'; // Considera normal se estiver na faixa terapêutica
+            return { ...exameConfig, value: valorStr, status: status };
+        }
+
+        if (isForaDoIntervalo(valorNum, referencia, ignorarBaixo)) {
+            status = 'alterado';
+        }
+
+        return { ...exameConfig, value: valorStr, status: status };
     }
 
     function processar() {
@@ -953,46 +923,37 @@
             return;
         }
 
-        const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
-        const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
+        const textoSemAcentos = removerAcentos(texto);
+        const sexoPaciente = pegarSexoPaciente(texto);
         const blocoUrina = (texto.match(/(Urina tipo I|EAS)([\s\S]*?)(?=Liberado por|$)/i) || [])[0] || "";
 
         let configExames = [...CONFIG_EXAMES_BASE];
         if (!blocoUrina) {
             configExames = configExames.filter(e => !e.usaTextoUrina);
         }
+        
+        // Gera a string de regex para o lookahead uma única vez
+        const todosNomesBusca = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+        const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
+        const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
 
         const todosExames = configExames.map(exame => {
-            if (exame.labelBusca) { // Se for um exame que usa a análise padrão
-                
-                let textoParaAnalisar = texto; // Padrão é o texto completo
-                if (exame.usaTextoArterial) {
-                    textoParaAnalisar = blocoGasometriaArterial;
-                } else if (exame.usaTextoVenoso) {
-                    textoParaAnalisar = blocoGasometriaVenosa;
-                } else if (exame.usaTextoUrina) {
-                    textoParaAnalisar = blocoUrina;
+            if (exame.nomesBusca) {
+                let textoParaAnalisar = textoSemAcentos;
+                if (exame.usaTextoArterial) textoParaAnalisar = removerAcentos(blocoGasometriaArterial);
+                else if (exame.usaTextoVenoso) textoParaAnalisar = removerAcentos(blocoGasometriaVenosa);
+                else if (exame.usaTextoUrina) textoParaAnalisar = removerAcentos(blocoUrina);
+
+                if (!textoParaAnalisar) {
+                    return { ...exame, value: null, status: 'nao_encontrado' };
                 }
 
-                // Se o texto específico (arterial/venoso) estiver vazio, não adianta nem tentar
-                if (!textoParaAnalisar && (exame.usaTextoArterial || exame.usaTextoVenoso || exame.usaTextoUrina)) {
-                        return { ...exame, value: null, status: 'nao_encontrado' };
-                }
-                
-                const analise = analisarExame(exame.labelBusca, textoParaAnalisar, exame.labelBuscaAlternativo, exame.tipo);
-
-                // Garante compatibilidade de nome do campo (valor → value)
-                return { 
-                    ...exame, 
-                    value: analise.valor, status: analise.status 
-                };
+                return analisarExame(exame, textoParaAnalisar, sexoPaciente, todosNomesBusca);
             }
             return exame; // Retorna exames que não usam a análise padrão
         });
 
-        // Filtra exames encontrados e ajusta a seleção para opcionais
         examesEncontradosGlobal = todosExames.filter(exame => exame.value !== null && exame.value !== undefined).map(exame => {
-            // Define a seleção padrão: selecionado se NÃO for opcional. Se 'selected' já estiver definido (ex: Data), mantém.
             exame.selected = exame.selected !== undefined ? exame.selected : !exame.optional;
             return exame;
         });
@@ -1003,16 +964,20 @@
     }
 
     function filtrarExames() {
-        const termoBusca = filtroExamesInput.value.toLowerCase();
+        const termoBusca = filtroExamesInput.value.toLowerCase().trim();
+        const termoNormalizado = removerAcentos(termoBusca);
         
         if (!termoBusca) {
             renderizarSidebar(examesEncontradosGlobal); // Se a busca estiver vazia, mostra todos
             return;
         }
+        const examesFiltrados = examesEncontradosGlobal.filter(exame => {
+            const label = exame.label.toLowerCase();
 
-        const examesFiltrados = examesEncontradosGlobal.filter(exame => 
-            exame.label.toLowerCase().includes(termoBusca)
-        );
+            // Verifica se o termo de busca está no label curto ou em algum dos nomes de busca (sinônimos)
+            return label.includes(termoNormalizado) || 
+                   (exame.nomesBusca && exame.nomesBusca.some(nome => removerAcentos(nome.toLowerCase()).includes(termoNormalizado)));
+        });
         renderizarSidebar(examesFiltrados);
     }
 
@@ -1046,13 +1011,12 @@
     const partesResultado = examesEncontradosGlobal
         .filter(exame => exame.selected)
         .map(exame => {
-            let parte = exame.template(exame.value);
+            const parteOriginal = exame.template(exame.value);
             // Se a opção estiver marcada e o status for 'alterado', adiciona o asterisco
             if (marcarAlterados && exame.status === 'alterado') {
-                // Insere o asterisco antes da barra final
-                parte = parte.replace(/ \/ $/, '* / ');
+                return parteOriginal.replace(/ \/ $/, '* / ');
             }
-            return parte;
+            return parteOriginal;
         });
 
     let resultado = `>> ${dataLaudo ? dataLaudo + ': ' : ''}${partesResultado.join('')}`;
