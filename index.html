@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
+<html lang="pt-br"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Processador de Laudos</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -450,7 +448,7 @@
                 <div class="theme-switch-wrapper">
                     <span>Modo Escuro</span>
                     <label class="theme-switch" for="theme-toggle" title="Alternar tema">
-                        <input type="checkbox" id="theme-toggle" />
+                        <input type="checkbox" id="theme-toggle">
                         <div class="slider round"></div>
                     </label>
                 </div>
@@ -466,17 +464,17 @@
             </div>
             <textarea id="input" placeholder="Aguardando dados do laudo..."></textarea>
             <div class="actions">
-                <button onclick="processar()" class="btn-primary">Analisar Laudo</button>
-                <button onclick="copiarResultado()" class="btn-secondary">Copiar Resultado</button>
-                <button onclick="limparTudo()" class="btn-secondary">Limpar Campos</button>
+                <button id="btn-processar" class="btn-primary">Analisar Laudo</button>
+                <button id="btn-copiar" class="btn-secondary">Copiar Resultado</button>
+                <button id="btn-limpar-campos" class="btn-secondary">Limpar Campos</button>
             </div>
             <div class="resultado-wrapper">
-                <div class="header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0; align-items: center;">
+                <div class="header header-no-border">
                     <p style="margin: 0;"><strong>Resultado Final:</strong></p>
                     <div class="theme-switch-wrapper" style="font-size: 14px;">
                         <span>Marcar alterados</span>
                         <label class="theme-switch" for="marcar-alterados-toggle" title="Adicionar '*' aos resultados alterados">
-                            <input type="checkbox" id="marcar-alterados-toggle" onchange="gerarTextoFinal()">
+                            <input type="checkbox" id="marcar-alterados-toggle">
                             <div class="slider round"></div>
                         </label>
                     </div>
@@ -485,7 +483,7 @@
             </div>
 
             <div class="download-section">
-                <button onclick="baixarScript()" class="btn-secondary">Baixar para Uso Offline</button>
+                <button id="btn-baixar" class="btn-secondary">Baixar para Uso Offline</button>
                 <p class="download-disclaimer">
                     <strong>Atenção:</strong> O script baixado não recebe atualizações automáticas. A versão mais recente, com correções e novos exames, está sempre disponível em <a href="https://bit.ly/labsfacil" target="_blank" rel="noopener noreferrer">bit.ly/labsfacil</a>. Recomendamos baixar uma nova versão periodicamente.
                 </p>
@@ -496,13 +494,19 @@
                     <h2>Resultados Recentes</h2>
                     <button id="btn-limpar-historico">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"></path>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"></path>
                         </svg>
                         Limpar Histórico
                     </button>
                 </div>
-                <div id="lista-recentes"></div>
+                <div id="lista-recentes"><div class="accordion-item"><div class="accordion-header"><span>Paciente Desconhecido</span><span>▼</span></div><div class="accordion-content"><div class="resultado-recente-item">
+                            <span>&gt;&gt; 02/11: N 919 / R 3 / U 37.0 / CR 0.70 / NA 140 / K 4.1 / PCR 12.80</span>
+                            <button class="copy-btn-individual" title="Copiar este resultado" data-copy-text="&gt;&gt; 02/11: N 919 / R 3 / U 37.0 / CR 0.70 / NA 140 / K 4.1 / PCR 12.80">Copiar</button>
+                         </div><div class="resultado-recente-item">
+                            <span>&gt;&gt; 02/11: N 919 / R 3 / U 37.0 / CR 0.70 / NA 140 / K 4.1 / PCR 12.80</span>
+                            <button class="copy-btn-individual" title="Copiar este resultado" data-copy-text="&gt;&gt; 02/11: N 919 / R 3 / U 37.0 / CR 0.70 / NA 140 / K 4.1 / PCR 12.80">Copiar</button>
+                         </div></div></div></div>
             </div>
 
             <!-- Elemento da notificação Toast -->
@@ -511,7 +515,7 @@
 
         <aside class="sidebar">
             <h2>Exames Encontrados</h2>
-            <input type="text" id="filtro-exames" class="search-input" placeholder="Buscar exame..." oninput="filtrarExames()">
+            <input type="text" id="filtro-exames" class="search-input" placeholder="Buscar exame...">
             <ul id="lista-exames">
                 <li class="instructions">Analise um laudo para ver os exames aqui.</li>
             </ul>
@@ -531,20 +535,37 @@
     </div>
 
   <script>
-    const themeToggle = document.getElementById('theme-toggle');
-    
     // Cache de seletores do DOM para melhor performance e manutenção
     const inputArea = document.getElementById('input');
     const resultadoDiv = document.getElementById('resultado');
     const listaExamesUl = document.getElementById('lista-exames');
     const filtroExamesInput = document.getElementById('filtro-exames');
     const listaRecentesDiv = document.getElementById('lista-recentes');
-    const modalOverlay = document.getElementById('confirmation-modal-overlay');
+    const themeToggle = document.getElementById('theme-toggle');
+    const marcarAlteradosToggle = document.getElementById('marcar-alterados-toggle');
+    const toastEl = document.getElementById('toast');
+
+    // Botões
+    const btnProcessar = document.getElementById('btn-processar');
+    const btnCopiarResultado = document.getElementById('btn-copiar');
+    const btnLimparCampos = document.getElementById('btn-limpar-campos');
+    const btnBaixarScript = document.getElementById('btn-baixar');
     const btnLimparHistorico = document.getElementById('btn-limpar-historico');
     const btnConfirmDelete = document.getElementById('btn-confirm-delete');
     const btnCancelDelete = document.getElementById('btn-cancel-delete');
 
-    // Verifica o tema salvo no localStorage quando a página carrega
+    // Modal
+    const modalOverlay = document.getElementById('confirmation-modal-overlay');
+
+    // --- LÓGICA DE INICIALIZAÇÃO E EVENTOS ---
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setupEventListeners();
+        loadTheme();
+        renderizarResultadosRecentes();
+    });
+
+    function loadTheme() {
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.documentElement.classList.add('dark-mode');
         themeToggle.checked = true;
@@ -560,24 +581,41 @@
         }
     });
 
+    function setupEventListeners() {
+        btnProcessar.addEventListener('click', processar);
+        btnCopiarResultado.addEventListener('click', copiarResultado);
+        btnLimparCampos.addEventListener('click', limparTudo);
+        btnBaixarScript.addEventListener('click', baixarScript);
+        filtroExamesInput.addEventListener('input', filtrarExames);
+        marcarAlteradosToggle.addEventListener('change', gerarTextoFinal);
+
+        // Event listeners para o histórico e modal
+        btnLimparHistorico.addEventListener('click', showConfirmationModal);
+        btnConfirmDelete.addEventListener('click', handleConfirmDelete);
+        btnCancelDelete.addEventListener('click', hideConfirmationModal);
+        listaRecentesDiv.addEventListener('click', handleHistoricoClick);
+        listaExamesUl.addEventListener('change', handleSelecaoExame);
+    }
+
+    // --- FUNÇÕES DE UI (TOAST, MODAL, ETC) ---
+
     let toastTimeout; // Variável para controlar o timeout do toast
 
     function showToast(message) {
-        const toast = document.getElementById("toast");
-        toast.innerText = message;
-        toast.classList.add("show");
+        toastEl.textContent = message;
+        toastEl.classList.add("show");
 
         // Limpa o timeout anterior se houver um
         clearTimeout(toastTimeout);
 
         // Esconde o toast após 3 segundos
         toastTimeout = setTimeout(() => {
-            toast.classList.remove("show");
+            toastEl.classList.remove("show");
         }, 3000);
     }
 
     function copiarResultado() {
-        const textoResultado = resultadoDiv.innerText;
+        const textoResultado = resultadoDiv.textContent;
         if (textoResultado) {
             navigator.clipboard.writeText(textoResultado)
                 .then(() => showToast('Resultado copiado!'))
@@ -590,7 +628,7 @@
     function limparTudo() {
         inputArea.value = '';
         listaExamesUl.innerHTML = '<li class="instructions">Analise um laudo para ver os exames aqui.</li>';
-        resultadoDiv.innerText = '';
+        resultadoDiv.textContent = '';
     }
 
     function showConfirmationModal() {
@@ -601,15 +639,14 @@
         modalOverlay.classList.remove('show');
     }
 
-    btnLimparHistorico.addEventListener('click', showConfirmationModal);
-    btnConfirmDelete.addEventListener('click', () => {
+    function handleConfirmDelete() {
         localStorage.removeItem('resultadosRecentes');
         renderizarResultadosRecentes();
         hideConfirmationModal();
         showToast('Histórico limpo com sucesso!');
-    });
-    btnCancelDelete.addEventListener('click', hideConfirmationModal);
-    // Fim da lógica do Modal
+    }
+
+    // --- LÓGICA DO HISTÓRICO DE RESULTADOS ---
 
     function renderizarResultadosRecentes() {
         const resultados = JSON.parse(localStorage.getItem('resultadosRecentes') || '[]');
@@ -636,18 +673,17 @@
 
         for (const paciente of pacientesOrdenados) {
             html += `<div class="accordion-item">`;
-            html += `<div class="accordion-header" onclick="toggleAccordion(this)"><span>${paciente}</span><span>▼</span></div>`;
+            html += `<div class="accordion-header"><span>${paciente}</span><span>▼</span></div>`;
             html += `<div class="accordion-content">`;
 
             // Ordena resultados do paciente por data (mais novo primeiro)
             agrupados[paciente].sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
 
             for (const res of agrupados[paciente]) {
-                // Escapa aspas simples no resultado para não quebrar o JS no onclick
-                const resultadoEscapado = res.resultado.replace(/'/g, "\\'");
+                const resultadoEscapado = res.resultado.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                 html += `<div class="resultado-recente-item">
                             <span>${res.resultado}</span>
-                            <button class="copy-btn-individual" title="Copiar este resultado" onclick="copiarTexto('${resultadoEscapado}')">Copiar</button>
+                            <button class="copy-btn-individual" title="Copiar este resultado" data-copy-text='${resultadoEscapado}'>Copiar</button>
                          </div>`;
             }
             html += `</div></div>`;
@@ -656,16 +692,25 @@
         listaRecentesDiv.innerHTML = html;
     }
 
-    function toggleAccordion(element) {
-        const content = element.nextElementSibling;
-        content.style.display = content.style.display === 'block' ? 'none' : 'block';
-        const icon = element.querySelector('span:last-child');
-        icon.textContent = content.style.display === 'block' ? '▲' : '▼';
+    function handleHistoricoClick(event) {
+        const header = event.target.closest('.accordion-header');
+        if (header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('span:last-child');
+            const isVisible = content.style.display === 'block';
+            content.style.display = isVisible ? 'none' : 'block';
+            icon.textContent = isVisible ? '▼' : '▲';
+            return;
+        }
+
+        const copyBtn = event.target.closest('.copy-btn-individual');
+        if (copyBtn && copyBtn.dataset.copyText) {
+            copiarTexto(copyBtn.dataset.copyText);
+        }
     }
 
-    // Renderiza os resultados recentes ao carregar a página
-    document.addEventListener('DOMContentLoaded', renderizarResultadosRecentes);
-
+    // --- LÓGICA PRINCIPAL DE PROCESSAMENTO DE LAUDOS ---
+    
     // Estrutura de configuração para todos os exames conhecidos
     const CONFIG_EXAMES_BASE = [
     // --- HEMOGRAMA ---
@@ -683,6 +728,7 @@
         // --- FUNÇÃO RENAL E ELETRÓLITOS ---
         { id: 'u', label: 'U', nomesBusca: ["Ureia", "Ureia, sérica"], template: (v) => `U ${v} / `, ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } } },
         { id: 'cr', label: 'Cr', nomesBusca: ["Creatinina", "Dosagem sérica de Creatinina"], template: (v) => `Cr ${v} / `, ref: { min: 0.7, max: 1.3 } },
+	{ id: 'tfg', label: 'TFG', nomesBusca: ["TFG", "TFG - Taxa de Filtração Glomerular"], optional: true, template: (v) => `TFG ${v} / `, ref: { min: 90, max: Infinity } },
         { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], template: (v) => `AU ${v} / `, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } } },
         { id: 'na', label: 'Na', nomesBusca: ["Sódio"], template: (v) => `Na ${v} / `, ref: { min: 135, max: 145 } },
         { id: 'k', label: 'K', nomesBusca: ["Potassio"], template: (v) => `K ${v} / `, ref: { min: 3.5, max: 5.0 } },
@@ -835,14 +881,16 @@
         );
     }
 
-    function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, todosNomesBusca) {
+    function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, todosNomesBuscaArray) {
         const { nomesBusca, tipo, ignorarBaixo } = exameConfig;
         
         const criarRegexBusca = (lbl) => {
             const lblSemAcentos = removerAcentos(lbl);
             let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             if (lbl.toLowerCase() === 'lactato') regexStr = 'Lactato(?! Arterial)';
-            return new RegExp(`(^|\\n)(${regexStr}\\b[\\s\\S]*?)(?=(?:\\n|\\s{2,})(?:${todosNomesBusca})|\\nLiberado por|$)`, "i");
+            const nomesBuscaAtuais = exameConfig.nomesBusca.map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+	    const todosNomesBuscaFiltrado = todosNomesBuscaArray.filter(nome => !nomesBuscaAtuais.includes(nome)).join('|');
+	    return new RegExp(`(^|\\n)(${regexStr}(?![a-zA-Z0-9])[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|$)`, "i");
         };
         let blocoExame = null;
         for (const nome of nomesBusca) {
@@ -867,19 +915,19 @@
 
         // Lógica para exames quantitativos
         let valorMatch;
-        const resultadoRegex = /Resultado\s*([\d,.-]+)/i;
+        const resultadoRegex = /^\s*Resultado\s*([^\n]+)/im;
         valorMatch = textoBloco.match(resultadoRegex);
 
         if (!valorMatch) {
             for (const nome of nomesBusca) {
-                const mesmaLinhaRegex = new RegExp(`^${removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*([\\d,.-]+)`, "im");
+                const mesmaLinhaRegex = new RegExp(`^${removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*(-?\\d[\\d,.-]*)`, "im");
                 valorMatch = textoBloco.match(mesmaLinhaRegex);
                 if (valorMatch) break;
             }
         }
 
         if (!valorMatch) {
-            valorMatch = textoBloco.match(/[\d,.-]+/);
+            valorMatch = textoBloco.match(/(?:\s|\n)(-?\d[\d,.-]*)/);
         }
 
         if (nomesBusca.some(n => n.toLowerCase().includes("neutrofilos"))) {
@@ -890,7 +938,7 @@
 
         if (!valorMatch || !valorMatch[1]) return { ...exameConfig, value: null, status: 'nao_encontrado' };
         
-        const valorStr = valorMatch[1].replace(',', '.');
+        const valorStr = valorMatch[1].replace(',', '.').trim();
         const valorNum = parseFloat(valorStr);
         let status = 'normal';
 
@@ -933,7 +981,7 @@
         }
         
         // Gera a string de regex para o lookahead uma única vez
-        const todosNomesBusca = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+        const todosNomesBuscaArray = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
         const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
         const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
 
@@ -948,7 +996,7 @@
                     return { ...exame, value: null, status: 'nao_encontrado' };
                 }
 
-                return analisarExame(exame, textoParaAnalisar, sexoPaciente, todosNomesBusca);
+                return analisarExame(exame, textoParaAnalisar, sexoPaciente, todosNomesBuscaArray);
             }
             return exame; // Retorna exames que não usam a análise padrão
         });
@@ -988,7 +1036,7 @@
         }
         listaExamesUl.innerHTML = exames.map(exame => `
             <li>
-                <input type="checkbox" id="${exame.id}" onchange="atualizarSelecao('${exame.id}', this.checked)" ${exame.selected ? 'checked' : ''}>
+                <input type="checkbox" id="${exame.id}" data-exame-id="${exame.id}" ${exame.selected ? 'checked' : ''}>
                 <label for="${exame.id}">${exame.label}</label>
                 <span class="exame-valor ${exame.status === 'alterado' ? 'valor-alterado' : ''}">${exame.value}</span>
             </li>
@@ -996,17 +1044,22 @@
     }
 
     function atualizarSelecao(id, isSelected) {
-        const exame = examesEncontradosGlobal.find(e => e.id === id);
-        if (exame) {
-            exame.selected = isSelected;
+      const exame = examesEncontradosGlobal.find(e => e.id === id);
+      if (exame) {
+          exame.selected = isSelected;
+          gerarTextoFinal();
+      }
+    }
+
+    function handleSelecaoExame(event) {
+        if (event.target.matches('input[type="checkbox"][data-exame-id]')) {
+            atualizarSelecao(event.target.dataset.exameId, event.target.checked);
         }
-        gerarTextoFinal();
     }
 
     function gerarTextoFinal() {
-    const texto = inputArea.value;
-    const dataLaudo = pegarData(texto);
-    const marcarAlterados = document.getElementById('marcar-alterados-toggle').checked;
+    const dataLaudo = pegarData(inputArea.value);
+    const marcarAlterados = marcarAlteradosToggle.checked;
     
     const partesResultado = examesEncontradosGlobal
         .filter(exame => exame.selected)
@@ -1023,15 +1076,15 @@
     
     resultado = resultado.trim().replace(/\/$/, '').trim(); // Remove última barra e espaços
     
-    resultadoDiv.innerText = resultado.toUpperCase();
+    resultadoDiv.textContent = resultado.toUpperCase();
     }
 
     function salvarNoHistorico() {
     // Salvar resultado no histórico
     const texto = inputArea.value;
     const nomePaciente = pegarNomePaciente(texto);
-    const dataCompleta = pegarDataCompleta(texto);
-    const resultadoFinal = resultadoDiv.innerText;
+    const dataCompleta = pegarDataCompleta(texto); 
+    const resultadoFinal = resultadoDiv.textContent;
 
     if (dataCompleta && resultadoFinal.length > 10) { // Só salva se tiver data e resultado
         const resultadosRecentes = JSON.parse(localStorage.getItem('resultadosRecentes') || '[]');
@@ -1058,7 +1111,7 @@
 
   <script>
     // Função para baixar o script
-    function baixarScript() {
+    function baixarScript() { 
         // Pega todo o conteúdo HTML da página atual
         const conteudoHtml = document.documentElement.outerHTML;
         // Cria um objeto Blob, que é um objeto semelhante a um arquivo
@@ -1077,5 +1130,6 @@
         showToast('Download iniciado!');
     }
   </script>
-</body>
-</html>
+
+
+</body></html>
