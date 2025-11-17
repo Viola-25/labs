@@ -803,8 +803,8 @@
         { id: 'u', label: 'U', nomesBusca: ["Ureia", "Ureia, serica"], template: (v) => `U ${v} / `, ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } } },
         { id: 'cr', label: 'Cr', nomesBusca: ["Creatinina", "Dosagem serica de Creatinina"], template: (v) => `Cr ${v} / `, ref: { M: { min: 0.66, max: 1.25 }, F: { min: 0.52, max: 1.04 } } },
 	    { id: 'tfg', label: 'TFG', nomesBusca: ["TFG", "TFG - Taxa de Filtração Glomerular", "Ritmo de Filtracao Glomerular", "RFG"], optional: true, template: (v) => `TFG ${v} / `, ref: { min: 90, max: Infinity } },
-        { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], template: (v) => `AU ${v} / `, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } } },
-        { id: 'na', label: 'Na', nomesBusca: ["Sódio"], template: (v) => `Na ${v} / `, ref: { min: 135, max: 145 } },
+        { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], optional: true, template: (v) => `AU ${v} / `, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } } },
+        { id: 'na', label: 'Na', nomesBusca: ["Sódio"], template: (v) => `Na ${v} / `, ref: { min: 137, max: 145 } },
         { id: 'k', label: 'K', nomesBusca: ["Potassio"], template: (v) => `K ${v} / `, ref: { min: 3.5, max: 5.0 } },
         { id: 'cl', label: 'Cl', nomesBusca: ["Cloro"], template: (v) => `Cl ${v} / `, ref: { min: 98, max: 107 } },
         { id: 'mg', label: 'Mg', nomesBusca: ["Magnésio"], template: (v) => `Mg ${v} / `, ref: { min: 1.8, max: 2.4 } },
@@ -818,7 +818,7 @@
         { id: 'ldl', label: 'LDL', nomesBusca: ["Colesterol LDL"], template: (v) => `LDL ${v} / `, ref: { min: -Infinity, max: 130 } },
         { id: 'tg', label: 'TGL', nomesBusca: ["Triglicerides", "TGL"], template: (v) => `TGL ${v} / `, ref: { min: -Infinity, max: 175 } }, // Usando valor de sem jejum como teto
         { id: 'vldl', label: 'VLDL', nomesBusca: ["Colesterol VLDL"], template: (v) => `VLDL ${v} / `, ref: { min: -Infinity, max: 30 } },
-
+ 
         // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
         { id: 'glic', label: 'Glic', nomesBusca: ["Glicose", "Glicemia"], template: (v) => `Glic ${v} / `, ref: { min: 70, max: 99 } },
         { id: 'pcr', label: 'PCR', nomesBusca: ["Proteína C Reativa - PCR"], template: (v) => `PCR ${v} / `, ref: { min: -Infinity, max: 0.5 } }, // Em mg/dL
@@ -834,7 +834,7 @@
         { id: 'tgo', label: 'TGO', nomesBusca: ["TGO/AST", "AST", "TGO"], template: (v) => `TGO ${v} / `, ref: { M: { min: 10, max: 40 }, F: { min: 14, max: 36 } } },
         { id: 'tgp', label: 'TGP', nomesBusca: ["TGP/ALT", "ALT", "TGP"], template: (v) => `TGP ${v} / `, ref: { min: 10, max: 40 } },
         { id: 'fal', label: 'FAL', nomesBusca: ["Fosfatase Alcalina"], template: (v) => `FAL ${v} / `, ref: { min: 30, max: 120 } },
-        { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lática"], template: (v) => `DHL ${v} / `, ref: { min: 140, max: 280 } },
+        { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lactica"], template: (v) => `DHL ${v} / `, ref: { min: 120, max: 246 } },
         { id: 'hba1c', label: 'HbA1c', nomesBusca: ["Hemoglobina Glicada", "HbA1c"], template: (v) => `HbA1c ${v} / `, ref: { min: -Infinity, max: 5.7 } },
         { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase"], template: (v) => `GGT ${v} / `, ref: { min: 5, max: 40 } },
 
@@ -985,7 +985,7 @@
         const { min, max } = referencia;
 
         // Está fora se for maior que o máximo OU (se não for para ignorar valores baixos E for menor que o mínimo)
-        return valor > max || (!ignorarBaixo && valor < min);
+        return valor > max || (!ignorarBaixo && valor < min && valor !== min);
     }
     
     function analisarExameAgrupador(exameConfig, textoParaAnalisar, sexoPaciente) {
@@ -1074,7 +1074,7 @@
         const valorNum = parseFloat(valorStr);
         let status = CONSTS.STATUS.NORMAL;
 
-        if (isNaN(valorNum)) {
+        if (isNaN(valorNum) || valorMatch[1].toLowerCase().includes('superior a')) {
             return { ...exameConfig, value: valorStr, status: CONSTS.STATUS.NORMAL };
         }
 
