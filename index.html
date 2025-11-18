@@ -805,7 +805,7 @@
 	    { id: 'tfg', label: 'TFG', nomesBusca: ["TFG", "TFG - Taxa de Filtração Glomerular", "Ritmo de Filtracao Glomerular", "RFG"], optional: true, template: (v) => `TFG ${v} / `, ref: { min: 90, max: Infinity } },
         { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], optional: true, template: (v) => `AU ${v} / `, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } } },
         { id: 'na', label: 'Na', nomesBusca: ["Sódio"], template: (v) => `Na ${v} / `, ref: { min: 137, max: 145 } },
-        { id: 'k', label: 'K', nomesBusca: ["Potassio"], template: (v) => `K ${v} / `, ref: { min: 3.5, max: 5.0 } },
+        { id: 'k', label: 'K', nomesBusca: ["Potassio"], template: (v) => `K ${v} / `, ref: { min: 3.5, max: 5.1 } },
         { id: 'cl', label: 'Cl', nomesBusca: ["Cloro"], template: (v) => `Cl ${v} / `, ref: { min: 98, max: 107 } },
         { id: 'mg', label: 'Mg', nomesBusca: ["Magnésio"], template: (v) => `Mg ${v} / `, ref: { min: 1.8, max: 2.4 } },
         { id: 'cai', label: 'Cai', nomesBusca: ["Calcio Ionizado"], template: (v) => `Cai ${v} / `, ref: { min: 1.12, max: 1.30 } },
@@ -831,12 +831,12 @@
         { id: 'bt', label: 'BT', nomesBusca: ["Bilirrubina Total"], template: (v) => `BT ${v} / `, ref: { min: 0.2, max: 1.2 }, ignorarBaixo: true },
         { id: 'bd', label: 'BD', nomesBusca: ["Bilirrubina Direta"], optional: true, template: (v) => `BD ${v} / `, ref: { min: 0.0, max: 0.3 } },
         { id: 'bi', label: 'BI', nomesBusca: ["Bilirrubina Indireta"], optional: true, template: (v) => `BI ${v} / `, ref: { min: 0.1, max: 0.8 } },
-        { id: 'tgo', label: 'TGO', nomesBusca: ["TGO/AST", "AST", "TGO"], template: (v) => `TGO ${v} / `, ref: { M: { min: 10, max: 40 }, F: { min: 14, max: 36 } } },
-        { id: 'tgp', label: 'TGP', nomesBusca: ["TGP/ALT", "ALT", "TGP"], template: (v) => `TGP ${v} / `, ref: { min: 10, max: 40 } },
+        { id: 'tgo', label: 'TGO', nomesBusca: ["TGO/AST", "AST", "TGO"], template: (v) => `TGO ${v} / `, ref: { M: { min: 17, max: 59 }, F: { min: 14, max: 36 } } },
+        { id: 'tgp', label: 'TGP', nomesBusca: ["TGP/ALT", "ALT", "TGP"], template: (v) => `TGP ${v} / `, ref: { M: { min: -Infinity, max: 50 }, F: { min: -Infinity, max: 35 } } },
         { id: 'fal', label: 'FAL', nomesBusca: ["Fosfatase Alcalina"], template: (v) => `FAL ${v} / `, ref: { min: 30, max: 120 } },
         { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lactica"], template: (v) => `DHL ${v} / `, ref: { min: 120, max: 246 } },
         { id: 'hba1c', label: 'HbA1c', nomesBusca: ["Hemoglobina Glicada", "HbA1c"], template: (v) => `HbA1c ${v} / `, ref: { min: -Infinity, max: 5.7 } },
-        { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase"], template: (v) => `GGT ${v} / `, ref: { min: 5, max: 40 } },
+        { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase", "Gama Glutamil Transferase - GGT"], template: (v) => `GGT ${v} / `, ref: { M: { min: 15, max: 73 }, F: { min: 12, max: 43 } } },
 
         // --- ENZIMAS CARDÍACAS ---
         { id: 'trop', label: 'Trop', nomesBusca: ["Troponina I", "Troponina T", "Troponina Ultrassensivel"], template: (v) => `Trop ${v} / `, ref: { min: -Infinity, max: 0.014 } }, // ng/mL
@@ -890,7 +890,7 @@
 
         // --- MARCADORES TUMORAIS ---
         { id: 'psa', label: 'PSA', nomesBusca: ["PSA", "Antigeno Prostatico Especifico"], template: (v) => `PSA ${v} / `, ref: { min: -Infinity, max: 4.0 } },
-        { id: 'cea', label: 'CEA', nomesBusca: ["CEA"], template: (v) => `CEA ${v} / `, ref: { min: -Infinity, max: 5.0 } },
+        { id: 'cea', label: 'CEA', nomesBusca: ["CEA", "Antigeno Carcinoembrionario"], template: (v) => `CEA ${v} / `, ref: { min: -Infinity, max: 5.0 } },
         { id: 'afp', label: 'AFP', nomesBusca: ["Alfa-fetoproteína"], template: (v) => `AFP ${v} / `, ref: { min: -Infinity, max: 10 } },
         { id: 'ca199', label: 'CA19-9', nomesBusca: ["CA 19-9"], template: (v) => `CA19-9 ${v.replace(/\.(?=.*\d{3},)/g, '')} / `, ref: { min: -Infinity, max: 37 } },
         { id: 'ca125', label: 'CA125', nomesBusca: ["CA 125"], template: (v) => `CA125 ${v} / `, ref: { min: -Infinity, max: 35 } },
@@ -985,7 +985,7 @@
         const { min, max } = referencia;
 
         // Está fora se for maior que o máximo OU (se não for para ignorar valores baixos E for menor que o mínimo)
-        return valor > max || (!ignorarBaixo && valor < min && valor !== min);
+        return valor > max || (!ignorarBaixo && valor < min);
     }
     
     function analisarExameAgrupador(exameConfig, textoParaAnalisar, sexoPaciente) {
@@ -1047,19 +1047,106 @@
             if (id === 'uroc' && (valorTexto.toLowerCase().includes("nao houve crescimento"))) return { ...exameConfig, value: 'SCB', status: CONSTS.STATUS.NORMAL };
             return { ...exameConfig, value: valorTexto.trim().replace(/\.$/, ''), status: CONSTS.STATUS.NORMAL };
         }
+        function extrairReferenciaDoBloco(textoBloco, sexoPaciente) { // REFATORADO
+            const parseNum = (str) => parseFloat(str.replace(',', '.'));
+            let match;
+            
+            // Procura por "Valor de referência" para ancorar a busca
+            const refAnchorMatch = textoBloco.match(/Valor(?:es)? de refer[êe]ncia/i);
+            let textoReferencia = textoBloco; // Por padrão, analisa o bloco todo
+
+            if (refAnchorMatch) {
+                // Se achou a âncora, busca apenas no subtexto a partir dela
+                textoReferencia = textoBloco.substring(refAnchorMatch.index);
+            }
+
+            // --- Padrão -1: Prioritário para TFG "Normal" ---
+            // Isso evita que ele pegue o range de "Diminuição leve" primeiro.
+            const tfgNormalRegex = /Normal\s*:\s*(?:>=|superior a|maior que)\s*([\d,.]+)/i;
+            match = textoReferencia.match(tfgNormalRegex);
+            if (match && match[1]) {
+                return { min: parseNum(match[1]), max: Infinity };
+            }
+
+            // --- Padrão 0: Prioritário para "Adultos" ou "Acima de X anos" ---
+            // Isso resolve o problema de pegar a referência de RN/criança primeiro.
+            const adultoRegex = new RegExp(
+                `(?:Adulto(s)?|Acima de \\d+ anos|\\+\\s*de \\d+ anos)[\\s=:]*?` + // Âncora (ex: "Adulto", "Acima de 20 anos", "+ de 12 anos")
+                `([\\d,.]+)\\s*(?:a|ate|-)\\s*([\\d,.]+)`, // Captura o range (ex: 1.6 a 2.6 ou 3,5 a 5,0)
+                'i'
+            );
+            match = textoReferencia.match(adultoRegex);
+            if (match && match[2] && match[3]) { // Corrigido para usar os grupos de captura corretos
+                return { min: parseNum(match[2]), max: parseNum(match[3]) };
+            }
+
+            // --- Padrões de Extração (agora buscam em 'textoReferencia') ---
+
+            // Padrão 1: Específico para sexo (TGP, GGT, Cr, U)
+            if (sexoPaciente) {
+                const mascRegex = '(?:Masculino|Homem|Homens)';
+                const femRegex = '(?:Feminino|Mulher|Mulheres)';
+                // Tenta primeiro o sexo específico, depois um "Adultos" genérico
+                const sexosRegex = [sexoPaciente === 'M' ? mascRegex : femRegex, 'Adultos'];
+
+                for (const sexoTermo of sexosRegex) {
+                    const sexoRegex = new RegExp(
+                        `${sexoTermo}[\\s:]*?` +  // Âncora (ex: "Homens" ou "Adultos")
+                        `(?:` + // Início das alternativas
+                            `([\\d,.]+)\\s*(?:a|ate|-)\\s*([\\d,.]+)` +  // Alt 1: Range (ex: 15 a 73)
+                            `|(?:inferior a|menor que|<)\\s*([\\d,.]+)` + // Alt 2: Limite Superior (ex: Menor que 50)
+                            `|(?:superior a|maior que|>)\\s*([\\d,.]+)` +  // Alt 3: Limite Inferior
+                        `)`, 
+                        'i'
+                    );
+                    match = textoReferencia.match(sexoRegex);
+                    if (match) {
+                        if (match[1] && match[2]) return { min: parseNum(match[1]), max: parseNum(match[2]) };
+                        if (match[3]) return { min: -Infinity, max: parseNum(match[3]) };
+                        if (match[4]) return { min: parseNum(match[4]), max: Infinity };
+                    }
+                }
+            }
+
+            // Padrão 2: Intervalo genérico (ex: Potássio 3,5 ate 5,1)
+            // Procura por um range que NÃO seja precedido por "Coleta:" para evitar pegar datas.
+            match = textoReferencia.match(/(?<!Coleta:\s*[\d\/]{8,10}\s*-\s*[\d:]+\s*-\s*|Liberacao:\s*[\d\/]{8,10}\s*-\s*[\d:]+\s*-\s*)(-?\d[\d,.]+)\s*(?:a|ate|-)\s*(-?\d[\d,.]+)/i);
+            // [FIX] Padrão mais robusto: procura por um range que segue a palavra "referência" ou está no início da linha.
+            // Isso evita capturar ranges de idade ou outros números aleatórios.
+            match = textoReferencia.match(/(?:refer[êe]ncia:?|^\s*)[\s\S]*?(-?\d[\d,.]+)\s*(?:a|ate|-)\s*(-?\d[\d,.]+)/i);
+            if (match && match[1] && match[2]) {
+                return { min: parseNum(match[1]), max: parseNum(match[2]) };
+            }
+
+            // Padrão 3: Limite superior genérico (ex: PCR Inferior a 1,0)
+            match = textoReferencia.match(/(?:inferior a|menor que|<)\s*([\d,.]+)/i);
+            if (match && match[1]) {
+                return { min: -Infinity, max: parseNum(match[1]) };
+            }
+
+            // Padrão 4: Limite inferior genérico (ex: TFG Superior a 90)
+            match = textoReferencia.match(/(?:superior a|maior que|>|>=)\s*([\d,.]+)/i);
+            if (match && match[1]) {
+                return { min: parseNum(match[1]), max: Infinity };
+            }
+
+            return null; // Não encontrou referência dinâmica
+        }
 
         // Lógica para exames quantitativos
         let valorMatch = null;
 
         // Tenta diferentes padrões de regex sequencialmente
         const patterns = [
+            // Padrão para "Superior a 90" (TFG)
+            /Resultado\s+(Superior a\s+[\d,.-]+)/im,
+            // [BUG FIX] Padrão "Resultado 123" mais específico e priorizado
+            /Resultado\s+([\d,.-]+)/im,
             // Regra especial para Neutrófilos e outros do leucograma: pegar o segundo valor numérico na linha
             nomesBusca.some(n => ["neutrofilos", "linfocitos totais", "monocitos", "eosinofilos", "basofilos"].includes(n.toLowerCase())) ? /[\d,.]+\s+([\d,.]+)/ : null,
-            // Padrão "Resultado: 123"
-            /^\s*Resultado\s*([^\n]+)/im,
             // Padrão "NomeExame 123" na mesma linha
             ...nomesBusca.map(nome => new RegExp(`^${removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s+(-?\\d[\\d,.-]*)`, "im")),
-            // Padrão genérico para pegar o primeiro número no bloco (útil para formatos de coluna)
+            // Padrão genérico para pegar o primeiro número no bloco
             /(?:\s|\n)(-?\d[\d,.-]*)/
         ].filter(p => p); // Remove padrões nulos
 
@@ -1068,43 +1155,66 @@
             if (valorMatch && valorMatch[1]) break;
         }
 
-        if (!valorMatch || !valorMatch[1]) return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
-        
-        const valorStr = valorMatch[1].replace(/\.(?=.*\d{3})/g, '').replace(',', '.').trim();
-        const valorNum = parseFloat(valorStr);
-        let status = CONSTS.STATUS.NORMAL;
-
-        if (isNaN(valorNum) || valorMatch[1].toLowerCase().includes('superior a')) {
-            return { ...exameConfig, value: valorStr, status: CONSTS.STATUS.NORMAL };
-        }
-
-        let referencia = exameConfig.ref;
-        if (referencia && (referencia.M || referencia.F)) {
-            referencia = sexoPaciente ? referencia[sexoPaciente] : (referencia.M || referencia.F);
-        }
-
-        if (id === 'inr' && valorNum >= 2.0 && valorNum <= 3.0) {
-            status = CONSTS.STATUS.NORMAL;
-            return { ...exameConfig, value: valorStr, status: status };
-        }
-
-        if (isForaDoIntervalo(valorNum, referencia, ignorarBaixo)) {
-            status = CONSTS.STATUS.ALTERADO;
-        }
-
-        return { ...exameConfig, value: valorStr, status: status };
+    if (!valorMatch || !valorMatch[1]) return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
+    
+    const valorOriginalStr = valorMatch[1].trim();
+    // Para valores como "Superior a 90", o valor é o próprio texto.
+    if (isNaN(parseFloat(valorOriginalStr.replace(',', '.')))) {
+        return { ...exameConfig, value: valorOriginalStr, status: CONSTS.STATUS.NORMAL };
     }
 
-    function extrairBlocoExame(textoParaAnalisar, exameConfig) {
+    const valorStr = valorOriginalStr.replace(/\.(?=.*\d{3})/g, '').replace(',', '.');
+    const valorNum = parseFloat(valorStr);
+    let status = CONSTS.STATUS.NORMAL;
+
+    // LÓGICA DE REFERÊNCIA: Tenta extrair do bloco (dinâmica), se falhar, usa a do config (hardcoded).
+    let referencia = extrairReferenciaDoBloco(textoBloco, sexoPaciente);
+    let origemReferencia = 'nenhuma';
+
+    if (referencia) {
+        origemReferencia = 'dinamica';
+    } else if (exameConfig.ref) { // Se não achou dinâmica, usa a hardcoded como fallback
+        origemReferencia = 'hardcoded';
+        if (exameConfig.ref.M || exameConfig.ref.F) {
+            referencia = sexoPaciente ? exameConfig.ref[sexoPaciente] : (exameConfig.ref.M || exameConfig.ref.F);
+        } else {
+            referencia = exameConfig.ref;
+        }
+    }
+
+    if (id === 'inr' && valorNum >= 2.0 && valorNum <= 3.0) {
+        status = CONSTS.STATUS.NORMAL;
+        // Mesmo em caso especial, retorna o debug completo
+        const inrResult = { ...exameConfig, value: valorOriginalStr, status: status };
+        inrResult.debug = { referenciaUtilizada: referencia, origemReferencia: origemReferencia };
+        return inrResult;
+    }
+
+    if (isForaDoIntervalo(valorNum, referencia, ignorarBaixo)) {
+        status = CONSTS.STATUS.ALTERADO;
+    }
+
+    const result = { ...exameConfig, value: valorOriginalStr, status: status };
+    result.debug = { referenciaUtilizada: referencia, origemReferencia: origemReferencia }; // Adiciona a referência e sua origem
+    return result;
+}
+
+function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         const nomesBuscaAtuais = exameConfig.nomesBusca.map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-        const todosNomesBuscaFiltrado = TODOS_NOMES_BUSCA_REGEX_STR.split('|').filter(nome => !nomesBuscaAtuais.includes(nome)).join('|');
+        const todosNomesBuscaFiltrado = (TODOS_NOMES_BUSCA_REGEX_STR.split('|').filter(nome => !nomesBuscaAtuais.includes(nome)).join('|') + '|Leucograma');
 
         for (const nome of exameConfig.nomesBusca) {
             const lblSemAcentos = removerAcentos(nome);
             let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s/g, '\\s+');
+            // Make CEA more specific to avoid matching "Ceac"
+            if (exameConfig.id === 'cea') {
+                // It must be at the start of a line, or preceded by a newline and optional whitespace.
+                regexStr = `(?:^|\\n\\s*)${regexStr}`;
+            }
             if (nome.toLowerCase() === 'lactato') regexStr = 'Lactato(?! Arterial)';
 
-            const re = new RegExp(`(^|\\n)(${regexStr}(?![a-zA-Z0-9])[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|$)`, "i");
+            // [BUG FIX FINAL] Regex ajustada para capturar o bloco inteiro corretamente, parando apenas em um novo título de exame ou na assinatura.
+            const re = new RegExp(`(^|\\n)(${regexStr}(?:\\s|\\n|\\r)*[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|$)`, "i");
             const blocoMatch = textoParaAnalisar.match(re);
             if (blocoMatch && blocoMatch[2]) return blocoMatch[2];
         }
@@ -1125,7 +1235,11 @@
         }
 
         const result = extrairValorDoBloco(textoBloco, exameConfig, sexoPaciente);
-        result.debug = { textoBlocoAnalisado: textoBloco }; // Adiciona o bloco analisado para depuração
+        // Combina informações de debug de ambas as funções
+        result.debug = { 
+            ...result.debug, // Mantém a referência utilizada
+            textoBlocoAnalisado: textoBloco 
+        };
         return result;
     }
 
@@ -1163,6 +1277,20 @@
             return exame;
         });
         
+        // [NOVO DEBUG] Limpa o console e exibe uma tabela com os resultados detalhados
+        console.clear();
+        console.log("--- INÍCIO DO DEBUG DE EXAMES ---");
+        console.log("A tabela abaixo mostra o que o script extraiu para cada exame. Verifique as colunas 'ref_usada' e 'bloco' para os exames com erro.");
+        console.table(examesEncontradosGlobal.filter(e => e.value !== null).map(e => ({
+            label: e.label,
+            valor_extraido: e.value,
+            status_final: e.status,
+            origem_ref: e.debug?.origemReferencia || "N/A",
+            ref_usada: e.debug?.referenciaUtilizada ? JSON.stringify(e.debug.referenciaUtilizada) : "N/A",
+            bloco_analisado: e.debug?.textoBlocoAnalisado?.replace(/\s+/g, ' ').substring(0, 150) + '...'
+        })));
+        console.log("--- FIM DO DEBUG DE EXAMES ---");
+
         renderizarSidebar(examesEncontradosGlobal);
         gerarTextoFinal();
         salvarNoHistorico(); // Salva automaticamente após análise
@@ -1194,8 +1322,16 @@
         listaExamesUl.innerHTML = exames.map(exame => {
             // Para exames agrupadores como Urina I, mostra um valor simplificado na sidebar
             const valorSidebar = (exame.tipo === 'agrupador') ? (exame.status === CONSTS.STATUS.ALTERADO ? 'Alterado' : 'Normal') : exame.value;
+            
+            // [DEBUG] Monta o texto do tooltip de depuração
+            const debugInfo = exame.debug || {};
+            const blocoAnalisado = (debugInfo.textoBlocoAnalisado || 'N/A').replace(/\n/g, '\\n').substring(0, 200);
+            const refUtilizada = JSON.stringify(debugInfo.referenciaUtilizada || 'N/A');
+            const origemRef = debugInfo.origemReferencia || 'N/A';
+            const debugTitle = `[DEBUG INFO]\n- Origem Ref.: ${origemRef}\n- Ref. Usada: ${refUtilizada}\n- Bloco Analisado: "${blocoAnalisado}..."`;
+
             return `
-            <li>
+            <li title="${debugTitle}">
                 <input type="checkbox" id="${exame.id}" data-exame-id="${exame.id}" ${exame.selected ? 'checked' : ''}>
                 <label for="${exame.id}">${exame.label}</label>
                 <span class="exame-valor ${exame.status === CONSTS.STATUS.ALTERADO ? 'valor-alterado' : ''}">${valorSidebar}</span>
@@ -1460,6 +1596,9 @@
                 failureEl.innerHTML += `\n   Esperado: ${JSON.stringify(test.expected)}\n   Recebido: ${JSON.stringify({ value: result.value, status: result.status })}\n`;
                 if (result.debug && result.debug.textoBlocoAnalisado) {
                     failureEl.innerHTML += `   Bloco Analisado: "${result.debug.textoBlocoAnalisado.replace(/\n/g, '\\n').substring(0, 100)}..."\n`;
+                }
+                if (result.debug && result.debug.referenciaUtilizada) {
+                    failureEl.innerHTML += `   Referência Usada: ${JSON.stringify(result.debug.referenciaUtilizada)}\n`;
                 }
                 failureEl.innerHTML += '\n';
                 testResultsEl.appendChild(failureEl);
