@@ -92,6 +92,24 @@
         .search-input:focus {
             outline: 2px solid var(--primary-color);
         }
+        .sidebar-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .sidebar-actions button {
+            flex-grow: 1;
+            padding: 6px 10px;
+            font-size: 12px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--secondary-hover);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .sidebar-actions button:hover { background-color: var(--bg-color); }
+        .sidebar-actions button:active { transform: scale(0.98); }
         #lista-exames {
             list-style: none;
             padding: 0;
@@ -192,6 +210,13 @@
             border: 1px solid var(--border-color);
         }
         .btn-secondary:hover { background-color: var(--bg-color); }
+        /* Estilo para o botão em estado de carregamento */
+        .btn-loading {
+            cursor: not-allowed;
+            background: var(--secondary-color);
+            color: #fff;
+            position: relative;
+        }
         #resultado {
             /* ... (estilos existentes) ... */
         }
@@ -224,6 +249,7 @@
             font-size: 12px;
             flex-shrink: 0; /* Impede que o botão encolha */
         }
+        .btn-recarregar { background-color: #3498db; } /* Cor azul para diferenciar */
         .copy-btn-individual:hover {
             opacity: 1;
             background-color: var(--primary-color);
@@ -280,6 +306,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
+        }
+        .resultado-recente-item .actions {
+            display: flex;
             gap: 8px;
         }
         .accordion-content .resultado-recente-item:last-child {
@@ -496,7 +526,7 @@
             <div id="recentes-container">
                 <div class="header-recentes">
                     <h2>Resultados Recentes</h2>
-                    <button id="btn-limpar-historico">
+                    <button id="btn-limpar-historico" aria-label="Limpar histórico de resultados">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"></path>
                             <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"></path>
@@ -514,6 +544,10 @@
         <aside class="sidebar">
             <h2>Exames Encontrados</h2>
             <input type="text" id="filtro-exames" class="search-input" placeholder="Buscar exame...">
+            <div class="sidebar-actions">
+                <button id="btn-selecionar-todos">Selecionar Todos</button>
+                <button id="btn-limpar-selecao">Limpar Seleção</button>
+            </div>
             <ul id="lista-exames">
                 <li class="instructions">Analise um laudo para ver os exames aqui.</li>
             </ul>
@@ -551,11 +585,16 @@
         </button>
     </div>
   <script>
+    // =================================================================================
+    // Processador de Laudos - Script Principal
+    // Manter HTML, CSS e JS em um único arquivo é intencional para permitir
+    // o funcionamento do botão "Baixar para Uso Offline".
+    // =================================================================================
     // IIFE para encapsular todo o script e evitar poluição do escopo global
     (function() {
-    // Cache de seletores do DOM para melhor performance e manutenção
-    
-    // Objeto para centralizar constantes e "magic strings"
+    "use strict";
+
+    // ------------------- CONSTANTES E SELETORES GLOBAIS -------------------
     const CONSTS = {
         LOCAL_STORAGE_KEY: 'resultadosRecentes',
         STATUS: {
@@ -569,6 +608,7 @@
         DARK_MODE_DISABLED: 'disabled'
     };
 
+    // Cache de seletores do DOM para melhor performance
     const inputArea = document.getElementById('input');
     const resultadoDiv = document.getElementById('resultado');
     const listaExamesUl = document.getElementById('lista-exames');
@@ -586,35 +626,17 @@
     const btnLimparHistorico = document.getElementById('btn-limpar-historico');
     const btnConfirmDelete = document.getElementById('btn-confirm-delete');
     const btnCancelDelete = document.getElementById('btn-cancel-delete');
-
+    const btnSelecionarTodos = document.getElementById('btn-selecionar-todos');
+    const btnLimparSelecao = document.getElementById('btn-limpar-selecao');
 
     // Modal
     const modalOverlay = document.getElementById('confirmation-modal-overlay');
 
-    // --- LÓGICA DE INICIALIZAÇÃO E EVENTOS ---
+    // Variáveis de estado
+    let examesEncontradosGlobal = [];
+    let toastTimeout;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        setupEventListeners();
-        loadTheme();
-        renderizarResultadosRecentes();
-    });
-
-    function loadTheme() {
-    if (localStorage.getItem('darkMode') === CONSTS.DARK_MODE_ENABLED) {
-        document.documentElement.classList.add(CONSTS.DARK_MODE_CLASS);
-        themeToggle.checked = true;
-    }
-
-    themeToggle.addEventListener('change', () => {
-        document.documentElement.classList.toggle(CONSTS.DARK_MODE_CLASS);
-        // Salva a preferência no localStorage
-        if (document.documentElement.classList.contains(CONSTS.DARK_MODE_CLASS)) {
-            localStorage.setItem('darkMode', CONSTS.DARK_MODE_ENABLED);
-        } else {
-            localStorage.setItem('darkMode', 'disabled');
-        }
-    });
-    }
+    // ------------------- INICIALIZAÇÃO -------------------
 
     function setupEventListeners() {
         btnProcessar.addEventListener('click', processar);
@@ -630,6 +652,8 @@
         btnCancelDelete.addEventListener('click', hideConfirmationModal);
         listaRecentesDiv.addEventListener('click', handleHistoricoClick);
         listaExamesUl.addEventListener('change', handleSelecaoExame);
+        btnSelecionarTodos.addEventListener('click', () => selecionarTodosExames(true));
+        btnLimparSelecao.addEventListener('click', () => selecionarTodosExames(false));
 
         // Botão de teste
         const btnRunTests = document.getElementById('btn-run-tests');
@@ -638,9 +662,21 @@
         if (btnToggleTests) btnToggleTests.addEventListener('click', toggleTestSection);
     }
 
-    // --- FUNÇÕES DE UI (TOAST, MODAL, ETC) ---
+    function loadTheme() {
+        const darkMode = localStorage.getItem('darkMode');
+        if (darkMode === CONSTS.DARK_MODE_ENABLED) {
+            document.documentElement.classList.add(CONSTS.DARK_MODE_CLASS);
+            themeToggle.checked = true;
+        }
 
-    let toastTimeout; // Variável para controlar o timeout do toast
+        themeToggle.addEventListener('change', () => {
+            document.documentElement.classList.toggle(CONSTS.DARK_MODE_CLASS);
+            const status = document.documentElement.classList.contains(CONSTS.DARK_MODE_CLASS) ? CONSTS.DARK_MODE_ENABLED : CONSTS.DARK_MODE_DISABLED;
+            localStorage.setItem('darkMode', status);
+        });
+    }
+
+    // --- FUNÇÕES DE UI (TOAST, MODAL, ETC) ---
 
     function showToast(message) {
         toastEl.textContent = message;
@@ -685,6 +721,31 @@
         renderizarResultadosRecentes();
         hideConfirmationModal();
         showToast('Histórico limpo com sucesso!');
+    }
+
+    function renderizarSidebar(exames) {
+        if (!exames || exames.length === 0) {
+            listaExamesUl.innerHTML = '<li class="instructions">Nenhum exame conhecido foi encontrado.</li>';
+            return;
+        }
+        listaExamesUl.innerHTML = exames.map(exame => {
+            // Para exames agrupadores como Urina I, mostra um valor simplificado na sidebar
+            const valorSidebar = (exame.tipo === 'agrupador') ? (exame.status === CONSTS.STATUS.ALTERADO ? 'Alterado' : 'Normal') : exame.value;
+            
+            // [DEBUG] Monta o texto do tooltip de depuração
+            const debugInfo = exame.debug || {};
+            const blocoAnalisado = (debugInfo.textoBlocoAnalisado || 'N/A').replace(/\n/g, '\\n').substring(0, 200);
+            const refUtilizada = JSON.stringify(debugInfo.referenciaUtilizada || 'N/A');
+            const origemRef = debugInfo.origemReferencia || 'N/A';
+            const debugTitle = `[DEBUG INFO]\n- Origem Ref.: ${origemRef}\n- Ref. Usada: ${refUtilizada}\n- Bloco Analisado: "${blocoAnalisado}..."`;
+
+            return `
+            <li title="${debugTitle}">
+                <input type="checkbox" id="${exame.id}" data-exame-id="${exame.id}" ${exame.selected ? 'checked' : ''}>
+                <label for="${exame.id}">${exame.label}</label>
+                <span class="exame-valor ${exame.status === CONSTS.STATUS.ALTERADO ? 'valor-alterado' : ''}">${valorSidebar}</span>
+            </li>
+        `}).join('');
     }
 
     // --- FUNÇÕES AUXILIARES ---
@@ -743,11 +804,18 @@
             agrupados[paciente].forEach(res => {
                 const item = createElement('div', { className: 'resultado-recente-item' }, [
                     createElement('span', {}, [res.resultado]),
-                    createElement('button', {
-                        className: 'copy-btn-individual',
-                        title: 'Copiar este resultado',
-                        dataset: { copyText: res.resultado }
-                    }, ['Copiar'])
+                    createElement('div', { className: 'actions' }, [
+                        createElement('button', {
+                            className: 'copy-btn-individual btn-recarregar',
+                            title: 'Recarregar este laudo para reanálise',
+                            dataset: { laudoIndex: res.id }
+                        }, ['Recarregar']),
+                        createElement('button', {
+                            className: 'copy-btn-individual',
+                            title: 'Copiar este resultado',
+                            dataset: { copyText: res.resultado }
+                        }, ['Copiar'])
+                    ])
                 ]);
                 accordionContent.appendChild(item);
             });
@@ -772,12 +840,24 @@
         if (copyBtn && copyBtn.dataset.copyText) {
             copiarTexto(copyBtn.dataset.copyText);
         }
+
+        const recarregarBtn = event.target.closest('.btn-recarregar');
+        if (recarregarBtn && recarregarBtn.dataset.laudoIndex) {
+            const resultados = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
+            const laudoId = parseInt(recarregarBtn.dataset.laudoIndex, 10);
+            const laudoParaRecarregar = resultados.find(r => r.id === laudoId);
+            if (laudoParaRecarregar && laudoParaRecarregar.originalInput) {
+                inputArea.value = laudoParaRecarregar.originalInput;
+                processar(); // Roda a análise automaticamente
+                showToast('Laudo recarregado e analisado!');
+            }
+        }
     }
 
-    // --- LÓGICA PRINCIPAL DE PROCESSAMENTO DE LAUDOS ---
-    
-    // Estrutura de configuração para todos os exames conhecidos
-    const CONFIG_EXAMES_BASE = [
+    // --- CONFIGURAÇÃO DE EXAMES ---
+
+    function getConfigExames() {
+        return [
     // --- HEMOGRAMA ---
         { id: 'hb', label: 'Hb', nomesBusca: ["Hemoglobina"], template: (v) => `Hb ${v} / `, ref: { M: { min: 13.5, max: 17.5 }, F: { min: 12.0, max: 15.5 } } },
         { id: 'ht', label: 'Ht', nomesBusca: ["Hematocrito"], template: (v) => `Ht ${v} / `, ref: { M: { min: 40, max: 50 }, F: { min: 36, max: 46 } } },
@@ -941,13 +1021,10 @@
                 return `Urina I (${partesAlteradas.join(', ')}, demais s/a) / `;
             }
         }
-    ];
+        ];
+    }
 
-    // Pré-calcula a lista de nomes de busca para otimizar a análise
-    const TODOS_NOMES_BUSCA_REGEX_STR = CONFIG_EXAMES_BASE.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-
-    let examesEncontradosGlobal = [];
-
+    // --- LÓGICA DE PROCESSAMENTO DE DADOS ---
     function removerAcentos(str) {
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     }
@@ -1038,7 +1115,7 @@
 
         if (tipo === 'texto') {
             let valorTexto;
-            if (id === 'uroc') {
+            if (id === 'uroc' || id === 'hmc') { // Adiciona HMC à mesma lógica de extração de texto
                 valorTexto = (textoBloco.match(/(?:Resultado:|Microrganismo:)\s*([^\n]+)/i) || [])[1];
             } else {
                 valorTexto = (textoBloco.match(/(?:Microrganismo:|Identificação[\s\S]*?Microrganismo:)\s*([^\n]+)/i) || [])[1] || (textoBloco.match(/(-?\d[\d,.-]*)/) || [])[1];
@@ -1199,7 +1276,7 @@
     return result;
 }
 
-function extrairBlocoExame(textoParaAnalisar, exameConfig) {
+function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REGEX_STR) {
         const nomesBuscaAtuais = exameConfig.nomesBusca.map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
         const todosNomesBuscaFiltrado = (TODOS_NOMES_BUSCA_REGEX_STR.split('|').filter(nome => !nomesBuscaAtuais.includes(nome)).join('|') + '|Leucograma');
 
@@ -1221,15 +1298,14 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         return null;
     }
 
-    function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente) {
+    function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, todosNomesBuscaRegexStr) {
         const { tipo } = exameConfig;
 
         if (tipo === 'agrupador') {
             return analisarExameAgrupador(exameConfig, textoParaAnalisar, sexoPaciente);
         }
         
-        // Adiciona informações de depuração ao resultado
-        const textoBloco = extrairBlocoExame(textoParaAnalisar, exameConfig);
+        const textoBloco = extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaRegexStr);
         if (!textoBloco) {
             return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO, debug: { textoBlocoAnalisado: null } };
         }
@@ -1243,21 +1319,30 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         return result;
     }
 
+    // --- FUNÇÕES PRINCIPAIS E MANIPULADORES DE EVENTOS ---
+
     function processar() {
+        btnProcessar.disabled = true;
+        btnProcessar.classList.add('btn-loading');
+        btnProcessar.textContent = 'Analisando...';
+
         const texto = inputArea.value;
         if (!texto.trim()) {
             showToast("A área de texto está vazia.");
+            resetProcessarButton();
             return;
         }
         const textoSemAcentos = removerAcentos(texto);
         const sexoPaciente = pegarSexoPaciente(texto);
         const blocoUrina = (textoSemAcentos.match(/(Urina I|Urina tipo I|\bEAS\b)([\s\S]*?)(?=Cultura de Urina|Liberado por|$)/i) || [])[0] || "";
         
-        // Gera a string de regex para o lookahead uma única vez
         const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
         const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
 
-        const todosExames = CONFIG_EXAMES_BASE.map(exame => {
+        const configExames = getConfigExames();
+        const todosNomesBuscaRegexStr = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+
+        const todosExames = configExames.map(exame => {
             if (exame.nomesBusca) {
                 let textoParaAnalisar = textoSemAcentos;
                 if (exame.usaTextoArterial) textoParaAnalisar = blocoGasometriaArterial;
@@ -1267,7 +1352,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
                 if (!textoParaAnalisar) {
                     return { ...exame, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
                 }
-                return analisarExame(exame, textoParaAnalisar, sexoPaciente);
+                return analisarExame(exame, textoParaAnalisar, sexoPaciente, todosNomesBuscaRegexStr);
             }
             return exame; // Retorna exames que não usam a análise padrão
         });
@@ -1294,6 +1379,21 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         renderizarSidebar(examesEncontradosGlobal);
         gerarTextoFinal();
         salvarNoHistorico(); // Salva automaticamente após análise
+        resetProcessarButton();
+    }
+
+    function selecionarTodosExames(selecionar) {
+        examesEncontradosGlobal.forEach(exame => exame.selected = selecionar);
+        // Re-renderiza a sidebar para refletir a mudança nos checkboxes
+        const termoBusca = filtroExamesInput.value;
+        termoBusca ? filtrarExames() : renderizarSidebar(examesEncontradosGlobal);
+        gerarTextoFinal();
+    }
+
+    function resetProcessarButton() {
+        btnProcessar.disabled = false;
+        btnProcessar.classList.remove('btn-loading');
+        btnProcessar.textContent = 'Analisar Laudo';
     }
 
     function filtrarExames() {
@@ -1312,31 +1412,6 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
                    (exame.nomesBusca && exame.nomesBusca.some(nome => removerAcentos(nome.toLowerCase()).includes(termoNormalizado)));
         });
         renderizarSidebar(examesFiltrados);
-    }
-
-    function renderizarSidebar(exames) {
-        if (!exames || exames.length === 0) {
-            listaExamesUl.innerHTML = '<li class="instructions">Nenhum exame conhecido foi encontrado.</li>';
-            return;
-        }
-        listaExamesUl.innerHTML = exames.map(exame => {
-            // Para exames agrupadores como Urina I, mostra um valor simplificado na sidebar
-            const valorSidebar = (exame.tipo === 'agrupador') ? (exame.status === CONSTS.STATUS.ALTERADO ? 'Alterado' : 'Normal') : exame.value;
-            
-            // [DEBUG] Monta o texto do tooltip de depuração
-            const debugInfo = exame.debug || {};
-            const blocoAnalisado = (debugInfo.textoBlocoAnalisado || 'N/A').replace(/\n/g, '\\n').substring(0, 200);
-            const refUtilizada = JSON.stringify(debugInfo.referenciaUtilizada || 'N/A');
-            const origemRef = debugInfo.origemReferencia || 'N/A';
-            const debugTitle = `[DEBUG INFO]\n- Origem Ref.: ${origemRef}\n- Ref. Usada: ${refUtilizada}\n- Bloco Analisado: "${blocoAnalisado}..."`;
-
-            return `
-            <li title="${debugTitle}">
-                <input type="checkbox" id="${exame.id}" data-exame-id="${exame.id}" ${exame.selected ? 'checked' : ''}>
-                <label for="${exame.id}">${exame.label}</label>
-                <span class="exame-valor ${exame.status === CONSTS.STATUS.ALTERADO ? 'valor-alterado' : ''}">${valorSidebar}</span>
-            </li>
-        `}).join('');
     }
 
     function atualizarSelecao(id, isSelected) {
@@ -1376,7 +1451,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
     }
 
     function salvarNoHistorico() {
-    // Salvar resultado no histórico
+    // Salva o resultado no histórico do localStorage
     const texto = inputArea.value;
     const nomePaciente = pegarNomePaciente(texto);
     const dataCompleta = pegarDataCompleta(texto); 
@@ -1398,14 +1473,13 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
     }
     }
 
-    // Funções auxiliares para cópia individual
     function copiarTexto(texto) {
         navigator.clipboard.writeText(texto)
             .then(() => showToast('Resultado copiado!'))
             .catch(() => showToast('Falha ao copiar.'));
     }
 
-    // Função para baixar o script
+    // Função para baixar o script como um arquivo HTML auto-contido
     function baixarScript() { 
         // Pega todo o conteúdo HTML da página atual
         const conteudoHtml = document.documentElement.outerHTML;
@@ -1425,13 +1499,36 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         showToast('Download iniciado!');
     }
 
+    // --- LÓGICA DE TESTES E DIAGNÓSTICO ---
+
     function toggleTestSection() {
         const testSection = document.getElementById('test-section-wrapper');
         const isVisible = testSection.style.display === 'block';
         testSection.style.display = isVisible ? 'none' : 'block';
     }
 
-    // --- LÓGICA DE TESTES AUTOMATIZADOS ---
+    /**
+     * Compara dois valores de forma inteligente.
+     * - Trata strings numéricas ("15.0", "15") como equivalentes.
+     * - Compara strings de forma insensível a maiúsculas/minúsculas e espaços.
+     */
+    function areValuesEqual(val1, val2) {
+        if (val1 === val2) return true;
+        if (val1 === null || val2 === null || val1 === undefined || val2 === undefined) return false;
+
+        const num1 = parseFloat(String(val1).replace(',', '.'));
+        const num2 = parseFloat(String(val2).replace(',', '.'));
+
+        if (!isNaN(num1) && !isNaN(num2)) {
+            return num1 === num2;
+        }
+
+        const normalize = (str) => String(str)
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .trim().toLowerCase().replace(/\.$/, ''); // Remove ponto final
+
+        return normalize(val1) === normalize(val2);
+    }
 
     /**
      * Gera casos de teste estáticos para todos os exames na configuração.
@@ -1440,8 +1537,10 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
     function generateStaticTestCases() {
         const staticCases = [];
 
-        CONFIG_EXAMES_BASE.forEach(exame => {
-            if (exame.tipo === 'agrupador' || !exame.nomesBusca || exame.nomesBusca.length === 0) return;
+        const configExames = getConfigExames();
+
+        configExames.forEach(exame => {
+            if (!exame.nomesBusca || exame.nomesBusca.length === 0) return;
 
             const nomeBusca = exame.nomesBusca[0];
 
@@ -1453,7 +1552,20 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
                 expected: { value: null, status: CONSTS.STATUS.NAO_ENCONTRADO }
             });
 
-            if (exame.tipo === 'texto') {
+            if (exame.id === 'urina1') { // Teste para Agrupador
+                staticCases.push({
+                    description: `[Estático] ${exame.label}: Deve extrair Urina I normal`,
+                    input: `Urina I\npH 5.5\nDensidade 1020\nNitrito Negativo`,
+                    examId: exame.id,
+                    expected: { status: CONSTS.STATUS.NORMAL }
+                });
+                staticCases.push({
+                    description: `[Estático] ${exame.label}: Deve extrair Urina I alterada`,
+                    input: `Urina I\npH 8.0\nDensidade 1020\nNitrito Positivo`,
+                    examId: exame.id,
+                    expected: { status: CONSTS.STATUS.ALTERADO }
+                });
+            } else if (exame.tipo === 'texto') {
                 if (exame.id === 'uroc') {
                     staticCases.push({
                         description: `[Estático] ${exame.label}: Deve extrair 'SCB' para 'não houve crescimento'`,
@@ -1467,6 +1579,13 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
                         examId: exame.id,
                         expected: { value: 'Klebsiella pneumoniae', status: CONSTS.STATUS.NORMAL }
                     });
+                } else if (exame.id === 'hmc') {
+                     staticCases.push({
+                        description: `[Estático] ${exame.label}: Deve extrair 'HMC SCB'`,
+                        input: `Hemocultura\nResultado: Nao houve crescimento de microrganismos.`,
+                        examId: exame.id,
+                        expected: { value: 'não houve crescimento de microrganismos.', status: CONSTS.STATUS.NORMAL } // O template trata isso
+                    });
                 }
             } else if (exame.ref) { // Testes para exames quantitativos com referência
                 const ref = exame.ref.M || exame.ref; // Usa referência masculina como padrão
@@ -1474,9 +1593,10 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
                 // Valor Normal (no meio da faixa)
                 if (ref.min !== -Infinity && ref.max !== Infinity) {
                     const normalValue = ((ref.min + ref.max) / 2).toFixed(2);
+                    const input = `${nomeBusca}\nResultado ${normalValue}\nValores de referência: ${ref.min} a ${ref.max}`;
                     staticCases.push({
                         description: `[Estático] ${exame.label}: Deve extrair valor NORMAL`,
-                        input: `${nomeBusca} ${normalValue}`,
+                        input: input,
                         examId: exame.id,
                         expected: { value: normalValue, status: CONSTS.STATUS.NORMAL }
                     });
@@ -1486,9 +1606,10 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
                 if (ref.max !== Infinity) { // Garante que o valor seja significativamente maior
                     // Exceção para INR, para testar acima da faixa terapêutica (2.0-3.0)
                     const highValue = (exame.id === 'inr') ? '3.50' : (ref.max + 1).toFixed(2);
+                    const input = `${nomeBusca}\nResultado ${highValue}\nValores de referência: ${ref.min} a ${ref.max}`;
                     staticCases.push({
                         description: `[Estático] ${exame.label}: Deve extrair valor ALTERADO (alto)`,
-                        input: `${nomeBusca} ${highValue}`,
+                        input: input,
                         examId: exame.id,
                         expected: { value: highValue, status: CONSTS.STATUS.ALTERADO }
                     });
@@ -1497,18 +1618,20 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
                 // Valor Alterado (Baixo)
                 if (ref.min > 0 && ref.min !== -Infinity && !exame.ignorarBaixo) {
                     const lowValue = (ref.min * 0.5).toFixed(2);
+                    const input = `${nomeBusca}\nResultado ${lowValue}\nValores de referência: ${ref.min} a ${ref.max}`;
                      staticCases.push({
                         description: `[Estático] ${exame.label}: Deve extrair valor ALTERADO (baixo)`,
-                        input: `${nomeBusca} ${lowValue}`,
+                        input: input,
                         examId: exame.id,
                         expected: { value: lowValue, status: CONSTS.STATUS.ALTERADO }
                     });
                 } else if (ref.min <= 0 && ref.min !== -Infinity && !exame.ignorarBaixo) {
                     // Caso especial para limites negativos ou zero, como o Base Excess (BE)
                     const lowValue = (ref.min - 1).toFixed(2);
+                    const input = `${nomeBusca}\nResultado ${lowValue}\nValores de referência: ${ref.min} a ${ref.max}`;
                      staticCases.push({
                         description: `[Estático] ${exame.label}: Deve extrair valor ALTERADO (baixo)`,
-                        input: `${nomeBusca} ${lowValue}`,
+                        input: input,
                         examId: exame.id,
                         expected: { value: lowValue, status: CONSTS.STATUS.ALTERADO }
                     });
@@ -1530,9 +1653,11 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         const laudosRecentes = resultados.filter(r => r.originalInput).slice(-3);
 
         laudosRecentes.forEach((laudo, index) => {
-            CONFIG_EXAMES_BASE.forEach(exame => {
+            const configExames = getConfigExames();
+            const todosNomesBuscaRegexStr = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+            configExames.forEach(exame => {
                 // Para cada laudo, verifica o que a função de análise extrai AGORA
-                const resultadoAtual = analisarExame(exame, removerAcentos(laudo.originalInput), pegarSexoPaciente(laudo.originalInput));
+                const resultadoAtual = analisarExame(exame, removerAcentos(laudo.originalInput), pegarSexoPaciente(laudo.originalInput), todosNomesBuscaRegexStr);
                 
                 // O teste vai verificar se o resultado continua o mesmo no futuro
                 historyCases.push({
@@ -1562,18 +1687,20 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         testResultsEl.textContent += `Encontrados ${staticTestCases.length} testes estáticos e ${historyTestCases.length} testes de histórico.\nTotal: ${testCases.length} asserções.\n\n`;
 
         testCases.forEach(test => {
-            const examConfig = CONFIG_EXAMES_BASE.find(e => e.id === test.examId);
+            const configExames = getConfigExames();
+            const todosNomesBuscaRegexStr = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+            const examConfig = configExames.find(e => e.id === test.examId);
             if (!examConfig) {
                 testResultsEl.textContent += `❌ FALHA: ${test.description}\n   Motivo: Configuração de exame com ID '${test.examId}' não encontrada.\n\n`;
                 failures++;
                 return;
             }
 
-            const result = analisarExame(examConfig, removerAcentos(test.input), test.sexo || pegarSexoPaciente(test.input) || 'M');
+            const result = analisarExame(examConfig, removerAcentos(test.input), test.sexo || pegarSexoPaciente(test.input) || 'M', todosNomesBuscaRegexStr);
 
             // Compara os valores esperados com os resultados
-            const valueMatch = ('value' in test.expected) ? result.value === test.expected.value : true;
-            const statusMatch = ('status'in test.expected) ? result.status === test.expected.status : true;
+            const valueMatch = ('value' in test.expected) ? areValuesEqual(result.value, test.expected.value) : true;
+            const statusMatch = ('status' in test.expected) ? result.status === test.expected.status : true;
 
             if (valueMatch && statusMatch) {
                 testResultsEl.textContent += `✅ SUCESSO: ${test.description}\n`;
@@ -1611,6 +1738,14 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig) {
         testResultsEl.textContent += `Sucessos: ${successes}\n`;
         testResultsEl.textContent += `Falhas: ${failures}\n`;
     }
+
+    // --- PONTO DE ENTRADA ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setupEventListeners();
+        loadTheme();
+        renderizarResultadosRecentes();
+    });
+
     })(); // Fim da IIFE
   </script>
 
