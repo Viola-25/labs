@@ -901,24 +901,24 @@
             return;
         }
 
-        // Agrupa resultados por paciente
         const agrupados = resultados.reduce((acc, res) => {
             acc[res.paciente] = acc[res.paciente] || [];
             acc[res.paciente].push(res);
             return acc;
         }, {});
 
-        listaRecentesDiv.innerHTML = ''; // Limpa a lista
-        // Ordena pacientes pelo mais recente
+        listaRecentesDiv.innerHTML = '';
+        
+        // Ordena pacientes pelo laudo mais recente de cada um
         const pacientesOrdenados = Object.keys(agrupados).sort((a, b) => {
-            const dataA = Math.max(...agrupados[a].map(r => r.id));
-            const dataB = Math.max(...agrupados[b].map(r => r.id));
-            return dataB - dataA;
+            const laudoMaisRecenteA = agrupados[a].reduce((latest, current) => (current.dataCompleta > latest.dataCompleta) ? current : latest);
+            const laudoMaisRecenteB = agrupados[b].reduce((latest, current) => (current.dataCompleta > latest.dataCompleta) ? current : latest);
+            return laudoMaisRecenteB.dataCompleta.localeCompare(laudoMaisRecenteA.dataCompleta);
         });
 
         for (const paciente of pacientesOrdenados) {
             // Ordena resultados do paciente por data (mais novo primeiro)
-            agrupados[paciente].sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
+            agrupados[paciente].sort((a, b) => b.dataCompleta.localeCompare(a.dataCompleta));
 
             const accordionContent = createElement('div', { className: 'accordion-content' });
 
@@ -929,7 +929,7 @@
                         createElement('button', {
                             className: 'copy-btn-individual btn-recarregar',
                             title: 'Recarregar este laudo para reanálise',
-                            dataset: { laudoIndex: res.id }
+                            dataset: { laudoId: res.id } // Usa o ID de string
                         }, ['Recarregar']),
                         createElement('button', {
                             className: 'copy-btn-individual',
@@ -963,9 +963,9 @@
         }
 
         const recarregarBtn = event.target.closest('.btn-recarregar');
-        if (recarregarBtn && recarregarBtn.dataset.laudoIndex) {
+        if (recarregarBtn && recarregarBtn.dataset.laudoId) { // Procura por laudoId
             const resultados = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
-            const laudoId = parseInt(recarregarBtn.dataset.laudoIndex, 10);
+            const laudoId = recarregarBtn.dataset.laudoId; // ID é uma string
             const laudoParaRecarregar = resultados.find(r => r.id === laudoId);
             if (laudoParaRecarregar && laudoParaRecarregar.originalInput) {
                 inputArea.value = laudoParaRecarregar.originalInput;
@@ -977,78 +977,65 @@
 
     // --- CONFIGURAÇÃO DE EXAMES ---
 
+    let cachedConfigExames = null;
     function getConfigExames() {
-        return [
+        if (cachedConfigExames) return cachedConfigExames;
+
+        const config = [
     // --- HEMOGRAMA ---
-        { id: 'hb', label: 'Hb', nomesBusca: ["Hemoglobina"], template: (v) => `Hb ${v} / `, ref: { M: { min: 13.5, max: 17.5 }, F: { min: 12.0, max: 15.5 } }, trendMeaning: 'higher_is_better' },
-        { id: 'ht', label: 'Ht', nomesBusca: ["Hematocrito"], template: (v) => `Ht ${v} / `, ref: { M: { min: 40, max: 50 }, F: { min: 36, max: 46 } }, trendMeaning: 'higher_is_better' },
-        { id: 'leuco', label: 'Leuco', nomesBusca: ["Leucocitos"], template: (v) => `Leuco ${v} / `, ref: { min: 4.0, max: 11.0 } }, // Neutro
-        { id: 'n', label: 'N', nomesBusca: ["Neutrofilos"], template: (v) => `N ${v} / `, ref: { min: 1.8, max: 7.7 } }, // Neutro
-        { id: 'plaq', label: 'PLAQ', nomesBusca: ["Plaquetas"], template: (v) => `PLAQ ${v} / `, ref: { min: 150, max: 450 } }, // Neutro
+        { id: 'hb', label: 'Hb', nomesBusca: ["Hemoglobina"], ref: { M: { min: 13.5, max: 17.5 }, F: { min: 12.0, max: 15.5 } }, trendMeaning: 'higher_is_better' },
+        { id: 'ht', label: 'Ht', nomesBusca: ["Hematocrito"], ref: { M: { min: 40, max: 50 }, F: { min: 36, max: 46 } }, trendMeaning: 'higher_is_better' },
+        { id: 'leuco', label: 'Leuco', nomesBusca: ["Leucocitos"], ref: { min: 4.0, max: 11.0 } }, // Neutro
+        { id: 'n', label: 'N', nomesBusca: ["Neutrofilos"], ref: { min: 1.8, max: 7.7 } }, // Neutro
+        { id: 'plaq', label: 'PLAQ', nomesBusca: ["Plaquetas"], ref: { min: 150, max: 450 } }, // Neutro
         // --- HEMOGRAMA (OPCIONAIS) ---
-        { id: 'vcm', label: 'VCM', nomesBusca: ["VCM"], optional: true, template: (v) => `VCM ${v} / `, ref: { min: 80.0, max: 100.0 } },
-        { id: 'hcm', label: 'HCM', nomesBusca: ["HCM"], optional: true, template: (v) => `HCM ${v} / `, ref: { min: 27.0, max: 32.0 } },
-        { id: 'chcm', label: 'CHCM', nomesBusca: ["CHCM"], optional: true, template: (v) => `CHCM ${v} / `, ref: { min: 31.5, max: 36.0 } },
-        { id: 'rdw', label: 'RDW', nomesBusca: ["RDW"], optional: true, template: (v) => `RDW ${v} / `, ref: { min: 11.9, max: 15.4 } },
-        { id: 'linf', label: 'Linf', nomesBusca: ["Linfocitos totais"], optional: true, template: (v) => `Linf ${v} / `, ref: { min: 1.0, max: 4.0 } },
-        { id: 'mono', label: 'Mono', nomesBusca: ["Monocitos"], optional: true, template: (v) => `Mono ${v} / `, ref: { min: 0.0, max: 0.8 } },
-        { id: 'eos', label: 'Eos', nomesBusca: ["Eosinofilos"], optional: true, template: (v) => `Eos ${v} / `, ref: { min: 0.0, max: 0.45 } },
-        { id: 'baso', label: 'Baso', nomesBusca: ["Basofilos"], optional: true, template: (v) => `Baso ${v} / `, ref: { min: 0.0, max: 0.2 } },
+        { id: 'vcm', label: 'VCM', nomesBusca: ["VCM"], optional: true, ref: { min: 80.0, max: 100.0 } },
+        { id: 'hcm', label: 'HCM', nomesBusca: ["HCM"], optional: true, ref: { min: 27.0, max: 32.0 } },
+        { id: 'chcm', label: 'CHCM', nomesBusca: ["CHCM"], optional: true, ref: { min: 31.5, max: 36.0 } },
+        { id: 'rdw', label: 'RDW', nomesBusca: ["RDW"], optional: true, ref: { min: 11.9, max: 15.4 } },
+        { id: 'linf', label: 'Linf', nomesBusca: ["Linfocitos totais"], optional: true, ref: { min: 1.0, max: 4.0 } },
+        { id: 'mono', label: 'Mono', nomesBusca: ["Monocitos"], optional: true, ref: { min: 0.0, max: 0.8 } },
+        { id: 'eos', label: 'Eos', nomesBusca: ["Eosinofilos"], optional: true, ref: { min: 0.0, max: 0.45 } },
+        { id: 'baso', label: 'Baso', nomesBusca: ["Basofilos"], optional: true, ref: { min: 0.0, max: 0.2 } },
         
         // --- COAGULAÇÃO ---
-        { id: 'inr', label: 'INR', nomesBusca: ["RNI", "INR"], template: (v) => `INR ${v} / `, ref: { min: 1.0, max: 1.2 }, trendMeaning: 'higher_is_worse' },
-        { id: 'r', label: 'R', nomesBusca: ["Relacao paciente/normal"], template: (v) => `R ${v} / `, ref: { min: 0.85, max: 1.20 } },
-        { id: 'dimd', label: 'D-Dim', nomesBusca: ["D-Dimero", "D-Dimer"], template: (v) => `D-Dim ${v} / `, ref: { min: -Infinity, max: 500 }, trendMeaning: 'higher_is_worse' },
+        { id: 'inr', label: 'INR', nomesBusca: ["RNI", "INR"], ref: { min: 1.0, max: 1.2 }, trendMeaning: 'higher_is_worse' },
+        { id: 'r', label: 'R', nomesBusca: ["Relacao paciente/normal"], ref: { min: 0.85, max: 1.20 } },
+        { id: 'dimd', label: 'D-Dim', nomesBusca: ["D-Dimero", "D-Dimer"], ref: { min: -Infinity, max: 500 }, trendMeaning: 'higher_is_worse' },
 
         // --- FUNÇÃO RENAL E ELETRÓLITOS ---
-        { id: 'u', label: 'U', nomesBusca: ["Ureia", "Ureia, serica"], template: (v) => `U ${v} / `, ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'cr', label: 'Cr', nomesBusca: ["Creatinina", "Dosagem serica de Creatinina"], template: (v) => `Cr ${v} / `, ref: { M: { min: 0.66, max: 1.25 }, F: { min: 0.52, max: 1.04 } }, trendMeaning: 'higher_is_worse' },
-	    { id: 'tfg', label: 'TFG', nomesBusca: ["TFG", "TFG - Taxa de Filtração Glomerular", "Ritmo de Filtracao Glomerular", "RFG"], optional: true, template: (v) => `TFG ${v} / `, ref: { min: 90, max: Infinity }, trendMeaning: 'higher_is_better' },
-        { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], optional: true, template: (v) => `AU ${v} / `, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'na', label: 'Na', nomesBusca: ["Sódio"], template: (v) => `Na ${v} / `, ref: { min: 137, max: 145 } },
-        { id: 'k', label: 'K', nomesBusca: ["Potassio"], template: (v) => `K ${v} / `, ref: { min: 3.5, max: 5.1 } },
-        { id: 'cl', label: 'Cl', nomesBusca: ["Cloro"], template: (v) => `Cl ${v} / `, ref: { min: 98, max: 107 } },
-        { id: 'mg', label: 'Mg', nomesBusca: ["Magnésio"], template: (v) => `Mg ${v} / `, ref: { min: 1.8, max: 2.4 } },
-        { id: 'cai', label: 'Cai', nomesBusca: ["Calcio Ionizado"], template: (v) => `Cai ${v} / `, ref: { min: 1.12, max: 1.30 } },
-        { id: 'ca', label: 'Ca', nomesBusca: ["Calcio"], template: (v) => `Ca ${v} / `, ref: { min: 8.4, max: 11.0 } },
-        { id: 'p', label: 'P', nomesBusca: ["Fosforo"], template: (v) => `P ${v} / `, ref: { min: 2.5, max: 4.5 } },
+        { id: 'u', label: 'U', nomesBusca: ["Ureia", "Ureia, serica"], ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'cr', label: 'Cr', nomesBusca: ["Creatinina", "Dosagem serica de Creatinina"], ref: { M: { min: 0.66, max: 1.25 }, F: { min: 0.52, max: 1.04 } }, trendMeaning: 'higher_is_worse' },
+	    { id: 'tfg', label: 'TFG', nomesBusca: ["TFG", "TFG - Taxa de Filtração Glomerular", "Ritmo de Filtracao Glomerular", "RFG"], optional: true, ref: { min: 90, max: Infinity }, trendMeaning: 'higher_is_better' },
+        { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], optional: true, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'na', label: 'Na', nomesBusca: ["Sódio"], ref: { min: 137, max: 145 } },
+        { id: 'k', label: 'K', nomesBusca: ["Potassio"], ref: { min: 3.5, max: 5.1 } },
+        { id: 'cl', label: 'Cl', nomesBusca: ["Cloro"], ref: { min: 98, max: 107 } },
+        { id: 'mg', label: 'Mg', nomesBusca: ["Magnésio"], ref: { min: 1.8, max: 2.4 } },
+        { id: 'cai', label: 'Cai', nomesBusca: ["Calcio Ionizado"], ref: { min: 1.12, max: 1.30 } },
+        { id: 'ca', label: 'Ca', nomesBusca: ["Calcio"], ref: { min: 8.4, max: 11.0 } },
+        { id: 'p', label: 'P', nomesBusca: ["Fosforo"], ref: { min: 2.5, max: 4.5 } },
         
         // --- PERFIL LIPÍDICO ---
-        { id: 'ct', label: 'CT', nomesBusca: ["Colesterol Total"], template: (v) => `CT ${v} / `, ref: { min: -Infinity, max: 190 }, trendMeaning: 'higher_is_worse' },
-        { id: 'hdl', label: 'HDL', nomesBusca: ["Colesterol HDL"], template: (v) => `HDL ${v} / `, ref: { M: { min: 40, max: Infinity }, F: { min: 50, max: Infinity } }, trendMeaning: 'higher_is_better' },
-        { id: 'ldl', label: 'LDL', nomesBusca: ["Colesterol LDL"], template: (v) => `LDL ${v} / `, ref: { min: -Infinity, max: 130 }, trendMeaning: 'higher_is_worse' },
-        { id: 'tg', label: 'TGL', nomesBusca: ["Triglicerides", "TGL"], template: (v) => `TGL ${v} / `, ref: { min: -Infinity, max: 175 }, trendMeaning: 'higher_is_worse' },
-        { id: 'vldl', label: 'VLDL', nomesBusca: ["Colesterol VLDL"], template: (v) => `VLDL ${v} / `, ref: { min: -Infinity, max: 30 }, trendMeaning: 'higher_is_worse' },
+        { id: 'ct', label: 'CT', nomesBusca: ["Colesterol Total"], ref: { min: -Infinity, max: 190 }, trendMeaning: 'higher_is_worse' },
+        { id: 'hdl', label: 'HDL', nomesBusca: ["Colesterol HDL"], ref: { M: { min: 40, max: Infinity }, F: { min: 50, max: Infinity } }, trendMeaning: 'higher_is_better' },
+        { id: 'ldl', label: 'LDL', nomesBusca: ["Colesterol LDL"], ref: { min: -Infinity, max: 130 }, trendMeaning: 'higher_is_worse' },
+        { id: 'tg', label: 'TGL', nomesBusca: ["Triglicerides", "TGL"], ref: { min: -Infinity, max: 175 }, trendMeaning: 'higher_is_worse' },
+        { id: 'vldl', label: 'VLDL', nomesBusca: ["Colesterol VLDL"], ref: { min: -Infinity, max: 30 }, trendMeaning: 'higher_is_worse' },
  
         // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
-        { id: 'glic', label: 'Glic', nomesBusca: ["Glicose", "Glicemia"], template: (v) => `Glic ${v} / `, ref: { min: 70, max: 99 }, trendMeaning: 'higher_is_worse' },
-        { id: 'pcr', label: 'PCR', nomesBusca: ["Proteína C Reativa - PCR"], template: (v) => `PCR ${v} / `, ref: { min: -Infinity, max: 0.5 }, trendMeaning: 'higher_is_worse' },
-        { id: 'lact', label: 'Lact', nomesBusca: ["Lactato"], template: (v) => `Lact ${v} / `, ref: { min: 0.5, max: 2.2 }, trendMeaning: 'higher_is_worse' },        
+        { id: 'glic', label: 'Glic', nomesBusca: ["Glicose", "Glicemia"], ref: { min: 70, max: 99 }, trendMeaning: 'higher_is_worse' },
+        { id: 'pcr', label: 'PCR', nomesBusca: ["Proteína C Reativa - PCR"], ref: { min: -Infinity, max: 0.5 }, trendMeaning: 'higher_is_worse' },
+        { id: 'lact', label: 'Lact', nomesBusca: ["Lactato"], ref: { min: 0.5, max: 2.2 }, trendMeaning: 'higher_is_worse' },        
         {
             id: 'ptf',
             label: 'PTF',
             nomesBusca: ["Proteína Total e Frações", "Proteina Total e Fracoes"],
             tipo: 'agrupador',
             subExames: [
-                { 
-                    id: 'ptf_pt', 
-                    label: 'Proteínas', 
-                    nomesBusca: ["Proteinas", "Proteínas", "Proteinas Totais", "Proteínas Totais"], 
-                    ref: { min: 6.0, max: 8.3 } 
-                },
-                { 
-                    id: 'ptf_alb', 
-                    label: 'Albumina', 
-                    nomesBusca: ["Albumina"], 
-                    ref: { min: 3.5, max: 5.0 },
-                    trendMeaning: 'higher_is_better'
-                },
-                { 
-                    id: 'ptf_glob', 
-                    label: 'Globulina', 
-                    nomesBusca: ["Globulina"], 
-                    ref: { min: 2.0, max: 3.5 } 
-                }
+                { id: 'ptf_pt', label: 'Proteínas', nomesBusca: ["Proteinas", "Proteínas", "Proteinas Totais", "Proteínas Totais"], ref: { min: 6.0, max: 8.3 } },
+                { id: 'ptf_alb', label: 'Albumina', nomesBusca: ["Albumina"], ref: { min: 3.5, max: 5.0 }, trendMeaning: 'higher_is_better' },
+                { id: 'ptf_glob', label: 'Globulina', nomesBusca: ["Globulina"], ref: { min: 2.0, max: 3.5 } }
             ],
             template: (v, exame) => {
                 const mostrarTendencia = document.getElementById('comparar-historico-toggle').checked;
@@ -1056,51 +1043,39 @@
                 const alb = exame.subExames.find(sub => sub.id === 'ptf_alb')?.value;
                 const glob = exame.subExames.find(sub => sub.id === 'ptf_glob')?.value;
 
-                let ptTendenciaStr = '';
-                let albTendenciaStr = '';
-                let globTendenciaStr = '';
+                let ptTendenciaStr = '', albTendenciaStr = '', globTendenciaStr = '';
 
                 if (mostrarTendencia && exame.tendencia) {
-                    if (exame.tendencia.ptf_pt) {
-                        ptTendenciaStr = ` (${exame.tendencia.ptf_pt.icone} ${exame.tendencia.ptf_pt.valorAntigo})`;
-                    }
-                    if (exame.tendencia.ptf_alb) {
-                        albTendenciaStr = ` (${exame.tendencia.ptf_alb.icone} ${exame.tendencia.ptf_alb.valorAntigo})`;
-                    }
-                    if (exame.tendencia.ptf_glob) {
-                        globTendenciaStr = ` (${exame.tendencia.ptf_glob.icone} ${exame.tendencia.ptf_glob.valorAntigo})`;
-                    }
+                    if (exame.tendencia.ptf_pt) ptTendenciaStr = ` (${exame.tendencia.ptf_pt.icone} ${exame.tendencia.ptf_pt.valorAntigo})`;
+                    if (exame.tendencia.ptf_alb) albTendenciaStr = ` (${exame.tendencia.ptf_alb.icone} ${exame.tendencia.ptf_alb.valorAntigo})`;
+                    if (exame.tendencia.ptf_glob) globTendenciaStr = ` (${exame.tendencia.ptf_glob.icone} ${exame.tendencia.ptf_glob.valorAntigo})`;
                 }
 
-                if (pt || alb) {
-                    return `PTF ${pt || '?'}${ptTendenciaStr} (A ${alb || '?'}${albTendenciaStr}, G ${glob || '?'}${globTendenciaStr}) / `;
-                }
-                
-                let tendenciaStr = ptTendenciaStr;
-                return `PTF ${v}${tendenciaStr} / `;
+                if (pt || alb) return `PTF ${pt || '?'}${ptTendenciaStr} (A ${alb || '?'}${albTendenciaStr}, G ${glob || '?'}${globTendenciaStr}) / `;
+                return `PTF ${v}${ptTendenciaStr} / `;
             }
         },
 
         // --- FUNÇÃO HEPÁTICA / BILI ---
-        { id: 'bt', label: 'BT', nomesBusca: ["Bilirrubina Total"], template: (v) => `BT ${v} / `, ref: { min: 0.2, max: 1.2 }, ignorarBaixo: true, trendMeaning: 'higher_is_worse' },
-        { id: 'bd', label: 'BD', nomesBusca: ["Bilirrubina Direta"], optional: true, template: (v) => `BD ${v} / `, ref: { min: 0.0, max: 0.3 }, trendMeaning: 'higher_is_worse' },
-        { id: 'bi', label: 'BI', nomesBusca: ["Bilirrubina Indireta"], optional: true, template: (v) => `BI ${v} / `, ref: { min: 0.1, max: 0.8 }, trendMeaning: 'higher_is_worse' },
-        { id: 'tgo', label: 'TGO', nomesBusca: ["TGO/AST", "AST", "TGO"], template: (v) => `TGO ${v} / `, ref: { M: { min: 17, max: 59 }, F: { min: 14, max: 36 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'tgp', label: 'TGP', nomesBusca: ["TGP/ALT", "ALT", "TGP"], template: (v) => `TGP ${v} / `, ref: { M: { min: -Infinity, max: 50 }, F: { min: -Infinity, max: 35 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'fal', label: 'FAL', nomesBusca: ["Fosfatase Alcalina"], template: (v) => `FAL ${v} / `, ref: { min: 30, max: 120 }, trendMeaning: 'higher_is_worse' },
-        { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lactica"], template: (v) => `DHL ${v} / `, ref: { min: 120, max: 246 }, trendMeaning: 'higher_is_worse' },
-        { id: 'hba1c', label: 'HbA1c', nomesBusca: ["Hemoglobina Glicada", "HbA1c"], template: (v) => `HbA1c ${v} / `, ref: { min: -Infinity, max: 5.7 }, trendMeaning: 'higher_is_worse' },
-        { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase", "Gama Glutamil Transferase - GGT"], template: (v) => `GGT ${v} / `, ref: { M: { min: 15, max: 73 }, F: { min: 12, max: 43 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'bt', label: 'BT', nomesBusca: ["Bilirrubina Total"], ref: { min: 0.2, max: 1.2 }, ignorarBaixo: true, trendMeaning: 'higher_is_worse' },
+        { id: 'bd', label: 'BD', nomesBusca: ["Bilirrubina Direta"], optional: true, ref: { min: 0.0, max: 0.3 }, trendMeaning: 'higher_is_worse' },
+        { id: 'bi', label: 'BI', nomesBusca: ["Bilirrubina Indireta"], optional: true, ref: { min: 0.1, max: 0.8 }, trendMeaning: 'higher_is_worse' },
+        { id: 'tgo', label: 'TGO', nomesBusca: ["TGO/AST", "AST", "TGO"], ref: { M: { min: 17, max: 59 }, F: { min: 14, max: 36 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'tgp', label: 'TGP', nomesBusca: ["TGP/ALT", "ALT", "TGP"], ref: { M: { min: -Infinity, max: 50 }, F: { min: -Infinity, max: 35 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'fal', label: 'FAL', nomesBusca: ["Fosfatase Alcalina"], ref: { min: 30, max: 120 }, trendMeaning: 'higher_is_worse' },
+        { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lactica"], ref: { min: 120, max: 246 }, trendMeaning: 'higher_is_worse' },
+        { id: 'hba1c', label: 'HbA1c', nomesBusca: ["Hemoglobina Glicada", "HbA1c"], ref: { min: -Infinity, max: 5.7 }, trendMeaning: 'higher_is_worse' },
+        { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase", "Gama Glutamil Transferase - GGT"], ref: { M: { min: 15, max: 73 }, F: { min: 12, max: 43 } }, trendMeaning: 'higher_is_worse' },
 
         // --- ENZIMAS CARDÍACAS ---
-        { id: 'trop', label: 'Trop', nomesBusca: ["Troponina I", "Troponina T", "Troponina Ultrassensivel"], template: (v) => `Trop ${v} / `, ref: { min: -Infinity, max: 0.014 }, trendMeaning: 'higher_is_worse' },
-        { id: 'ckmb', label: 'CKMB', nomesBusca: ["CK-MB"], template: (v) => `CKMB ${v} / `, ref: { min: -Infinity, max: 25 }, trendMeaning: 'higher_is_worse' },
-        { id: 'ck', label: 'CK', nomesBusca: ["CK Total", "Creatinoquinase"], template: (v) => `CK ${v} / `, ref: { M: { min: 35, max: 200 }, F: { min: 30, max: 150 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'bnp', label: 'BNP', nomesBusca: ["BNP", "NT-proBNP", "Peptideo Natriuretico"], template: (v) => `BNP ${v} / `, ref: { min: -Infinity, max: 100 }, trendMeaning: 'higher_is_worse' },
+        { id: 'trop', label: 'Trop', nomesBusca: ["Troponina I", "Troponina T", "Troponina Ultrassensivel"], ref: { min: -Infinity, max: 0.014 }, trendMeaning: 'higher_is_worse' },
+        { id: 'ckmb', label: 'CKMB', nomesBusca: ["CK-MB"], ref: { min: -Infinity, max: 25 }, trendMeaning: 'higher_is_worse' },
+        { id: 'ck', label: 'CK', nomesBusca: ["CK Total", "Creatinoquinase"], ref: { M: { min: 35, max: 200 }, F: { min: 30, max: 150 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'bnp', label: 'BNP', nomesBusca: ["BNP", "NT-proBNP", "Peptideo Natriuretico"], ref: { min: -Infinity, max: 100 }, trendMeaning: 'higher_is_worse' },
 
         // --- ENZIMAS PANCREÁTICAS ---
-        { id: 'amil', label: 'Amil', nomesBusca: ["Amilase"], template: (v) => `Amil ${v} / `, ref: { min: 25, max: 125 }, trendMeaning: 'higher_is_worse' },
-        { id: 'lip', label: 'Lip', nomesBusca: ["Lipase"], template: (v) => `Lip ${v} / `, ref: { min: 10, max: 140 }, trendMeaning: 'higher_is_worse' },
+        { id: 'amil', label: 'Amil', nomesBusca: ["Amilase"], ref: { min: 25, max: 125 }, trendMeaning: 'higher_is_worse' },
+        { id: 'lip', label: 'Lip', nomesBusca: ["Lipase"], ref: { min: 10, max: 140 }, trendMeaning: 'higher_is_worse' },
 
         // --- MICROBIOLOGIA ---
         { 
@@ -1110,12 +1085,8 @@
             tipo: 'texto',
             template: (v) => {
                 const valorLimpo = v.toLowerCase();
-                if (valorLimpo.includes("não houve crescimento") || valorLimpo.includes("nao houve crescimento")) {
-                    return 'HMC SCB / ';
-                }
-                if (valorLimpo.includes("crescimento")) {
-                    return 'HMC POS / ';
-                }
+                if (valorLimpo.includes("não houve crescimento") || valorLimpo.includes("nao houve crescimento")) return 'HMC SCB / ';
+                if (valorLimpo.includes("crescimento")) return 'HMC POS / ';
                 return `HMC ${v} / `;
             } 
         },
@@ -1124,53 +1095,45 @@
             label: 'Urocultura',
             nomesBusca: ["Cultura de Urina", "Urocultura"],
             tipo: 'texto',
-            template: (v, exame) => {
-                if (exame.value === 'SCB') {
-                    return 'Urocultura SCB / ';
-                }
-                return `Urocultura ${v} / `;
-            }
+            template: (v, exame) => (exame.value === 'SCB') ? 'Urocultura SCB / ' : `Urocultura ${v} / `
         },
 
         // --- ENDOCRINOLOGIA ---
-        { id: 'tsh', label: 'TSH', nomesBusca: ["TSH"], template: (v) => `TSH ${v} / `, ref: { min: 0.4, max: 4.5 }, trendMeaning: 'higher_is_worse' }, // Simplificado
-        { id: 't4l', label: 'T4L', nomesBusca: ["T4 Livre"], template: (v) => `T4L ${v} / `, ref: { min: 0.8, max: 1.8 } },
-        { id: 't3l', label: 'T3L', nomesBusca: ["T3 Livre"], template: (v) => `T3L ${v} / `, ref: { min: 2.0, max: 4.4 } },
-        { id: 't3t', label: 'T3T', nomesBusca: ["T3 Total"], template: (v) => `T3T ${v} / `, ref: { min: 80, max: 200 } },
-        { id: 'atpo', label: 'Anti-TPO', nomesBusca: ["Anti-TPO"], template: (v) => `Anti-TPO ${v} / `, ref: { min: -Infinity, max: 35 } },
-        { id: 'atg', label: 'Anti-TG', nomesBusca: ["Anti-Tireoglobulina"], template: (v) => `Anti-TG ${v} / `, ref: { min: -Infinity, max: 40 } },
-        { id: 'vitd', label: 'Vit.D', nomesBusca: ["Vitamina D", "25-hidroxivitamina D", "Vitamina D3"], template: (v) => `Vit.D ${v} / `, ref: { min: 20, max: 50 }, trendMeaning: 'higher_is_better' },
-        { id: 'pth', label: 'PTH', nomesBusca: ["PTH", "Paratormonio"], template: (v) => `PTH ${v} / `, ref: { min: 15, max: 65 } },
+        { id: 'tsh', label: 'TSH', nomesBusca: ["TSH"], ref: { min: 0.4, max: 4.5 }, trendMeaning: 'higher_is_worse' }, // Simplificado
+        { id: 't4l', label: 'T4L', nomesBusca: ["T4 Livre"], ref: { min: 0.8, max: 1.8 } },
+        { id: 't3l', label: 'T3L', nomesBusca: ["T3 Livre"], ref: { min: 2.0, max: 4.4 } },
+        { id: 't3t', label: 'T3T', nomesBusca: ["T3 Total"], ref: { min: 80, max: 200 } },
+        { id: 'atpo', label: 'Anti-TPO', nomesBusca: ["Anti-TPO"], ref: { min: -Infinity, max: 35 } },
+        { id: 'atg', label: 'Anti-TG', nomesBusca: ["Anti-Tireoglobulina"], ref: { min: -Infinity, max: 40 } },
+        { id: 'vitd', label: 'Vit.D', nomesBusca: ["Vitamina D", "25-hidroxivitamina D", "Vitamina D3"], ref: { min: 20, max: 50 }, trendMeaning: 'higher_is_better' },
+        { id: 'pth', label: 'PTH', nomesBusca: ["PTH", "Paratormonio"], ref: { min: 15, max: 65 } },
 
         // --- MARCADORES TUMORAIS ---
-        { id: 'psa', label: 'PSA', nomesBusca: ["PSA", "Antigeno Prostatico Especifico"], template: (v) => `PSA ${v} / `, ref: { min: -Infinity, max: 4.0 }, trendMeaning: 'higher_is_worse' },
-        { id: 'cea', label: 'CEA', nomesBusca: ["CEA", "Antigeno Carcinoembrionario"], template: (v) => `CEA ${v} / `, ref: { min: -Infinity, max: 5.0 }, trendMeaning: 'higher_is_worse' },
-        { id: 'afp', label: 'AFP', nomesBusca: ["Alfa-fetoproteína"], template: (v) => `AFP ${v} / `, ref: { min: -Infinity, max: 10 }, trendMeaning: 'higher_is_worse' },
+        { id: 'psa', label: 'PSA', nomesBusca: ["PSA", "Antigeno Prostatico Especifico"], ref: { min: -Infinity, max: 4.0 }, trendMeaning: 'higher_is_worse' },
+        { id: 'cea', label: 'CEA', nomesBusca: ["CEA", "Antigeno Carcinoembrionario"], ref: { min: -Infinity, max: 5.0 }, trendMeaning: 'higher_is_worse' },
+        { id: 'afp', label: 'AFP', nomesBusca: ["Alfa-fetoproteína"], ref: { min: -Infinity, max: 10 }, trendMeaning: 'higher_is_worse' },
         { id: 'ca199', label: 'CA19-9', nomesBusca: ["CA 19-9"], template: (v) => `CA19-9 ${v.replace(/\.(?=.*\d{3},)/g, '')} / `, ref: { min: -Infinity, max: 37 }, trendMeaning: 'higher_is_worse' },
-        { id: 'ca125', label: 'CA125', nomesBusca: ["CA 125"], template: (v) => `CA125 ${v} / `, ref: { min: -Infinity, max: 35 }, trendMeaning: 'higher_is_worse' },
-        { id: 'ca153', label: 'CA15-3', nomesBusca: ["CA 15-3"], template: (v) => `CA15-3 ${v} / `, ref: { min: -Infinity, max: 30 }, trendMeaning: 'higher_is_worse' },
-        { id: 'bhcg', label: 'Beta-HCG', nomesBusca: ["Beta-HCG"], template: (v) => `Beta-HCG ${v} / `, ref: { min: -Infinity, max: 5 }, trendMeaning: 'higher_is_worse' },
-
-        // --- SOROLOGIAS (Exemplos) ---
-        // Adicionar sorologias aqui conforme necessário
+        { id: 'ca125', label: 'CA125', nomesBusca: ["CA 125"], ref: { min: -Infinity, max: 35 }, trendMeaning: 'higher_is_worse' },
+        { id: 'ca153', label: 'CA15-3', nomesBusca: ["CA 15-3"], ref: { min: -Infinity, max: 30 }, trendMeaning: 'higher_is_worse' },
+        { id: 'bhcg', label: 'Beta-HCG', nomesBusca: ["Beta-HCG"], ref: { min: -Infinity, max: 5 }, trendMeaning: 'higher_is_worse' },
 
         // --- GASOMETRIA ARTERIAL ---
-        { id: 'phart', label: 'pHart', nomesBusca: ["PH"], usaTextoArterial: true, template: (v) => `pHart ${v} / `, ref: { min: 7.35, max: 7.45 } },
-        { id: 'po2art', label: 'pO2art', nomesBusca: ["PO2"], usaTextoArterial: true, template: (v) => `pO2art ${v} / `, ref: { min: 80, max: 100 } },
-        { id: 'pco2art', label: 'pCO2art', nomesBusca: ["PCO2"], usaTextoArterial: true, template: (v) => `pCO2art ${v} / `, ref: { min: 35, max: 40 } },
-        { id: 'so2art', label: 'SO2art', nomesBusca: ["Saturacao de O2"], usaTextoArterial: true, template: (v) => `SO2art ${v} / `, ref: { min: 95, max: 100 } },
-        { id: 'hco3art', label: 'HCO3art', nomesBusca: ["Bicarbonato"], usaTextoArterial: true, template: (v) => `HCO3art ${v} / `, ref: { min: 22, max: 26 } },
-        { id: 'beart', label: 'BEart', nomesBusca: ["Base Exces"], usaTextoArterial: true, template: (v) => `BEart ${v} / `, ref: { min: -2, max: 2 } },
-        { id: 'lactart', label: 'Lactart', nomesBusca: ["Lactato Arterial"], template: (v) => `Lactart ${v} / `, ref: { min: 0.5, max: 1.6 }, trendMeaning: 'higher_is_worse' },
+        { id: 'phart', label: 'pHart', nomesBusca: ["PH"], usaTextoArterial: true, ref: { min: 7.35, max: 7.45 } },
+        { id: 'po2art', label: 'pO2art', nomesBusca: ["PO2"], usaTextoArterial: true, ref: { min: 80, max: 100 } },
+        { id: 'pco2art', label: 'pCO2art', nomesBusca: ["PCO2"], usaTextoArterial: true, ref: { min: 35, max: 40 } },
+        { id: 'so2art', label: 'SO2art', nomesBusca: ["Saturacao de O2"], usaTextoArterial: true, ref: { min: 95, max: 100 } },
+        { id: 'hco3art', label: 'HCO3art', nomesBusca: ["Bicarbonato"], usaTextoArterial: true, ref: { min: 22, max: 26 } },
+        { id: 'beart', label: 'BEart', nomesBusca: ["Base Exces"], usaTextoArterial: true, ref: { min: -2, max: 2 } },
+        { id: 'lactart', label: 'Lactart', nomesBusca: ["Lactato Arterial"], ref: { min: 0.5, max: 1.6 }, trendMeaning: 'higher_is_worse' },
         
         // --- GASOMETRIA VENOSA ---
-        { id: 'phven', label: 'pHven', nomesBusca: ["PH"], usaTextoVenoso: true, template: (v) => `pHven ${v} / `, ref: { min: 7.31, max: 7.41 } },
-        { id: 'po2ven', label: 'pO2ven', nomesBusca: ["PO2"], usaTextoVenoso: true, template: (v) => `pO2ven ${v} / `, ref: { min: 30, max: 40 } },
-        { id: 'pco2ven', label: 'pCO2ven', nomesBusca: ["PCO2"], usaTextoVenoso: true, template: (v) => `pCO2ven ${v} / `, ref: { min: 41, max: 51 } },
-        { id: 'so2ven', label: 'SO2ven', nomesBusca: ["Saturacao de O2"], usaTextoVenoso: true, template: (v) => `SO2ven ${v} / ` },
-        { id: 'hco3ven', label: 'HCO3ven', nomesBusca: ["Bicarbonato"], usaTextoVenoso: true, template: (v) => `HCO3ven ${v} / `, ref: { min: 23, max: 29 } },
-        { id: 'beven', label: 'BEven', nomesBusca: ["Base Exces"], usaTextoVenoso: true, template: (v) => `BEven ${v} / `, ref: { min: -2, max: 2 } },
-        { id: 'lactven', label: 'Lactven', nomesBusca: ["Lactato"], usaTextoVenoso: true, template: (v) => `Lactven ${v} / `, ref: { min: 0.5, max: 2.2 }, trendMeaning: 'higher_is_worse' },
+        { id: 'phven', label: 'pHven', nomesBusca: ["PH"], usaTextoVenoso: true, ref: { min: 7.31, max: 7.41 } },
+        { id: 'po2ven', label: 'pO2ven', nomesBusca: ["PO2"], usaTextoVenoso: true, ref: { min: 30, max: 40 } },
+        { id: 'pco2ven', label: 'pCO2ven', nomesBusca: ["PCO2"], usaTextoVenoso: true, ref: { min: 41, max: 51 } },
+        { id: 'so2ven', label: 'SO2ven', nomesBusca: ["Saturacao de O2"], usaTextoVenoso: true },
+        { id: 'hco3ven', label: 'HCO3ven', nomesBusca: ["Bicarbonato"], usaTextoVenoso: true, ref: { min: 23, max: 29 } },
+        { id: 'beven', label: 'BEven', nomesBusca: ["Base Exces"], usaTextoVenoso: true, ref: { min: -2, max: 2 } },
+        { id: 'lactven', label: 'Lactven', nomesBusca: ["Lactato"], usaTextoVenoso: true, ref: { min: 0.5, max: 2.2 }, trendMeaning: 'higher_is_worse' },
 
         // --- URINA I (AGRUPADOR) ---
         {
@@ -1188,14 +1151,23 @@
             ],
             template: (v, exame) => {
                 const alterados = exame.subExames.filter(sub => sub.status === 'alterado');
-                if (alterados.length === 0) {
-                    return 'Urina I s/a / ';
-                }
+                if (alterados.length === 0) return 'Urina I s/a / ';
                 const partesAlteradas = alterados.map(sub => `${sub.label.toUpperCase()} ${sub.value}`);
                 return `Urina I (${partesAlteradas.join(', ')}, demais s/a) / `;
             }
         }
         ];
+
+        // Otimização: Adicionar propriedades padrão (como 'template') dinamicamente
+        // Isso reduz significativamente a verbosidade da configuração acima.
+        config.forEach(exame => {
+            if (!exame.template) {
+                exame.template = (v) => `${exame.label} ${v} / `;
+            }
+        });
+        
+        cachedConfigExames = config;
+        return cachedConfigExames;
     }
 
     // --- LÓGICA DE PROCESSAMENTO DE DADOS ---
@@ -1219,6 +1191,23 @@
         if (!m) return null;
         const [dia, mes, ano] = m[1].split('/');
         return `${ano}-${mes}-${dia}`; // Formato YYYY-MM-DD para fácil ordenação
+    }
+
+    function pegarDataHoraCompleta(texto) {
+        const dataMatch = texto.match(/Coleta:\s*([\d\/]{8,10})/i);
+        if (!dataMatch) return null;
+        const [dia, mes, ano] = dataMatch[1].split('/');
+        
+        let hora = '00';
+        let minuto = '00';
+
+        // Tenta pegar a hora de "Liberação:" ou "Coleta:"
+        const horaMatch = texto.match(/(?:Liberacao:|Coleta:)\s*[\d\/]{8,10}\s*-?\s*(\d{1,2}):(\d{2})/i);
+        if (horaMatch) {
+            hora = horaMatch[1].padStart(2, '0');
+            minuto = horaMatch[2].padStart(2, '0');
+        }
+        return `${ano}-${mes}-${dia}T${hora}:${minuto}`;
     }
 
     function pegarSexoPaciente(texto) {
@@ -1462,10 +1451,8 @@
     return result;
 }
 
-function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REGEX_STR) {
-        const nomesBuscaAtuais = exameConfig.nomesBusca.map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-        const todosNomesBuscaFiltrado = (TODOS_NOMES_BUSCA_REGEX_STR.split('|').filter(nome => !nomesBuscaAtuais.includes(nome)).join('|') + '|Leucograma');
-
+function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltrado) {
+        // A string 'todosNomesBuscaFiltrado' agora é pré-calculada e passada diretamente.
         for (const nome of exameConfig.nomesBusca) {
             const lblSemAcentos = removerAcentos(nome);
             let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s/g, '\\s+');
@@ -1484,14 +1471,15 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         return null;
     }
 
-    function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, todosNomesBuscaRegexStr) {
+    function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, lookaheadRegexStr) {
         const { tipo } = exameConfig;
 
         if (tipo === 'agrupador') {
             return analisarExameAgrupador(exameConfig, textoParaAnalisar, sexoPaciente);
         }
         
-        const textoBloco = extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaRegexStr);
+        // A 'lookaheadRegexStr' (previamente todosNomesBuscaRegexStr) agora vem pré-filtrada.
+        const textoBloco = extrairBlocoExame(textoParaAnalisar, exameConfig, lookaheadRegexStr);
         if (!textoBloco) {
             return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO, debug: { textoBlocoAnalisado: null } };
         }
@@ -1527,7 +1515,18 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
 
         const configExames = getConfigExames();
-        const todosNomesBuscaRegexStr = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+        
+        // Otimização: Pré-calcular strings de regex para evitar trabalho repetido nas funções internas.
+        const todosNomesBuscaRegexStrings = configExames
+            .flatMap(e => e.nomesBusca || [])
+            .map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+
+        configExames.forEach(exame => {
+            if (!exame.nomesBusca) return;
+            const nomesBuscaAtuais = exame.nomesBusca.map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+            // Pré-calcula a string de lookahead para cada exame.
+            exame.lookaheadRegexStr = todosNomesBuscaRegexStrings.filter(nome => !nomesBuscaAtuais.includes(nome)).join('|') + '|Leucograma';
+        });
 
         const todosExames = configExames.map(exame => {
             if (exame.nomesBusca) {
@@ -1539,7 +1538,8 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
                 if (!textoParaAnalisar) {
                     return { ...exame, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
                 }
-                return analisarExame(exame, textoParaAnalisar, sexoPaciente, todosNomesBuscaRegexStr);
+                // Passa a string de lookahead pré-calculada para a função de análise.
+                return analisarExame(exame, textoParaAnalisar, sexoPaciente, exame.lookaheadRegexStr);
             }
             return exame; // Retorna exames que não usam a análise padrão
         });
@@ -1606,16 +1606,16 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
     }
 
     function calcularTendenciaExames(nomePaciente) {
+        const textoAtual = inputArea.value;
         const resultados = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
-        const dataAtualLaudo = pegarDataCompleta(inputArea.value); // Pega a data do laudo atual
-
+        
         const historicoPaciente = resultados
             .filter(r => 
                 r.paciente === nomePaciente && 
                 r.exames &&
-                r.dataCompleta !== dataAtualLaudo // Exclui o laudo atual da busca por histórico
+                r.originalInput !== textoAtual // Exclui o laudo atual exato da busca por histórico
             )
-            .sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
+            .sort((a, b) => b.dataCompleta.localeCompare(a.dataCompleta)); // Ordena pela nova data/hora
 
         if (historicoPaciente.length === 0) {
             // Limpa tendências antigas se não houver histórico
@@ -1695,10 +1695,12 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
             if (valorAtualNum > valorAntigoNum) icone = '↑';
             if (valorAtualNum < valorAntigoNum) icone = '↓';
 
-            exameAtual.tendencia = {
-                icone: icone,
-                valorAntigo: valorAntigoParaExibir
-            };
+            if (icone !== '=') {
+                exameAtual.tendencia = {
+                    icone: icone,
+                    valorAntigo: valorAntigoParaExibir
+                };
+            }
         });
     }
 
@@ -1917,41 +1919,49 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
     }
 
     function salvarNoHistorico() {
-    // Salva o resultado no histórico do localStorage
-    const texto = inputArea.value;
-    const nomePaciente = pegarNomePaciente(texto);
-    const dataCompleta = pegarDataCompleta(texto); 
-    const resultadoFinal = resultadoDiv.textContent;
+        const texto = inputArea.value;
+        const nomePaciente = pegarNomePaciente(texto);
+        const dataHora = pegarDataHoraCompleta(texto);
+        const resultadoFinal = resultadoDiv.textContent;
+        const novosExames = examesEncontradosGlobal;
 
-    if (dataCompleta && resultadoFinal.length > 10 && texto.length > 50) { // Só salva se tiver dados significativos
+        if (!dataHora || !resultadoFinal || !texto) {
+            return; // Não salva se faltar dados essenciais
+        }
+
+        const getSignature = (exames) => exames.map(e => `${e.id}:${e.value}`).sort().join('|');
+        const novaAssinatura = getSignature(novosExames);
+
         const resultadosRecentes = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
         
-        // --- LÓGICA ANTI-DUPLICIDADE ---
-        // Verifica se já existe um laudo idêntico (mesmo paciente, data e conteúdo)
+        // Verifica se já existe um laudo idêntico (mesmo paciente, data e CONTEÚDO de exames)
         const laudoDuplicado = resultadosRecentes.some(
-            laudo => laudo.paciente === nomePaciente && 
-                     laudo.dataCompleta === dataCompleta &&
-                     laudo.originalInput === texto
+            laudo => laudo.paciente === nomePaciente &&
+                    laudo.dataCompleta.startsWith(dataHora.substring(0, 10)) && // Compara apenas a parte da data
+                    getSignature(laudo.exames) === novaAssinatura
         );
 
         if (laudoDuplicado) {
-            return; // Interrompe a função para não salvar a duplicata
+            // Laudo com o mesmo conteúdo de exames já existe para este dia.
+            return;
         }
-        // ---------------------------------
-
+        
         const novoResultado = {
-            id: Date.now(), // ID único para ordenação de grupos
+            id: dataHora, // Usa a data/hora como ID para ordenação
             paciente: nomePaciente,
-            dataCompleta: dataCompleta,
+            dataCompleta: dataHora, // Salva a data e hora completas
             resultado: resultadoFinal,
-            originalInput: texto, // Salva o laudo original
-            exames: examesEncontradosGlobal // Salva os exames processados
+            originalInput: texto,
+            exames: novosExames
         };
+
         resultadosRecentes.push(novoResultado);
-        // Limita o histórico aos últimos 50 resultados para não sobrecarregar
+        
+        // Ordena para garantir que laudos do mesmo dia fiquem juntos e por horário
+        resultadosRecentes.sort((a, b) => b.id.localeCompare(a.id));
+
         localStorage.setItem(CONSTS.LOCAL_STORAGE_KEY, JSON.stringify(resultadosRecentes.slice(-50)));
         renderizarResultadosRecentes();
-    }
     }
 
     function copiarTexto(texto) {
