@@ -519,6 +519,20 @@
         .header-title { margin: 0; }
         .theme-switch-wrapper[style*="font-size"] { font-size: 14px; /* Mantém o estilo específico onde necessário */
         }
+        .result-actions {
+            display: flex;
+            align-items: center;
+            gap: 24px; /* Aumenta o espaço entre os grupos de controle */
+            flex-wrap: wrap; /* Permite quebra de linha em telas pequenas */
+            justify-content: flex-end; /* Alinha os controles à direita */
+        }
+
+        .result-actions .btn-small-action {
+            padding: 6px 12px; /* Aumenta um pouco o padding para melhor clique */
+            font-size: 13px;   /* Aumenta a fonte para legibilidade */
+            flex-grow: 0;      /* Impede que o botão estique */
+            margin-left: 4px;  /* Pequena margem para separar do switch */
+        }
 
     </style>
 </head>
@@ -553,7 +567,8 @@
             </div>
             <div class="resultado-wrapper">
                 <div class="header header-no-border">
-                    <p class="header-title"><strong>Resultado Final:</strong></p>
+                <p class="header-title"><strong>Resultado Final:</strong></p>
+                <div class="result-actions">
                     <div class="theme-switch-wrapper">
                         <span>Marcar alterados</span>
                         <label class="theme-switch" for="marcar-alterados-toggle" title="Adicionar '*' aos resultados alterados">
@@ -561,15 +576,16 @@
                             <div class="slider round"></div>
                         </label>
                     </div>
-                    <div class="theme-switch-wrapper" style="margin-left: 16px;">
+                    <div class="theme-switch-wrapper">
                         <span>Comparar Evolução</span>
                         <label class="theme-switch" for="comparar-historico-toggle" title="Mostra setas (↑/↓) comparando com o último laudo deste paciente">
                             <input type="checkbox" id="comparar-historico-toggle">
                             <div class="slider round"></div>
                         </label>
-                        <button id="btn-ver-historico-completo" class="btn-secondary" style="padding: 4px 8px; font-size: 12px; margin-left: 8px; flex-grow: 0;" disabled>Ver Histórico Completo</button>
                     </div>
+                    <button id="btn-ver-historico-completo" class="btn-secondary btn-small-action" disabled="">Analisar tendências do paciente</button>
                 </div>
+            </div>
                 <div id="resultado"></div>
             </div>
 
@@ -784,6 +800,7 @@
         inputArea.value = '';
         listaExamesUl.innerHTML = '<li class="instructions">Analise um laudo para ver os exames aqui.</li>';
         resultadoDiv.textContent = '';
+        btnVerHistoricoCompleto.disabled = false;
     }
 
     function showConfirmationModal() {
@@ -1008,18 +1025,34 @@
                 }
             ],
             template: (v, exame) => {
-                // Tenta pegar os valores dos sub-exames
+                const mostrarTendencia = document.getElementById('comparar-historico-toggle').checked;
                 const pt = exame.subExames.find(sub => sub.id === 'ptf_pt')?.value;
                 const alb = exame.subExames.find(sub => sub.id === 'ptf_alb')?.value;
                 const glob = exame.subExames.find(sub => sub.id === 'ptf_glob')?.value;
 
-                // Se encontrou Proteína OU Albumina, monta o formato detalhado
-                if (pt || alb) {
-                    // Usa '?' se algum valor específico estiver faltando
-                    return `PTF ${pt || '?'} (A ${alb || '?'}, G ${glob || '?'}) / `;
+                let ptTendenciaStr = '';
+                let albTendenciaStr = '';
+                let globTendenciaStr = '';
+
+                if (mostrarTendencia && exame.tendencia) {
+                    if (exame.tendencia.ptf_pt) {
+                        ptTendenciaStr = ` (${exame.tendencia.ptf_pt.icone} ${exame.tendencia.ptf_pt.valorAntigo})`;
+                    }
+                    if (exame.tendencia.ptf_alb) {
+                        albTendenciaStr = ` (${exame.tendencia.ptf_alb.icone} ${exame.tendencia.ptf_alb.valorAntigo})`;
+                    }
+                    if (exame.tendencia.ptf_glob) {
+                        globTendenciaStr = ` (${exame.tendencia.ptf_glob.icone} ${exame.tendencia.ptf_glob.valorAntigo})`;
+                    }
                 }
-                // Fallback padrão
-                return `PTF ${v} / `;
+
+                if (pt || alb) {
+                    return `PTF ${pt || '?'}${ptTendenciaStr} (A ${alb || '?'}${albTendenciaStr}, G ${glob || '?'}${globTendenciaStr}) / `;
+                }
+                
+                // Fallback (não deve acontecer em laudos normais)
+                let tendenciaStr = ptTendenciaStr; // Apenas a tendência principal se disponível
+                return `PTF ${v}${tendenciaStr} / `;
             }
         },
 
@@ -1583,14 +1616,60 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
                 laudo.exames && laudo.exames.some(e => e.id === exameAtual.id && e.value !== null)
             );
 
-            if (!laudoAnteriorComExame || exameAtual.tipo === 'texto' || exameAtual.tipo === 'agrupador') {
-                return; // Pula se não houver histórico para este exame específico, ou se for do tipo texto/agrupador
+            // Pula se não houver histórico ou for do tipo texto
+            if (!laudoAnteriorComExame || exameAtual.tipo === 'texto') {
+                return;
+            }
+
+            // Deixa o PTF passar mas ainda pula outros agrupadores
+            if (exameAtual.tipo === 'agrupador' && exameAtual.id !== 'ptf') {
+                return;
             }
 
             const exameAnterior = laudoAnteriorComExame.exames.find(e => e.id === exameAtual.id);
+            if (!exameAnterior) return;
 
-            const valorAtualNum = parseFloat(String(exameAtual.value).replace(',', '.'));
-            const valorAntigoNum = parseFloat(String(exameAnterior.value).replace(',', '.').replace(/[^\d.-]/g, ''));
+            let valorAtualNum, valorAntigoNum, valorAntigoParaExibir;
+
+            if (exameAtual.id === 'ptf') {
+                const ptfTendencias = {}; // Objeto para guardar as tendências dos sub-exames
+
+                // Itera e compara cada sub-exame
+                for (const subExamId of ['ptf_pt', 'ptf_alb', 'ptf_glob']) {
+                    const subExameAtual = exameAtual.subExames?.find(sub => sub.id === subExamId);
+                    const subExameAnterior = exameAnterior.subExames?.find(sub => sub.id === subExamId);
+
+                    if (subExameAtual?.value && subExameAnterior?.value) {
+                        const valorAtualNum = parseFloat(String(subExameAtual.value).replace(',', '.'));
+                        const valorAntigoNum = parseFloat(String(subExameAnterior.value).replace(',', '.'));
+
+                        if (!isNaN(valorAtualNum) && !isNaN(valorAntigoNum)) {
+                            let icone = '=';
+                            if (valorAtualNum > valorAntigoNum) icone = '↑';
+                            if (valorAtualNum < valorAntigoNum) icone = '↓';
+
+                            // Só adiciona se houver mudança
+                            if (icone !== '=') {
+                                ptfTendencias[subExamId] = {
+                                    icone: icone,
+                                    valorAntigo: subExameAnterior.value
+                                };
+                            }
+                        }
+                    }
+                }
+                // Atribui o objeto de tendências se ele não estiver vazio
+                if (Object.keys(ptfTendencias).length > 0) {
+                    exameAtual.tendencia = ptfTendencias;
+                }
+                return; // Finaliza o processamento para o PTF aqui
+            }
+
+            // Lógica padrão para outros exames. A conversão com parseFloat já ignora texto após o número.
+            valorAtualNum = parseFloat(String(exameAtual.value).replace(',', '.'));
+            valorAntigoNum = parseFloat(String(exameAnterior.value).replace(',', '.'));
+            valorAntigoParaExibir = exameAnterior.value;
+
 
             if (isNaN(valorAtualNum) || isNaN(valorAntigoNum)) {
                 return; // Pula se algum dos valores não for numérico
@@ -1602,7 +1681,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
 
             exameAtual.tendencia = {
                 icone: icone,
-                valorAntigo: exameAnterior.value
+                valorAntigo: valorAntigoParaExibir
             };
         });
     }
@@ -1610,7 +1689,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
     function mostrarHistoricoCompleto() {
         const nomePaciente = pegarNomePaciente(inputArea.value);
         if (!nomePaciente || nomePaciente === "Paciente Desconhecido") {
-            showToast("Não foi possível identificar o paciente no laudo atual.");
+            showToast("Para ver as tendências, primeiro analise um laudo para identificar o paciente.");
             return;
         }
 
@@ -1670,7 +1749,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
             }
 
             // --- NOVA LÓGICA DE TENDÊNCIA ---
-            if (mostrarTendencia && exame.tendencia && exame.tendencia.icone !== '=') {
+            if (mostrarTendencia && exame.tendencia && exame.tendencia.icone !== '=' && exame.id !== 'ptf') {
                 const textoTendencia = ` (${exame.tendencia.icone} ${exame.tendencia.valorAntigo})`;
                 // Adiciona a tendência antes da barra final, com ou sem asterisco
                 parte = parte.replace(/(\*? \/ )$/, `${textoTendencia}$1`);
