@@ -1434,7 +1434,7 @@
             const cacheKey = `ref_cache_${exameConfig.id}`;
             localStorage.setItem(cacheKey, JSON.stringify(referencia));
         } catch (e) {
-            console.warn("Não foi possível salvar a referência dinâmica no cache:", e);
+            // Silently ignore cache saving errors
         }
     } else if (exameConfig.ref) { // Se não achou dinâmica, usa a hardcoded como fallback
         origemReferencia = 'hardcoded';
@@ -1552,20 +1552,6 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         // Após encontrar os exames, calcula a tendência
         calcularTendenciaExames(pegarNomePaciente(texto));
         
-        // [NOVO DEBUG] Limpa o console e exibe uma tabela com os resultados detalhados
-        console.clear();
-        console.log("--- INÍCIO DO DEBUG DE EXAMES ---");
-        console.log("A tabela abaixo mostra o que o script extraiu para cada exame. Verifique as colunas 'ref_usada' e 'bloco' para os exames com erro.");
-        console.table(examesEncontradosGlobal.filter(e => e.value !== null).map(e => ({
-            label: e.label,
-            valor_extraido: e.value,
-            status_final: e.status,
-            origem_ref: e.debug?.origemReferencia || "N/A",
-            ref_usada: e.debug?.referenciaUtilizada ? JSON.stringify(e.debug.referenciaUtilizada) : "N/A",
-            bloco_analisado: e.debug?.textoBlocoAnalisado?.replace(/\s+/g, ' ').substring(0, 150) + '...'
-        })));
-        console.log("--- FIM DO DEBUG DE EXAMES ---");
-
         renderizarSidebar(examesEncontradosGlobal);
         gerarTextoFinal();
         btnVerHistoricoCompleto.disabled = false;
@@ -1634,7 +1620,6 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         if (historicoPaciente.length === 0) {
             // Limpa tendências antigas se não houver histórico
             examesEncontradosGlobal.forEach(exame => delete exame.tendencia);
-            console.log("Nenhum laudo anterior encontrado para comparação de tendência.");
             return;
         }
 
@@ -1950,7 +1935,6 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         );
 
         if (laudoDuplicado) {
-            console.log("Laudo duplicado detectado. Não será salvo novamente.");
             return; // Interrompe a função para não salvar a duplicata
         }
         // ---------------------------------
