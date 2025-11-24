@@ -1368,9 +1368,8 @@
             // Padrão 2: Intervalo genérico (ex: Potássio 3,5 ate 5,1)
             // Procura por um range que NÃO seja precedido por "Coleta:" para evitar pegar datas.
             match = textoReferencia.match(/(?<!Coleta:\s*[\d\/]{8,10}\s*-\s*[\d:]+\s*-\s*|Liberacao:\s*[\d\/]{8,10}\s*-\s*[\d:]+\s*-\s*)(-?\d[\d,.]+)\s*(?:a|ate|-)\s*(-?\d[\d,.]+)/i);
-            // [FIX] Padrão mais robusto: procura por um range que segue a palavra "referência" ou está no início da linha.
-            // Isso evita capturar ranges de idade ou outros números aleatórios.
-            match = textoReferencia.match(/(?:refer[êe]ncia:?|^\s*)[\s\S]*?(-?\d[\d,.]+)\s*(?:a|ate|-)\s*(-?\d[\d,.]+)/i);
+            // [FIX] Padrão mais robusto: procura por um range que segue a palavra "referência", limitando a busca para evitar capturar ranges de idade.
+            match = textoReferencia.match(/(?:refer[êe]ncia:?)[\s\S]{0,100}?(-?\d[\d,.]+)\s*(?:a|ate|-)\s*(-?\d[\d,.]+)/i);
             if (match && match[1] && match[2]) {
                 return { min: parseNum(match[1]), max: parseNum(match[2]) };
             }
@@ -1840,14 +1839,9 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
                     let displayHTML = valorAtualStr;
                     let icone = '';
                     let trendIs = 'neutral';
-
-                    // 1. Set cell color based on status (is it out of reference range?)
-                    if (exameNesteLaudo.status === CONSTS.STATUS.ALTERADO) {
-                        td.classList.add('tendencia-pior'); // This class makes the text red
-                    }
-
-                    // 2. Determine trend direction and corresponding icon color class
                     let iconColorClass = '';
+
+                    // Passo 1: Determinar a tendência ('pior', 'melhor', 'neutra') e o ícone ('↑', '↓')
                     const laudoAnterior = historicoPaciente[index + 1];
                     if (laudoAnterior) {
                         const exameAnterior = laudoAnterior.exames.find(e => e.id === examId);
@@ -1867,13 +1861,19 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
                         }
                     }
 
+                    // Passo 2: Definir a cor do TEXTO com base apenas no status (se está fora da referência)
+                    if (exameNesteLaudo.status === CONSTS.STATUS.ALTERADO) {
+                        td.classList.add('tendencia-pior'); // Vermelho se estiver fora da referência, independentemente da tendência
+                    }
+
+                    // Passo 3: Definir a cor do ÍCONE com base apenas na tendência
                     if (trendIs === 'pior') {
-                        iconColorClass = 'tendencia-pior'; // Red icon
+                        iconColorClass = 'tendencia-pior';
                     } else if (trendIs === 'melhor') {
-                        iconColorClass = 'tendencia-melhor'; // Green icon
+                        iconColorClass = 'tendencia-melhor';
                     }
                     
-                    // 3. Append icon with its independent color
+                    // Passo 4: Adicionar o ícone com sua cor independente
                     if (icone) {
                         displayHTML += `<span class="tendencia-icone ${iconColorClass}">${icone}</span>`;
                     }
