@@ -478,6 +478,27 @@
         #evolution-modal td { font-family: 'Courier New', Courier, monospace; }
         #evolution-modal .modal-actions { margin-top: 24px; justify-content: flex-end; }
         #evolution-modal .modal-actions button { flex-grow: 0; } /* Botão não estica */
+
+        /* --- Estilos Visuais da Tabela de Evolução --- */
+        #evolution-modal td.valor-aumentou { color: #e74c3c; } /* Vermelho para aumento */
+        #evolution-modal td.valor-diminuiu { color: #27ae60; } /* Verde para diminuição */
+        #evolution-modal .valor-alterado-tabela { font-weight: bold; color: #e74c3c; position: relative; }
+        #evolution-modal .valor-alterado-tabela::before {
+            content: '*';
+            position: absolute;
+            left: 2px;
+            top: 5px;
+            font-size: 14px;
+        }
+        #evolution-modal .tendencia-icone {
+            display: inline-block;
+            font-weight: bold;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        #evolution-modal .sparkline-cell { padding: 0 !important; vertical-align: middle; }
+        #evolution-modal .sparkline-svg { display: block; margin: auto; }
+        #evolution-modal .sparkline { stroke: var(--primary-color); stroke-width: 2; fill: rgba(52, 152, 219, 0.1); }
         /* Fim dos estilos do Modal de Histórico */
 
         .header-main {
@@ -1686,6 +1707,69 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         });
     }
 
+    function criarSparkline(valores) {
+        if (!valores || valores.length < 2) return '';
+
+        // 1. Parse all values to numbers, handling thousand separators and commas. Invalid values become NaN.
+        const numeros = valores.map(v => {
+            if (v === null || v === undefined) return null;
+            // Handle thousand separators (e.g., '1.213') and decimal commas (e.g., '1,5')
+            const valorLimpo = String(v).replace(/\.(?=.*\d{3}(?:,|$))/g, '').replace(',', '.');
+            return parseFloat(valorLimpo);
+        });
+
+        // 2. Filter for valid numbers to calculate min/max/range
+        const numerosValidos = numeros.filter(n => !isNaN(n));
+
+        // 3. We need at least two valid points to draw a line
+        if (numerosValidos.length < 2) return '';
+
+        const LARGURA = 100;
+        const ALTURA = 22;
+        const PADDING = 2;
+
+        const max = Math.max(...numerosValidos);
+        const min = Math.min(...numerosValidos);
+        let range = max - min;
+
+        // 4. Handle the case where all values are the same (range is 0) to avoid division by zero.
+        // Draw a flat line in the vertical middle.
+        if (range === 0) {
+            const y = ALTURA / 2;
+            const pathData = `M ${PADDING} ${y} L ${LARGURA - PADDING} ${y}`;
+            return `
+                <svg width="${LARGURA}" height="${ALTURA}" viewbox="0 0 ${LARGURA} ${ALTURA}" class="sparkline-svg">
+                    <path d="${pathData}" class="sparkline" />
+                </svg>
+            `;
+        }
+
+        // 5. Build the SVG path data, iterating over the original 'numeros' array to maintain spacing.
+        let pathData = '';
+        let primeiroPonto = true;
+        
+        numeros.forEach((n, i) => {
+            // Skip invalid or null numbers in the path
+            if (n === null || isNaN(n)) return;
+
+            // Calculate X based on index in the original array
+            const x = (i / (numeros.length - 1)) * (LARGURA - PADDING * 2) + PADDING;
+            // Calculate Y based on the value's position within the min/max range
+            const y = ALTURA - PADDING - ((n - min) / range) * (ALTURA - PADDING * 2);
+            
+            pathData += `${primeiroPonto ? 'M' : 'L'} ${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100} `;
+            primeiroPonto = false;
+        });
+
+        if (!pathData) return '';
+
+        return `
+            <svg width="${LARGURA}" height="${ALTURA}" viewbox="0 0 ${LARGURA} ${ALTURA}" class="sparkline-svg">
+                <path d="${pathData}" class="sparkline" />
+            </svg>
+        `;
+    }
+    
     function mostrarHistoricoCompleto() {
         const nomePaciente = pegarNomePaciente(inputArea.value);
         if (!nomePaciente || nomePaciente === "Paciente Desconhecido") {
@@ -1694,9 +1778,10 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         }
 
         const resultados = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
+        // Ordem do mais NOVO para o mais ANTIGO para a tabela
         const historicoPaciente = resultados
             .filter(r => r.paciente === nomePaciente && r.exames)
-            .sort((a, b) => new Date(a.dataCompleta) - new Date(b.dataCompleta)); // Do mais antigo para o mais novo
+            .sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
 
         if (historicoPaciente.length === 0) {
             showToast(`Nenhum histórico encontrado para ${nomePaciente}.`);
@@ -1709,26 +1794,87 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         const modalContent = document.getElementById('evolution-modal-content');
         document.getElementById('evolution-modal-title').textContent = `Histórico de Evolução: ${nomePaciente}`;
 
-        let tableHTML = '<table><thead><tr><th>Exame</th>';
-        historicoPaciente.forEach(laudo => {
-            tableHTML += `<th>${pegarData(laudo.originalInput)}</th>`;
-        });
-        tableHTML += '</tr></thead><tbody>';
+        const table = createElement('table');
+        const thead = createElement('thead');
+        const tbody =createElement('tbody');
 
+        // Cabeçalho da tabela
+        const headerRow = createElement('tr');
+        headerRow.appendChild(createElement('th', {}, ['Exame']));
+        historicoPaciente.forEach(laudo => {
+            headerRow.appendChild(createElement('th', {}, [pegarData(laudo.originalInput)]));
+        });
+        headerRow.appendChild(createElement('th', { style: 'text-align: center;' }, ['Tendência']));
+        thead.appendChild(headerRow);
+
+        // Corpo da tabela
         todosExamesIds.forEach(examId => {
             const examConfig = configExames.find(e => e.id === examId);
-            if (!examConfig || examConfig.tipo === 'texto' || examConfig.tipo === 'agrupador') return; // Pula não-numéricos
+            if (!examConfig || examConfig.tipo === 'texto' || (examConfig.tipo === 'agrupador' && examConfig.id !== 'ptf')) {
+                return;
+            }
 
-            tableHTML += `<tr><td>${examConfig.label}</td>`;
-            historicoPaciente.forEach(laudo => {
+            const dataRow = createElement('tr');
+            dataRow.appendChild(createElement('td', {}, [examConfig.label]));
+
+            const valoresParaSparkline = [];
+
+            historicoPaciente.forEach((laudo, index) => {
                 const exameNesteLaudo = laudo.exames.find(e => e.id === examId);
-                tableHTML += `<td>${exameNesteLaudo ? exameNesteLaudo.value : '-'}</td>`;
+                const valorAtualStr = exameNesteLaudo ? exameNesteLaudo.value : null;
+                valoresParaSparkline.push(valorAtualStr);
+
+                const td = createElement('td');
+                if (valorAtualStr === null) {
+                    td.textContent = '-';
+                } else {
+                    const valorAtualNum = parseFloat(String(valorAtualStr).replace(/\.(?=.*\d{3}(?:,|$))/g, '').replace(',', '.'));
+                    let displayHTML = valorAtualStr;
+
+                    if (exameNesteLaudo.status === CONSTS.STATUS.ALTERADO) {
+                        td.classList.add('valor-alterado-tabela');
+                    }
+                    
+                    // Compara o valor atual (mais novo) com o da coluna seguinte (mais antigo)
+                    const laudoAnterior = historicoPaciente[index + 1];
+                    if (laudoAnterior) {
+                        const exameAnterior = laudoAnterior.exames.find(e => e.id === examId);
+                        if (exameAnterior && exameAnterior.value !== null) {
+                            const valorAnteriorNum = parseFloat(String(exameAnterior.value).replace(/\.(?=.*\d{3}(?:,|$))/g, '').replace(',', '.'));
+
+                            if (!isNaN(valorAtualNum) && !isNaN(valorAnteriorNum)) {
+                                let icone = '';
+                                if (valorAtualNum > valorAnteriorNum) {
+                                    icone = '↑';
+                                    td.classList.add('valor-aumentou');
+                                } else if (valorAtualNum < valorAnteriorNum) {
+                                    icone = '↓';
+                                    td.classList.add('valor-diminuiu');
+                                }
+                                if (icone) {
+                                    displayHTML += `<span class="tendencia-icone">${icone}</span>`;
+                                }
+                            }
+                        }
+                    }
+                    td.innerHTML = displayHTML;
+                }
+                dataRow.appendChild(td);
             });
-            tableHTML += '</tr>';
+            
+            // Célula do Sparkline: inverte o array para a ordem cronológica correta (antigo -> novo)
+            const sparklineCell = createElement('td', { className: 'sparkline-cell' });
+            sparklineCell.innerHTML = criarSparkline(valoresParaSparkline.reverse());
+            dataRow.appendChild(sparklineCell);
+
+            tbody.appendChild(dataRow);
         });
 
-        tableHTML += '</tbody></table>';
-        modalContent.innerHTML = tableHTML;
+        table.appendChild(thead);
+        table.appendChild(tbody);
+
+        modalContent.innerHTML = ''; // Limpa conteúdo anterior
+        modalContent.appendChild(table);
 
         document.getElementById('evolution-modal-overlay').classList.add(CONSTS.MODAL_CLASS);
     }
