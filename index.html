@@ -903,10 +903,48 @@
         // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
         { id: 'glic', label: 'Glic', nomesBusca: ["Glicose", "Glicemia"], template: (v) => `Glic ${v} / `, ref: { min: 70, max: 99 } },
         { id: 'pcr', label: 'PCR', nomesBusca: ["Proteína C Reativa - PCR"], template: (v) => `PCR ${v} / `, ref: { min: -Infinity, max: 0.5 } }, // Em mg/dL
-        { id: 'lact', label: 'Lact', nomesBusca: ["Lactato"], template: (v) => `Lact ${v} / `, ref: { min: 0.5, max: 2.2 } },
-        { id: 'alb', label: 'Alb', nomesBusca: ["Albumina"], template: (v) => `Alb ${v} / `, ref: { min: 3.5, max: 5.0 } },
-        { id: 'pt', label: 'PT', nomesBusca: ["Proteinas Totais"], template: (v) => `PT ${v} / `, ref: { min: 6.0, max: 8.3 } },
-        { id: 'glob', label: 'Glob', nomesBusca: ["Globulina"], template: (v) => `Glob ${v} / `, ref: { min: 2.0, max: 3.5 } },
+        { id: 'lact', label: 'Lact', nomesBusca: ["Lactato"], template: (v) => `Lact ${v} / `, ref: { min: 0.5, max: 2.2 } },        
+        {
+            id: 'ptf',
+            label: 'PTF',
+            nomesBusca: ["Proteína Total e Frações", "Proteina Total e Fracoes"],
+            tipo: 'agrupador',
+            subExames: [
+                { 
+                    id: 'ptf_pt', 
+                    label: 'Proteínas', 
+                    // AQUI ESTAVA O ERRO: Adicionei versões sem acento
+                    nomesBusca: ["Proteinas", "Proteínas", "Proteinas Totais", "Proteínas Totais"], 
+                    ref: { min: 6.0, max: 8.3 } 
+                },
+                { 
+                    id: 'ptf_alb', 
+                    label: 'Albumina', 
+                    nomesBusca: ["Albumina"], 
+                    ref: { min: 3.5, max: 5.0 } 
+                },
+                { 
+                    id: 'ptf_glob', 
+                    label: 'Globulina', 
+                    nomesBusca: ["Globulina"], 
+                    ref: { min: 2.0, max: 3.5 } 
+                }
+            ],
+            template: (v, exame) => {
+                // Tenta pegar os valores dos sub-exames
+                const pt = exame.subExames.find(sub => sub.id === 'ptf_pt')?.value;
+                const alb = exame.subExames.find(sub => sub.id === 'ptf_alb')?.value;
+                const glob = exame.subExames.find(sub => sub.id === 'ptf_glob')?.value;
+
+                // Se encontrou Proteína OU Albumina, monta o formato detalhado
+                if (pt || alb) {
+                    // Usa '?' se algum valor específico estiver faltando
+                    return `PTF ${pt || '?'} (A ${alb || '?'}, G ${glob || '?'}) / `;
+                }
+                // Fallback padrão
+                return `PTF ${v} / `;
+            }
+        },
 
         // --- FUNÇÃO HEPÁTICA / BILI ---
         { id: 'bt', label: 'BT', nomesBusca: ["Bilirrubina Total"], template: (v) => `BT ${v} / `, ref: { min: 0.2, max: 1.2 }, ignorarBaixo: true },
@@ -1070,34 +1108,39 @@
         const { subExames } = exameConfig;
 
         const resultadosSubExames = subExames.map(sub => {
-            const nomeBusca = sub.nomesBusca[0]; // Usar o primeiro nome para a regex
-            const regex = new RegExp(`^\\s*${nomeBusca}\\s+([\\d.,]+|Negativo|Positivo|Normal|Ausentes|Presentes|Algumas|Raras|Inferior a [\\d,.]+)`, "im");
+            // Usa uma regex que busca o nome do sub-exame no início de uma linha (com ou sem espaços)
+            // e captura o primeiro valor numérico que encontrar depois dele.
+            const nomeBusca = sub.nomesBusca.map(n => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+            
+            // [CORREÇÃO] Regex mais robusta: aceita quebras de linha (\r\n), espaços e dois pontos (:) antes do número
+            const regex = new RegExp(`(?:^|[\\n\\r])\\s*(${nomeBusca})[\\s:]+([\\d.,]+)`, "im");
+            
             const match = textoParaAnalisar.match(regex);
 
-            if (!match || !match[1]) {
+            if (!match || !match[2]) {
                 return { ...sub, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
             }
 
-            const valorStr = match[1].replace(',', '.').trim();
+            const valorStrOriginal = match[2].trim();
+            const valorStrLimpo = valorStrOriginal.replace(',', '.');
 
             if (sub.tipo === 'texto') {
-                const status = valorStr.toLowerCase() === sub.ref.normal.toLowerCase() ? CONSTS.STATUS.NORMAL : CONSTS.STATUS.ALTERADO;
-                return { ...sub, value: valorStr, status };
+                const status = valorStrLimpo.toLowerCase() === sub.ref.normal.toLowerCase() ? CONSTS.STATUS.NORMAL : CONSTS.STATUS.ALTERADO;
+                return { ...sub, value: valorStrOriginal, status };
             }
 
-            const valorNum = parseFloat(valorStr.replace(/\.(?=.*\d{3})/g, '').replace(',', '.')); // Remove pontos de milhar, troca vírgula
+            const valorNum = parseFloat(valorStrLimpo.replace(/\.(?=.*\d{3})/g, '')); 
             if (isNaN(valorNum)) {
-                return { ...sub, value: valorStr, status: 'normal' }; // Se não for número, considera normal
+                return { ...sub, value: valorStrOriginal, status: 'normal' };
             }
             const status = isForaDoIntervalo(valorNum, sub.ref) ? CONSTS.STATUS.ALTERADO : CONSTS.STATUS.NORMAL;
-            return { ...sub, value: match[1].trim(), status }; // Usa o valor original com ponto para exibição
+            return { ...sub, value: valorStrOriginal, status };
         });
 
         if (resultadosSubExames.every(r => r.status === CONSTS.STATUS.NAO_ENCONTRADO)) {
             return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
         }
 
-        // O "valor" do agrupador é uma representação dos seus sub-resultados
         const alterados = resultadosSubExames.filter(sub => sub.status === 'alterado');
         const valorDisplay = alterados.length > 0
             ? alterados.map(sub => `${sub.label}: ${sub.value}`).join(', ')
@@ -1107,7 +1150,8 @@
             ...exameConfig,
             value: valorDisplay,
             status: alterados.length > 0 ? CONSTS.STATUS.ALTERADO : CONSTS.STATUS.NORMAL,
-            subExames: resultadosSubExames.filter(s => s.value !== null) // Armazena os sub-exames encontrados
+            // [IMPORTANTE] Retorna TODOS os sub-exames encontrados (não nulos) para o template usar
+            subExames: resultadosSubExames.filter(s => s.value !== null) 
         };
     }
 
