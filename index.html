@@ -1424,12 +1424,19 @@
     const valorNum = parseFloat(valorStr);
     let status = CONSTS.STATUS.NORMAL;
 
-    // LÓGICA DE REFERÊNCIA: Tenta extrair do bloco (dinâmica), se falhar, usa a do config (hardcoded).
+    // LÓGICA DE REFERÊNCIA: Tenta extrair do bloco (dinâmica). Se falhar, usa hardcoded. Salva a dinâmica no cache se encontrada.
     let referencia = extrairReferenciaDoBloco(textoBloco, sexoPaciente);
     let origemReferencia = 'nenhuma';
 
     if (referencia) {
         origemReferencia = 'dinamica';
+        // Salva a referência dinâmica no cache para futuro uso em análises de tendência.
+        try {
+            const cacheKey = `ref_cache_${exameConfig.id}`;
+            localStorage.setItem(cacheKey, JSON.stringify(referencia));
+        } catch (e) {
+            console.warn("Não foi possível salvar a referência dinâmica no cache:", e);
+        }
     } else if (exameConfig.ref) { // Se não achou dinâmica, usa a hardcoded como fallback
         origemReferencia = 'hardcoded';
         if (exameConfig.ref.M || exameConfig.ref.F) {
@@ -1832,9 +1839,15 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
                     const valorAtualNum = parseFloat(String(valorAtualStr).replace(/\.(?=.*\d{3}(?:,|$))/g, '').replace(',', '.'));
                     let displayHTML = valorAtualStr;
                     let icone = '';
-                    let finalColorClass = '';
-
                     let trendIs = 'neutral';
+
+                    // 1. Set cell color based on status (is it out of reference range?)
+                    if (exameNesteLaudo.status === CONSTS.STATUS.ALTERADO) {
+                        td.classList.add('tendencia-pior'); // This class makes the text red
+                    }
+
+                    // 2. Determine trend direction and corresponding icon color class
+                    let iconColorClass = '';
                     const laudoAnterior = historicoPaciente[index + 1];
                     if (laudoAnterior) {
                         const exameAnterior = laudoAnterior.exames.find(e => e.id === examId);
@@ -1853,17 +1866,16 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
                             }
                         }
                     }
-                    
-                    if (exameNesteLaudo.status === CONSTS.STATUS.ALTERADO) {
-                        finalColorClass = (trendIs === 'melhor') ? 'tendencia-melhor' : 'tendencia-pior';
-                    }
-                    
-                    if (finalColorClass) {
-                        td.classList.add(finalColorClass);
-                    }
 
+                    if (trendIs === 'pior') {
+                        iconColorClass = 'tendencia-pior'; // Red icon
+                    } else if (trendIs === 'melhor') {
+                        iconColorClass = 'tendencia-melhor'; // Green icon
+                    }
+                    
+                    // 3. Append icon with its independent color
                     if (icone) {
-                        displayHTML += `<span class="tendencia-icone ${finalColorClass}">${icone}</span>`;
+                        displayHTML += `<span class="tendencia-icone ${iconColorClass}">${icone}</span>`;
                     }
                     td.innerHTML = displayHTML;
                 }
