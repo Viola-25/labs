@@ -7,25 +7,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f8f9fa;
+            --bg-color: #f4f7f9;
             --card-bg: #fff;
-            --text-color: #2c3e50;
-            --primary-color: #007bff;
+            --text-color: #34495e;
+            --primary-color: #3498db;
             --primary-hover: #2980b9;
-            --secondary-color: #95a5a6;
-            --secondary-hover: #7f8c8d;
+            --secondary-color: #bdc3c7;
+            --secondary-hover: #95a5a6;
             --border-color: #e0e6ed;
-            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         }
         html.dark-mode {
-            --bg-color: #2c3e50;
-            --card-bg: #34495e;
+            --bg-color: #212c37;
+            --card-bg: #2c3a47;
             --text-color: #ecf0f1;
-            --primary-color: #0d6efd;
+            --primary-color: #3498db;
             --primary-hover: #5dade2;
-            --secondary-color: #7f8c8d;
-            --secondary-hover: #95a5a6;
-            --border-color: #4a6572;
+            --secondary-color: #5d6d7e;
+            --secondary-hover: #7f8c8d;
+            --border-color: #3e5162;
         }
         html.dark-mode .disclaimer {
             background-color: #4d442a;
@@ -59,7 +59,7 @@
         .container {
             background-color: var(--card-bg);
             border-radius: 12px;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--box-shadow); /* Sombra mais sutil */
             padding: 24px 32px;
             width: 100%;
             flex: 3; /* Ocupa 3 partes do espaço */
@@ -68,7 +68,7 @@
         .sidebar {
             background-color: var(--card-bg);
             border-radius: 12px;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--box-shadow); /* Sombra mais sutil */
             padding: 24px;
             width: 100%;
             flex: 1; /* Ocupa 1 parte do espaço */
@@ -119,11 +119,16 @@
             overflow-y: auto;
         }
         #lista-exames li {
-            padding: 8px 4px;
+            padding: 10px 8px;
             display: grid; /* Usar grid para melhor alinhamento */
             grid-template-columns: auto 1fr auto; /* Checkbox | Label | Valor */
             align-items: center;
             gap: 12px; /* Aumenta o espaçamento */
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        #lista-exames li:hover {
+            background-color: var(--bg-color);
         }
         #lista-exames label {
             cursor: pointer; /* Melhora UX */
@@ -201,10 +206,10 @@
         }
         button:active { transform: scale(0.98); }
         .btn-primary {
-            background: linear-gradient(45deg, var(--primary-color), var(--primary-hover));
+            background-color: var(--primary-color);
             color: white;
         }
-        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-primary:hover { background-color: var(--primary-hover); } /* Escurece no hover */
         .btn-secondary {
             background-color: transparent;
             color: var(--secondary-hover);
@@ -214,9 +219,18 @@
         /* Estilo para o botão em estado de carregamento */
         .btn-loading {
             cursor: not-allowed;
-            background: var(--secondary-color);
-            color: #fff;
+            background: var(--secondary-hover);
+            color: white;
             position: relative;
+            opacity: 0.8;
+        }
+        .btn-loading::after {
+            content: '...';
+            display: inline-block;
+            animation: loading-dots 1.4s infinite;
+        }
+        @keyframes loading-dots {
+            0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; }
         }
         #resultado {
             /* ... (estilos existentes) ... */
@@ -238,7 +252,7 @@
             word-wrap: break-word;
             transition: background-color 0.3s, border-color 0.3s;
         }
-        .copy-btn-individual {
+        .copy-btn-individual, .btn-recarregar {
             background: var(--secondary-color);
             color: white;
             border: none;
@@ -250,8 +264,7 @@
             font-size: 12px;
             flex-shrink: 0; /* Impede que o botão encolha */
         }
-        .btn-recarregar { background-color: #3498db; } /* Cor azul para diferenciar */
-        .copy-btn-individual:hover {
+        .copy-btn-individual:hover, .btn-recarregar:hover {
             opacity: 1;
             background-color: var(--primary-color);
         }
@@ -432,13 +445,50 @@
             justify-content: center;
         }
         /* Fim dos estilos do Modal */
-        .signature {
+
+        /* Estilos para o Modal de Histórico de Evolução */
+        #evolution-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001; /* Acima do outro modal */
+        }
+        #evolution-modal-overlay.show { display: flex; }
+        #evolution-modal {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 900px; /* Mais largo */
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #evolution-modal-content { overflow-y: auto; }
+        #evolution-modal table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        #evolution-modal th, #evolution-modal td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        #evolution-modal th { font-weight: 700; background-color: var(--bg-color); }
+        #evolution-modal td { font-family: 'Courier New', Courier, monospace; }
+        #evolution-modal .modal-actions { margin-top: 24px; justify-content: flex-end; }
+        #evolution-modal .modal-actions button { flex-grow: 0; } /* Botão não estica */
+        /* Fim dos estilos do Modal de Histórico */
+
+        .header-main {
             text-align: center;
-            font-size: 14px; /* Aumentei o tamanho da fonte */
+            margin-bottom: 24px;
+        }
+        .signature {
+            font-size: 14px;
             color: var(--secondary-hover);
             font-weight: 500;
-            margin-top: 4px; /* Pequeno espaço abaixo do título */
-            text-align: left; /* Alinhado com o título */
+            margin-top: 8px;
         }
         .download-section {
             margin-top: 24px;
@@ -470,116 +520,13 @@
         .theme-switch-wrapper[style*="font-size"] { font-size: 14px; /* Mantém o estilo específico onde necessário */
         }
 
-
-        /* Estilos para o Modal de Tendências */
-        #trend-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: none; /* Escondido por padrão */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        #trend-modal-overlay.show {
-            display: flex;
-        }
-        #trend-modal {
-            background-color: var(--card-bg);
-            padding: 24px 32px;
-            border-radius: 12px;
-            box-shadow: var(--box-shadow);
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .trend-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 16px;
-            margin-bottom: 16px;
-        }
-        #trend-modal-title {
-            margin: 0;
-            font-size: 20px;
-        }
-        #trend-modal-content {
-            overflow-y: auto;
-            line-height: 1.8;
-        }
-        .btn-close {
-            background: transparent;
-            border: none;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            color: var(--secondary-hover);
-            padding: 0 8px;
-        }
-        .trend-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 4px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .trend-item:last-child {
-            border-bottom: none;
-        }
-        .trend-date {
-            font-weight: 500;
-        }
-        .trend-value {
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: bold;
-        }
-        .trend-value.alterado {
-            color: #e74c3c;
-        }
-        .sidebar-actions-full-width {
-            display: flex;
-            margin-bottom: 16px;
-        }
-        .sidebar-actions-full-width button {
-            flex-grow: 1;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 10px;
-            font-size: 14px;
-            font-weight: 700;
-        }
-        .sidebar-actions-full-width button:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-        .trend-group-header {
-            font-weight: 700;
-            font-size: 16px;
-            padding: 12px 4px 4px;
-            border-bottom: 2px solid var(--primary-color);
-            margin-top: 16px;
-        }
-        .trend-group-header:first-child {
-            margin-top: 0;
-        }
-
     </style>
 </head>
 <body>
     <main class="page-wrapper">
         <div class="container"> <!-- Conteúdo Principal -->
-            <div class="header">
-                <div>
-                    <h1>Processador de Laudos</h1>
-                    <div class="signature">Feito por Enzo Viola - Turma XXVIII - MEDSC</div>
-                </div>
+            <div class="header header-main">
+                <h1>Processador de Laudos</h1>
                 <div class="theme-switch-wrapper">
                     <span>Modo Escuro</span>
                     <label class="theme-switch" for="theme-toggle" title="Alternar tema">
@@ -588,6 +535,7 @@
                     </label>
                 </div>
             </div>
+            <div class="signature">Feito por Enzo Viola - Turma XXVIII - MEDSC</div>
             <div class="instructions">
                 <p><strong>Como usar:</strong><br>
                 1. Na página do laudo, aperte <strong>CTRL+A</strong> (para selecionar tudo) e depois <strong>CTRL+C</strong> (para copiar).<br>
@@ -613,12 +561,13 @@
                             <div class="slider round"></div>
                         </label>
                     </div>
-                    <div class="theme-switch-wrapper">
-                        <span>Mostrar tendências</span>
-                        <label class="theme-switch" for="mostrar-tendencias-toggle" title="Comparar com o resultado anterior">
-                            <input type="checkbox" id="mostrar-tendencias-toggle">
+                    <div class="theme-switch-wrapper" style="margin-left: 16px;">
+                        <span>Comparar Evolução</span>
+                        <label class="theme-switch" for="comparar-historico-toggle" title="Mostra setas (↑/↓) comparando com o último laudo deste paciente">
+                            <input type="checkbox" id="comparar-historico-toggle">
                             <div class="slider round"></div>
                         </label>
+                        <button id="btn-ver-historico-completo" class="btn-secondary" style="padding: 4px 8px; font-size: 12px; margin-left: 8px; flex-grow: 0;" disabled>Ver Histórico Completo</button>
                     </div>
                 </div>
                 <div id="resultado"></div>
@@ -656,9 +605,6 @@
                 <button id="btn-selecionar-todos">Selecionar Todos</button>
                 <button id="btn-limpar-selecao">Limpar Seleção</button>
             </div>
-            <div class="sidebar-actions-full-width">
-                <button id="btn-analisar-tendencias" title="Analisar a tendência de todos os exames para o paciente atual">Analisar Tendências 📈</button>
-            </div>
             <ul id="lista-exames">
                 <li class="instructions">Analise um laudo para ver os exames aqui.</li>
             </ul>
@@ -673,6 +619,19 @@
             <div class="modal-actions">
                 <button id="btn-confirm-delete" class="btn-primary">Sim, apagar</button>
                 <button id="btn-cancel-delete" class="btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico de Evolução -->
+    <div id="evolution-modal-overlay">
+        <div id="evolution-modal">
+            <h3 id="evolution-modal-title">Histórico de Evolução</h3>
+            <div id="evolution-modal-content">
+                <!-- A tabela será inserida aqui via JS -->
+            </div>
+            <div class="modal-actions">
+                <button id="btn-close-evolution-modal" class="btn-secondary">Fechar</button>
             </div>
         </div>
     </div>
@@ -695,19 +654,6 @@
             Painel de Diagnóstico
         </button>
     </div>
-    <!-- Modal de Tendências -->
-    <div id="trend-modal-overlay">
-        <div id="trend-modal">
-            <div class="trend-modal-header">
-                <h3 id="trend-modal-title">Tendência do Exame</h3>
-                <button id="btn-close-trend-modal" class="btn-close" title="Fechar">&times;</button>
-            </div>
-            <div id="trend-modal-content">
-                <!-- Os dados da tendência serão injetados aqui -->
-            </div>
-        </div>
-    </div>
-
   <script>
     // =================================================================================
     // Processador de Laudos - Script Principal
@@ -740,7 +686,6 @@
     const listaRecentesDiv = document.getElementById('lista-recentes');
     const themeToggle = document.getElementById('theme-toggle');
     const marcarAlteradosToggle = document.getElementById('marcar-alterados-toggle');
-    const mostrarTendenciasToggle = document.getElementById('mostrar-tendencias-toggle');
     const toastEl = document.getElementById('toast');
 
     // Botões
@@ -753,15 +698,11 @@
     const btnCancelDelete = document.getElementById('btn-cancel-delete');
     const btnSelecionarTodos = document.getElementById('btn-selecionar-todos');
     const btnLimparSelecao = document.getElementById('btn-limpar-selecao');
-    const btnAnalisarTendencias = document.getElementById('btn-analisar-tendencias');
+    const btnVerHistoricoCompleto = document.getElementById('btn-ver-historico-completo');
 
-    // Modals
+    // Modal
     const modalOverlay = document.getElementById('confirmation-modal-overlay');
-    const trendModalOverlay = document.getElementById('trend-modal-overlay');
-    const trendModalTitle = document.getElementById('trend-modal-title');
-    const trendModalContent = document.getElementById('trend-modal-content');
-    const btnCloseTrendModal = document.getElementById('btn-close-trend-modal');
-    
+
     // Variáveis de estado
     let examesEncontradosGlobal = [];
     let toastTimeout;
@@ -775,10 +716,10 @@
         btnBaixarScript.addEventListener('click', baixarScript);
         filtroExamesInput.addEventListener('input', filtrarExames);
         marcarAlteradosToggle.addEventListener('change', gerarTextoFinal);
-        mostrarTendenciasToggle.addEventListener('change', gerarTextoFinal);
-        btnAnalisarTendencias.addEventListener('click', analisarTodasAsTendencias);
+        const compararHistoricoToggle = document.getElementById('comparar-historico-toggle');
+        compararHistoricoToggle.addEventListener('change', gerarTextoFinal);
 
-        // Event listeners para o histórico e modais
+        // Event listeners para o histórico e modal
         btnLimparHistorico.addEventListener('click', showConfirmationModal);
         btnConfirmDelete.addEventListener('click', handleConfirmDelete);
         btnCancelDelete.addEventListener('click', hideConfirmationModal);
@@ -787,13 +728,10 @@
         btnSelecionarTodos.addEventListener('click', () => selecionarTodosExames(true));
         btnLimparSelecao.addEventListener('click', () => selecionarTodosExames(false));
 
-        // Listeners do Modal de Tendência
-        btnCloseTrendModal.addEventListener('click', hideTrendModal);
-        trendModalOverlay.addEventListener('click', (event) => {
-            if (event.target === trendModalOverlay) {
-                hideTrendModal();
-            }
-        });
+        // Listeners do novo modal de evolução
+        btnVerHistoricoCompleto.addEventListener('click', mostrarHistoricoCompleto);
+        document.getElementById('btn-close-evolution-modal').addEventListener('click', () => document.getElementById('evolution-modal-overlay').classList.remove(CONSTS.MODAL_CLASS));
+
 
         // Botão de teste
         const btnRunTests = document.getElementById('btn-run-tests');
@@ -861,97 +799,6 @@
         renderizarResultadosRecentes();
         hideConfirmationModal();
         showToast('Histórico limpo com sucesso!');
-    }
-
-    function showTrendModal(title, allTrendsData) {
-        trendModalTitle.textContent = title;
-
-        const examLabels = Object.keys(allTrendsData);
-        
-        if (examLabels.length === 0) {
-            trendModalContent.innerHTML = '<p class="instructions">Nenhum dado histórico encontrado para os exames deste paciente.</p>';
-        } else {
-            let html = '';
-            examLabels.forEach(label => {
-                const trendData = allTrendsData[label];
-                if(trendData && trendData.length > 1) { // Só mostra se tiver mais de 1 resultado
-                    html += `<div class="trend-group-header">${label}</div>`;
-                    
-                    // Remove duplicados e ordena
-                    const uniqueData = Array.from(new Map(trendData.map(item => [`${item.date}-${item.value}`, item])).values());
-                    uniqueData.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                    html += uniqueData.map(item => {
-                        const [year, month, day] = item.date.split('-');
-                        const formattedDate = `${day}/${month}/${year}`;
-                        return `
-                            <div class="trend-item">
-                                <span class="trend-date">${formattedDate}</span>
-                                <span class="trend-value ${item.status === CONSTS.STATUS.ALTERADO ? 'alterado' : ''}">${item.value}</span>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            });
-            trendModalContent.innerHTML = html || '<p class="instructions">Nenhum exame com dados históricos suficientes (mínimo 2) para análise de tendência.</p>';
-        }
-        
-        trendModalOverlay.classList.add(CONSTS.MODAL_CLASS);
-    }
-
-    function hideTrendModal() {
-        trendModalOverlay.classList.remove(CONSTS.MODAL_CLASS);
-    }
-
-    function analisarTodasAsTendencias() {
-        const currentPatientName = pegarNomePaciente(inputArea.value);
-        if (!currentPatientName || currentPatientName === "Paciente Desconhecido") {
-            showToast("Não é possível analisar tendências sem um nome de paciente no laudo atual.");
-            return;
-        }
-
-        const examsToAnalyze = examesEncontradosGlobal.filter(e => e.tipo !== 'texto' && e.tipo !== 'agrupador');
-        if (examsToAnalyze.length === 0) {
-            showToast("Nenhum exame numérico encontrado no laudo atual para analisar tendência.");
-            return;
-        }
-
-        const historicalData = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
-        const patientHistory = historicalData.filter(entry => entry.originalInput && pegarNomePaciente(entry.originalInput) === currentPatientName);
-
-        if (patientHistory.length === 0) {
-            showToast("Nenhum histórico encontrado para este paciente.");
-            return;
-        }
-        
-        showToast(`Analisando ${patientHistory.length} laudo(s) do histórico...`);
-
-        setTimeout(() => {
-            const allTrends = {};
-            const todosNomesBuscaRegexStr = getConfigExames().flatMap(e => e.nomesBusca).sort((a, b) => b.length - a.length).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-
-            examsToAnalyze.forEach(examConfig => {
-                const trendData = patientHistory.map(entry => {
-                    const resultadoExame = analisarExame(examConfig, removerAcentos(entry.originalInput), pegarSexoPaciente(entry.originalInput), todosNomesBuscaRegexStr);
-                    if (resultadoExame && resultadoExame.value !== null) {
-                        return { date: entry.dataCompleta, value: resultadoExame.value, status: resultadoExame.status };
-                    }
-                    return null;
-                }).filter(Boolean);
-
-                // Adiciona o resultado atual
-                const dataAtual = pegarDataCompleta(inputArea.value);
-                if (examConfig && dataAtual) {
-                    trendData.push({ date: dataAtual, value: examConfig.value, status: examConfig.status });
-                }
-                
-                if (trendData.length > 1) { // Apenas inclui exames com mais de um ponto de dado
-                    allTrends[examConfig.label] = trendData;
-                }
-            });
-
-            showTrendModal(`Tendências para ${currentPatientName}`, allTrends);
-        }, 10);
     }
 
     function renderizarSidebar(exames) {
@@ -1335,64 +1182,55 @@
     }
     
     function analisarExameAgrupador(exameConfig, textoParaAnalisar, sexoPaciente) {
-    const { subExames } = exameConfig;
+        const { subExames } = exameConfig;
 
-    const resultadosSubExames = subExames.map(sub => {
-        // [CORREÇÃO] Ordena os nomes de busca do maior para o menor para evitar match parcial
-        // Ex: Evita que "Proteinas" dê match em "Proteinas Totais" e trave na palavra "Totais"
-        const nomesOrdenados = [...sub.nomesBusca].sort((a, b) => b.length - a.length);
-        
-        const nomeBusca = nomesOrdenados.map(n => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-        
-        // Regex ajustada: Aceita quebras de linha ou inicio de string, seguido do nome,
-        // seguido de qualquer pontuação ou espaço, até achar o número.
-        const regex = new RegExp(`(?:^|[\\n\\r])\\s*(${nomeBusca})[\\s\\S]*?([\\d.,]+)`, "im");
-        
-        const match = textoParaAnalisar.match(regex);
+        const resultadosSubExames = subExames.map(sub => {
+            // Usa uma regex que busca o nome do sub-exame no início de uma linha (com ou sem espaços)
+            // e captura o primeiro valor numérico que encontrar depois dele.
+            const nomeBusca = sub.nomesBusca.map(n => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+            
+            // [CORREÇÃO] Regex mais robusta: aceita quebras de linha (\r\n), espaços e dois pontos (:) antes do número
+            const regex = new RegExp(`(?:^|[\\n\\r])\\s*(${nomeBusca})[\\s:]+([\\d.,]+)`, "im");
+            
+            const match = textoParaAnalisar.match(regex);
 
-        if (!match || !match[2]) {
-            return { ...sub, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
-        }
-        
-        const valorStrOriginal = match[2].trim();
-        const valorStrLimpo = valorStrOriginal.replace(/\.(?=.*\d{3})/g, '').replace(',', '.'); // Limpa milhar antes
+            if (!match || !match[2]) {
+                return { ...sub, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
+            }
 
-        if (sub.tipo === 'texto') {
-             if (!sub.ref || !sub.ref.normal) { // Checa se a referência para texto existe
-                return { ...sub, value: valorStrOriginal, status: CONSTS.STATUS.NORMAL };
-             }
-             const status = valorStrLimpo.toLowerCase() === sub.ref.normal.toLowerCase() ? CONSTS.STATUS.NORMAL : CONSTS.STATUS.ALTERADO;
-             return { ...sub, value: valorStrOriginal, status };
+            const valorStrOriginal = match[2].trim();
+            const valorStrLimpo = valorStrOriginal.replace(',', '.');
+
+            if (sub.tipo === 'texto') {
+                const status = valorStrLimpo.toLowerCase() === sub.ref.normal.toLowerCase() ? CONSTS.STATUS.NORMAL : CONSTS.STATUS.ALTERADO;
+                return { ...sub, value: valorStrOriginal, status };
+            }
+
+            const valorNum = parseFloat(valorStrLimpo.replace(/\.(?=.*\d{3})/g, '')); 
+            if (isNaN(valorNum)) {
+                return { ...sub, value: valorStrOriginal, status: 'normal' };
+            }
+            const status = isForaDoIntervalo(valorNum, sub.ref) ? CONSTS.STATUS.ALTERADO : CONSTS.STATUS.NORMAL;
+            return { ...sub, value: valorStrOriginal, status };
+        });
+
+        if (resultadosSubExames.every(r => r.status === CONSTS.STATUS.NAO_ENCONTRADO)) {
+            return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
         }
 
-        const valorNum = parseFloat(valorStrLimpo); 
-        if (isNaN(valorNum)) {
-            return { ...sub, value: valorStrOriginal, status: 'normal' };
-        }
-        // Defensiva: Se não tiver ref, considera normal
-        if (!sub.ref) {
-            return { ...sub, value: valorStrOriginal, status: 'normal' };
-        }
-        const status = isForaDoIntervalo(valorNum, sub.ref) ? CONSTS.STATUS.ALTERADO : CONSTS.STATUS.NORMAL;
-        return { ...sub, value: valorStrOriginal, status };
-    });
-    
-    if (resultadosSubExames.every(r => r.status === CONSTS.STATUS.NAO_ENCONTRADO)) {
-        return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
+        const alterados = resultadosSubExames.filter(sub => sub.status === 'alterado');
+        const valorDisplay = alterados.length > 0
+            ? alterados.map(sub => `${sub.label}: ${sub.value}`).join(', ')
+            : 'Normal';
+
+        return {
+            ...exameConfig,
+            value: valorDisplay,
+            status: alterados.length > 0 ? CONSTS.STATUS.ALTERADO : CONSTS.STATUS.NORMAL,
+            // [IMPORTANTE] Retorna TODOS os sub-exames encontrados (não nulos) para o template usar
+            subExames: resultadosSubExames.filter(s => s.value !== null) 
+        };
     }
-
-    const alterados = resultadosSubExames.filter(sub => sub.status === 'alterado');
-    const valorDisplay = alterados.length > 0
-        ? alterados.map(s => `${s.label}: ${s.value}`).join(', ')
-        : 'Normal';
-
-    return {
-        ...exameConfig,
-        value: valorDisplay,
-        status: alterados.length > 0 ? CONSTS.STATUS.ALTERADO : CONSTS.STATUS.NORMAL,
-        subExames: resultadosSubExames.filter(s => s.value !== null) 
-    };
-}
 
     function extrairValorDoBloco(textoBloco, exameConfig, sexoPaciente) {
         const { nomesBusca, tipo, ignorarBaixo, id } = exameConfig;
@@ -1413,7 +1251,7 @@
             let match;
             
             // Procura por "Valor de referência" para ancorar a busca
-            const refAnchorMatch = textoBloco.match(/(?:Valor(?:es)? de refer[êe]ncia|V\.?R\.?|Ref\.?[\s:])/i);
+            const refAnchorMatch = textoBloco.match(/Valor(?:es)? de refer[êe]ncia/i);
             let textoReferencia = textoBloco; // Por padrão, analisa o bloco todo
 
             if (refAnchorMatch) {
@@ -1561,29 +1399,26 @@
 }
 
 function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REGEX_STR) {
-    // [CORREÇÃO] Também ordena aqui para garantir que a Regex principal seja robusta
-    const nomesBuscaAtuais = [...exameConfig.nomesBusca]
-        .sort((a, b) => b.length - a.length)
-        .map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-        
-    const todosNomesBuscaFiltrado = (TODOS_NOMES_BUSCA_REGEX_STR.split('|').filter(nome => !nomesBuscaAtuais.includes(nome)).join('|') + '|Leucograma');
+        const nomesBuscaAtuais = exameConfig.nomesBusca.map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+        const todosNomesBuscaFiltrado = (TODOS_NOMES_BUSCA_REGEX_STR.split('|').filter(nome => !nomesBuscaAtuais.includes(nome)).join('|') + '|Leucograma');
 
-    for (const nome of exameConfig.nomesBusca) { // Pode manter a iteração original, a regex interna resolve
-        const lblSemAcentos = removerAcentos(nome);
-        let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s/g, '\\s+');
-        
-        if (exameConfig.id === 'cea') {
-            regexStr = `(?:^|\\n\\s*)${regexStr}`;
+        for (const nome of exameConfig.nomesBusca) {
+            const lblSemAcentos = removerAcentos(nome);
+            let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s/g, '\\s+');
+            // Make CEA more specific to avoid matching "Ceac"
+            if (exameConfig.id === 'cea') {
+                // It must be at the start of a line, or preceded by a newline and optional whitespace.
+                regexStr = `(?:^|\\n\\s*)${regexStr}`;
+            }
+            if (nome.toLowerCase() === 'lactato') regexStr = 'Lactato(?! Arterial)';
+
+            // [BUG FIX FINAL] Regex ajustada para capturar o bloco inteiro corretamente, parando apenas em um novo título de exame ou na assinatura.
+            const re = new RegExp(`(^|\\n)(${regexStr}(?:\\s|\\n|\\r)*[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|$)`, "i");
+            const blocoMatch = textoParaAnalisar.match(re);
+            if (blocoMatch && blocoMatch[2]) return blocoMatch[2];
         }
-        if (nome.toLowerCase() === 'lactato') regexStr = 'Lactato(?! Arterial)'; // Lookahead negativo importante
-
-        // Regex refinada
-        const re = new RegExp(`(^|\\n)(${regexStr}(?:\\s|\\n|\\r)*[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|$)`, "i");
-        const blocoMatch = textoParaAnalisar.match(re);
-        if (blocoMatch && blocoMatch[2]) return blocoMatch[2];
+        return null;
     }
-    return null;
-}
 
     function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, todosNomesBuscaRegexStr) {
         const { tipo } = exameConfig;
@@ -1611,11 +1446,12 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
     function processar() {
         btnProcessar.disabled = true;
         btnProcessar.classList.add('btn-loading');
-        btnProcessar.textContent = 'Analisando...';
+        btnProcessar.textContent = 'Analisando';
 
         const texto = inputArea.value;
         if (!texto.trim()) {
             showToast("A área de texto está vazia.");
+            btnVerHistoricoCompleto.disabled = true;
             resetProcessarButton();
             return;
         }
@@ -1627,11 +1463,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
 
         const configExames = getConfigExames();
-                const todosNomesBuscaRegexStr = configExames
-            .flatMap(e => e.nomesBusca)
-            .sort((a, b) => b.length - a.length)
-            .map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
-            .join('|');
+        const todosNomesBuscaRegexStr = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
 
         const todosExames = configExames.map(exame => {
             if (exame.nomesBusca) {
@@ -1652,6 +1484,9 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
             exame.selected = exame.selected !== undefined ? exame.selected : !exame.optional;
             return exame;
         });
+
+        // Após encontrar os exames, calcula a tendência
+        calcularTendenciaExames(pegarNomePaciente(texto));
         
         // [NOVO DEBUG] Limpa o console e exibe uma tabela com os resultados detalhados
         console.clear();
@@ -1669,6 +1504,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
 
         renderizarSidebar(examesEncontradosGlobal);
         gerarTextoFinal();
+        btnVerHistoricoCompleto.disabled = false;
         salvarNoHistorico(); // Salva automaticamente após análise
         resetProcessarButton();
     }
@@ -1719,78 +1555,136 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
         }
     }
 
-    function getPreviousExamValue(currentPatientName, examConfig, dataAtual) {
-        const historicalData = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
-        if (!currentPatientName || historicalData.length < 1) {
-            return null;
-        }
+    function calcularTendenciaExames(nomePaciente) {
+        const resultados = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
+        const dataAtualLaudo = pegarDataCompleta(inputArea.value); // Pega a data do laudo atual
 
-        const patientHistory = historicalData
-            .filter(entry => entry.paciente === currentPatientName && entry.originalInput && entry.dataCompleta !== dataAtual)
+        const historicoPaciente = resultados
+            .filter(r => 
+                r.paciente === nomePaciente && 
+                r.exames &&
+                r.dataCompleta !== dataAtualLaudo // Exclui o laudo atual da busca por histórico
+            )
             .sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
 
-        // Itera sobre o histórico do paciente para encontrar o valor mais recente do exame específico
-        for (const entry of patientHistory) {
-            const textoSemAcentos = removerAcentos(entry.originalInput);
-            const sexoPaciente = pegarSexoPaciente(entry.originalInput);
-            const todosNomesBuscaRegexStr = getConfigExames().flatMap(e => e.nomesBusca).sort((a, b) => b.length - a.length).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-
-            const resultadoExameAnterior = analisarExame(examConfig, textoSemAcentos, sexoPaciente, todosNomesBuscaRegexStr);
-
-            if (resultadoExameAnterior && resultadoExameAnterior.value !== null) {
-                // Retorna o primeiro valor encontrado, que será o mais recente devido à ordenação
-                return resultadoExameAnterior.value;
-            }
+        if (historicoPaciente.length === 0) {
+            // Limpa tendências antigas se não houver histórico
+            examesEncontradosGlobal.forEach(exame => delete exame.tendencia);
+            console.log("Nenhum laudo anterior encontrado para comparação de tendência.");
+            return;
         }
 
-        return null; // Retorna null se nenhum valor anterior for encontrado
+        examesEncontradosGlobal.forEach(exameAtual => {
+            // Limpa tendência anterior
+            delete exameAtual.tendencia;
+
+            // Para cada exame atual, encontre o laudo mais recente no histórico que contenha esse exame.
+            const laudoAnteriorComExame = historicoPaciente.find(laudo => 
+                laudo.exames && laudo.exames.some(e => e.id === exameAtual.id && e.value !== null)
+            );
+
+            if (!laudoAnteriorComExame || exameAtual.tipo === 'texto' || exameAtual.tipo === 'agrupador') {
+                return; // Pula se não houver histórico para este exame específico, ou se for do tipo texto/agrupador
+            }
+
+            const exameAnterior = laudoAnteriorComExame.exames.find(e => e.id === exameAtual.id);
+
+            const valorAtualNum = parseFloat(String(exameAtual.value).replace(',', '.'));
+            const valorAntigoNum = parseFloat(String(exameAnterior.value).replace(',', '.').replace(/[^\d.-]/g, ''));
+
+            if (isNaN(valorAtualNum) || isNaN(valorAntigoNum)) {
+                return; // Pula se algum dos valores não for numérico
+            }
+
+            let icone = '=';
+            if (valorAtualNum > valorAntigoNum) icone = '↑';
+            if (valorAtualNum < valorAntigoNum) icone = '↓';
+
+            exameAtual.tendencia = {
+                icone: icone,
+                valorAntigo: exameAnterior.value
+            };
+        });
     }
 
+    function mostrarHistoricoCompleto() {
+        const nomePaciente = pegarNomePaciente(inputArea.value);
+        if (!nomePaciente || nomePaciente === "Paciente Desconhecido") {
+            showToast("Não foi possível identificar o paciente no laudo atual.");
+            return;
+        }
+
+        const resultados = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
+        const historicoPaciente = resultados
+            .filter(r => r.paciente === nomePaciente && r.exames)
+            .sort((a, b) => new Date(a.dataCompleta) - new Date(b.dataCompleta)); // Do mais antigo para o mais novo
+
+        if (historicoPaciente.length === 0) {
+            showToast(`Nenhum histórico encontrado para ${nomePaciente}.`);
+            return;
+        }
+
+        const todosExamesIds = new Set(historicoPaciente.flatMap(laudo => laudo.exames.map(ex => ex.id)));
+        const configExames = getConfigExames();
+
+        const modalContent = document.getElementById('evolution-modal-content');
+        document.getElementById('evolution-modal-title').textContent = `Histórico de Evolução: ${nomePaciente}`;
+
+        let tableHTML = '<table><thead><tr><th>Exame</th>';
+        historicoPaciente.forEach(laudo => {
+            tableHTML += `<th>${pegarData(laudo.originalInput)}</th>`;
+        });
+        tableHTML += '</tr></thead><tbody>';
+
+        todosExamesIds.forEach(examId => {
+            const examConfig = configExames.find(e => e.id === examId);
+            if (!examConfig || examConfig.tipo === 'texto' || examConfig.tipo === 'agrupador') return; // Pula não-numéricos
+
+            tableHTML += `<tr><td>${examConfig.label}</td>`;
+            historicoPaciente.forEach(laudo => {
+                const exameNesteLaudo = laudo.exames.find(e => e.id === examId);
+                tableHTML += `<td>${exameNesteLaudo ? exameNesteLaudo.value : '-'}</td>`;
+            });
+            tableHTML += '</tr>';
+        });
+
+        tableHTML += '</tbody></table>';
+        modalContent.innerHTML = tableHTML;
+
+        document.getElementById('evolution-modal-overlay').classList.add(CONSTS.MODAL_CLASS);
+    }
 
     function gerarTextoFinal() {
-        const dataLaudo = pegarData(inputArea.value);
-        const dataCompleta = pegarDataCompleta(inputArea.value)
-        const marcarAlterados = marcarAlteradosToggle.checked;
-        const mostrarTendencias = mostrarTendenciasToggle.checked;
-        const nomePaciente = mostrarTendencias ? pegarNomePaciente(inputArea.value) : null;
+    const dataLaudo = pegarData(inputArea.value);
+    const marcarAlterados = marcarAlteradosToggle.checked;
+    const mostrarTendencia = document.getElementById('comparar-historico-toggle').checked; // NOVO
+    
+    const partesResultado = examesEncontradosGlobal
+        .filter(exame => exame.selected)
+        .map(exame => {
+            let parte = exame.template(exame.value, exame); // Passa o objeto exame inteiro
+            
+            // Lógica existente de asterisco
+            if (marcarAlterados && exame.status === CONSTS.STATUS.ALTERADO) {
+                parte = parte.replace(/ \/ $/, '* / ');
+            }
 
-        const partesResultado = examesEncontradosGlobal
-            .filter(exame => exame.selected)
-            .map(exame => {
-                let parteOriginal = exame.template(exame.value, exame);
+            // --- NOVA LÓGICA DE TENDÊNCIA ---
+            if (mostrarTendencia && exame.tendencia && exame.tendencia.icone !== '=') {
+                const textoTendencia = ` (${exame.tendencia.icone} ${exame.tendencia.valorAntigo})`;
+                // Adiciona a tendência antes da barra final, com ou sem asterisco
+                parte = parte.replace(/(\*? \/ )$/, `${textoTendencia}$1`);
+            }
+            // -------------------------------
 
-                // Adiciona o asterisco para exames alterados, se a opção estiver marcada
-                if (marcarAlterados && exame.status === CONSTS.STATUS.ALTERADO) {
-                    parteOriginal = parteOriginal.replace(/ \/ $/, '* / ');
-                }
+            return parte;
+        });
 
-                // Lógica de Tendências
-                if (mostrarTendencias && nomePaciente && exame.tipo !== 'texto' && exame.tipo !== 'agrupador') {
-                    const valorAnteriorStr = getPreviousExamValue(nomePaciente, exame, dataCompleta);
-
-                    if (valorAnteriorStr !== null) {
-                        const valorAtualNum = parseFloat(String(exame.value).replace(',', '.'));
-                        const valorAnteriorNum = parseFloat(String(valorAnteriorStr).replace(',', '.'));
-
-                        if (!isNaN(valorAtualNum) && !isNaN(valorAnteriorNum)) {
-                            let tendencia = '-';
-                            if (valorAtualNum > valorAnteriorNum) tendencia = '↑';
-                            else if (valorAtualNum < valorAnteriorNum) tendencia = '↓';
-
-                            const tendenciaStr = ` (${valorAnteriorStr}${tendencia})`;
-                            // Insere a tendência antes da barra final
-                            parteOriginal = parteOriginal.replace(/ \/ $/, `${tendenciaStr} / `);
-                        }
-                    }
-                }
-                return parteOriginal;
-            });
-
-        let resultado = `>> ${dataLaudo ? dataLaudo + ': ' : ''}${partesResultado.join('')}`;
-
-        resultado = resultado.trim().replace(/\/$/, '').trim(); // Remove última barra e espaços
-
-        resultadoDiv.textContent = resultado.toUpperCase();
+    let resultado = `>> ${dataLaudo ? dataLaudo + ': ' : ''}${partesResultado.join('')}`;
+    
+    resultado = resultado.trim().replace(/\/$/, '').trim(); // Remove última barra e espaços
+    
+    resultadoDiv.textContent = resultado.toUpperCase();
     }
 
     function salvarNoHistorico() {
@@ -1802,12 +1696,28 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
 
     if (dataCompleta && resultadoFinal.length > 10 && texto.length > 50) { // Só salva se tiver dados significativos
         const resultadosRecentes = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
+        
+        // --- LÓGICA ANTI-DUPLICIDADE ---
+        // Verifica se já existe um laudo idêntico (mesmo paciente, data e conteúdo)
+        const laudoDuplicado = resultadosRecentes.some(
+            laudo => laudo.paciente === nomePaciente && 
+                     laudo.dataCompleta === dataCompleta &&
+                     laudo.originalInput === texto
+        );
+
+        if (laudoDuplicado) {
+            console.log("Laudo duplicado detectado. Não será salvo novamente.");
+            return; // Interrompe a função para não salvar a duplicata
+        }
+        // ---------------------------------
+
         const novoResultado = {
             id: Date.now(), // ID único para ordenação de grupos
             paciente: nomePaciente,
             dataCompleta: dataCompleta,
             resultado: resultadoFinal,
-            originalInput: texto // Salva o laudo original para testes futuros
+            originalInput: texto, // Salva o laudo original
+            exames: examesEncontradosGlobal // Salva os exames processados
         };
         resultadosRecentes.push(novoResultado);
         // Limita o histórico aos últimos 50 resultados para não sobrecarregar
@@ -1997,11 +1907,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
 
         laudosRecentes.forEach((laudo, index) => {
             const configExames = getConfigExames();
-                    const todosNomesBuscaRegexStr = configExames
-            .flatMap(e => e.nomesBusca)
-            .sort((a, b) => b.length - a.length)
-            .map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
-            .join('|');
+            const todosNomesBuscaRegexStr = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
             configExames.forEach(exame => {
                 // Para cada laudo, verifica o que a função de análise extrai AGORA
                 const resultadoAtual = analisarExame(exame, removerAcentos(laudo.originalInput), pegarSexoPaciente(laudo.originalInput), todosNomesBuscaRegexStr);
@@ -2035,11 +1941,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, TODOS_NOMES_BUSCA_REG
 
         testCases.forEach(test => {
             const configExames = getConfigExames();
-                    const todosNomesBuscaRegexStr = configExames
-            .flatMap(e => e.nomesBusca)
-            .sort((a, b) => b.length - a.length)
-            .map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
-            .join('|');
+            const todosNomesBuscaRegexStr = configExames.flatMap(e => e.nomesBusca).map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
             const examConfig = configExames.find(e => e.id === test.examId);
             if (!examConfig) {
                 testResultsEl.textContent += `❌ FALHA: ${test.description}\n   Motivo: Configuração de exame com ID '${test.examId}' não encontrada.\n\n`;
