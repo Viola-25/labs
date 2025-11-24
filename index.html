@@ -851,7 +851,12 @@
         }
         listaExamesUl.innerHTML = exames.map(exame => {
             // Para exames agrupadores como Urina I, mostra um valor simplificado na sidebar
-            const valorSidebar = (exame.tipo === 'agrupador') ? (exame.status === CONSTS.STATUS.ALTERADO ? 'Alterado' : 'Normal') : exame.value;
+            let valorSidebar;
+        if (exame.tipo === 'agrupador' || exame.tipo === 'microbiologia') {
+            valorSidebar = (exame.status === CONSTS.STATUS.ALTERADO ? 'Alterado' : 'Normal');
+        } else {
+            valorSidebar = exame.value;
+        }
             
             // [DEBUG] Monta o texto do tooltip de depuração
             const debugInfo = exame.debug || {};
@@ -1090,16 +1095,34 @@
                 return `HMC ${v} / `;
             } 
         },
-        { 
-            id: 'uroc', 
-            label: 'Urocultura',
-            nomesBusca: ["Cultura de Urina", "Urocultura"],
-            tipo: 'texto',
-            template: (v, exame) => (exame.value === 'SCB') ? 'Urocultura SCB / ' : `Urocultura ${v} / `
-        },
-
-        // --- ENDOCRINOLOGIA ---
-        { id: 'tsh', label: 'TSH', nomesBusca: ["TSH"], ref: { min: 0.4, max: 4.5 }, trendMeaning: 'higher_is_worse' }, // Simplificado
+                {
+                    id: 'uroc',
+                    label: 'Urocultura',
+                    nomesBusca: ["Cultura de Urina", "Urocultura"],
+                    tipo: 'texto',
+                    template: (v, exame) => (exame.value === 'SCB') ? 'Urocultura SCB / ' : `Urocultura ${v} / `
+                },
+                {
+                    id: 'cultura_aerobios',
+                    label: 'Cultura Aeróbios',
+                    nomesBusca: ["Cultura de Aeróbios"],
+                    tipo: 'microbiologia',
+                    template: (v) => {
+                        if (!v || v.length === 0) return 'Cultura Aeróbios: SCB / ';
+                        const material = v[0]?.material || 'N/A';
+                        const partes = v.map(microrganismo => {
+                            const sensiveis = microrganismo.sensiveis;
+                            const resistentes = microrganismo.resistentes;
+                            let str = microrganismo.nome;
+                            if (sensiveis.length > 0) str += ` (S: ${sensiveis.join(', ')})`;
+                            if (resistentes.length > 0) str += ` (R: ${resistentes.join(', ')})`;
+                            return str;
+                        });
+                        return `Cultura (${material}): ${partes.join(' + ')} / `;
+                    }
+                },
+        
+                // --- ENDOCRINOLOGIA ---        { id: 'tsh', label: 'TSH', nomesBusca: ["TSH"], ref: { min: 0.4, max: 4.5 }, trendMeaning: 'higher_is_worse' }, // Simplificado
         { id: 't4l', label: 'T4L', nomesBusca: ["T4 Livre"], ref: { min: 0.8, max: 1.8 } },
         { id: 't3l', label: 'T3L', nomesBusca: ["T3 Livre"], ref: { min: 2.0, max: 4.4 } },
         { id: 't3t', label: 'T3T', nomesBusca: ["T3 Total"], ref: { min: 80, max: 200 } },
@@ -1184,6 +1207,19 @@
     function pegarNomePaciente(texto) {
         const m = texto.match(/Paciente:\s*([^\n]+)/i);
         return m ? m[1].trim() : "Paciente Desconhecido";
+    }
+
+    function pegarDataComHora(texto) {
+        const dataMatch = texto.match(/Coleta:\s*([\d\/]{8,10})/i);
+        if (!dataMatch) return 'N/A';
+        const data = dataMatch[1].replace(/\/\d{4}$/, ''); // Formato DD/MM
+
+        // Tenta pegar a hora de "Liberação:" ou "Coleta:"
+        const horaMatch = texto.match(/(?:Liberacao:|Coleta:)\s*[\d\/]{8,10}\s*-?\s*(\d{1,2}):(\d{2})/i);
+        if (horaMatch) {
+            return `${data} ${horaMatch[1]}:${horaMatch[2]}`; // Retorna DD/MM HH:mm
+        }
+        return data; // Fallback para apenas data se a hora não for encontrada
     }
     // Pega a data completa para ordenação
     function pegarDataCompleta(texto) {
@@ -1471,8 +1507,75 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
         return null;
     }
 
+    function analisarExameMicrobiologia(exameConfig, textoCompleto) {
+        const { nomesBusca } = exameConfig;
+        const nomesBuscaSemAcentos = nomesBusca.map(nome => removerAcentos(nome));
+        const nomeBuscaRegex = new RegExp(`(?:^|\\n)(${nomesBuscaSemAcentos.join('|')})`, 'gi');
+        const resultados = [];
+        const textoSemAcentos = removerAcentos(textoCompleto);
+        
+        const partes = textoSemAcentos.split(nomeBuscaRegex);
+
+        if (partes.length <= 1) {
+            return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
+        }
+        
+        for (let i = 1; i < partes.length; i += 2) {
+            const bloco = partes[i+1];
+            if (!bloco) continue;
+
+            // Regex aprimorada para lidar com o erro de digitação "Materlal"
+            const materialMatch = bloco.match(/Mater(i|la)l:\s*([^\n\r]+)/i);
+            const material = materialMatch ? materialMatch[2].trim() : 'N/A';
+
+            const microrganismoMatch = bloco.match(/Microrganismo:\s*([^\n\r]+)/i);
+            if (!microrganismoMatch || removerAcentos(microrganismoMatch[1]).toLowerCase().includes('nao houve crescimento')) {
+                continue;
+            }
+            const nomeMicrorganismo = microrganismoMatch[1].trim();
+            
+            const sensiveis = [];
+            const resistentes = [];
+            
+            const antibiogramaMatch = bloco.match(/Antibiograma([\s\S]*?)(?=Notas:|Métodos utilizados:|Cultura de Aeróbios|$)/i);
+            if (antibiogramaMatch && antibiogramaMatch[1]) {
+                const tabelaTexto = antibiogramaMatch[1];
+                const linhasRegex = /^([A-Za-z\/].*?)\s+(S|R|I)\s*$/gm;
+                let linhaMatch;
+                while((linhaMatch = linhasRegex.exec(tabelaTexto)) !== null) {
+                    const antibiotico = linhaMatch[1].trim();
+                    const sensibilidade = linhaMatch[2];
+                    
+                    if (sensibilidade === 'S') sensiveis.push(antibiotico);
+                    else if (sensibilidade === 'R') resistentes.push(antibiotico);
+                }
+            }
+            
+            resultados.push({
+                nome: nomeMicrorganismo,
+                material: material,
+                sensiveis: sensiveis,
+                resistentes: resistentes,
+            });
+        }
+
+        if (resultados.length === 0) {
+            return { ...exameConfig, value: [], status: CONSTS.STATUS.NORMAL };
+        }
+
+        return {
+            ...exameConfig,
+            value: resultados,
+            status: CONSTS.STATUS.ALTERADO 
+        };
+    }
+
     function analisarExame(exameConfig, textoParaAnalisar, sexoPaciente, lookaheadRegexStr) {
         const { tipo } = exameConfig;
+
+        if (tipo === 'microbiologia') {
+            return analisarExameMicrobiologia(exameConfig, textoParaAnalisar);
+        }
 
         if (tipo === 'agrupador') {
             return analisarExameAgrupador(exameConfig, textoParaAnalisar, sexoPaciente);
@@ -1777,7 +1880,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
         const resultados = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
         const historicoPaciente = resultados
             .filter(r => r.paciente === nomePaciente && r.exames)
-            .sort((a, b) => new Date(b.dataCompleta) - new Date(a.dataCompleta));
+            .sort((a, b) => b.dataCompleta.localeCompare(a.dataCompleta));
 
         if (historicoPaciente.length === 0) {
             showToast(`Nenhum histórico encontrado para ${nomePaciente}.`);
@@ -1797,14 +1900,15 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
         const headerRow = createElement('tr');
         headerRow.appendChild(createElement('th', {}, ['Exame']));
         historicoPaciente.forEach(laudo => {
-            headerRow.appendChild(createElement('th', {}, [pegarData(laudo.originalInput)]));
+            // FIX: Usa a nova função para pegar data e hora para os cabeçalhos
+            headerRow.appendChild(createElement('th', {}, [pegarDataComHora(laudo.originalInput)]));
         });
         headerRow.appendChild(createElement('th', { style: 'text-align: center;' }, ['Tendência']));
         thead.appendChild(headerRow);
 
         todosExamesIds.forEach(examId => {
             const examConfig = configExames.find(e => e.id === examId);
-            if (!examConfig || examConfig.tipo === 'texto' || (examConfig.tipo === 'agrupador' && examConfig.id !== 'ptf')) {
+            if (!examConfig || (examConfig.tipo === 'agrupador' && examConfig.id !== 'ptf')) {
                 return;
             }
 
@@ -1816,19 +1920,27 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
             historicoPaciente.forEach((laudo, index) => {
                 const exameNesteLaudo = laudo.exames.find(e => e.id === examId);
                 const valorAtualStr = exameNesteLaudo ? exameNesteLaudo.value : null;
-                valoresParaSparkline.push(valorAtualStr);
-
+                
                 const td = createElement('td');
+
                 if (valorAtualStr === null) {
                     td.textContent = '-';
-                } else {
+                    valoresParaSparkline.push(null);
+                } else if (examConfig.tipo === 'microbiologia') {
+                    // FIX: Lógica para exibir resultados de microbiologia de forma legível
+                    const nomes = valorAtualStr.map(m => m.nome).join(', ');
+                    td.textContent = nomes || (valorAtualStr.length > 0 ? 'Cresc.' : 'SCB');
+                    td.title = JSON.stringify(valorAtualStr, null, 2);
+                    valoresParaSparkline.push(null); // Não adicionar ao sparkline
+                }
+                else {
+                    valoresParaSparkline.push(valorAtualStr);
                     const valorAtualNum = parseFloat(String(valorAtualStr).replace(/\.(?=.*\d{3}(?:,|$))/g, '').replace(',', '.'));
                     let displayHTML = valorAtualStr;
                     let icone = '';
                     let trendIs = 'neutral';
                     let iconColorClass = '';
 
-                    // Passo 1: Determinar a tendência ('pior', 'melhor', 'neutra') e o ícone ('↑', '↓')
                     const laudoAnterior = historicoPaciente[index + 1];
                     if (laudoAnterior) {
                         const exameAnterior = laudoAnterior.exames.find(e => e.id === examId);
@@ -1848,19 +1960,13 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
                         }
                     }
 
-                    // Passo 2: Definir a cor do TEXTO com base apenas no status (se está fora da referência)
                     if (exameNesteLaudo.status === CONSTS.STATUS.ALTERADO) {
-                        td.classList.add('tendencia-pior'); // Vermelho se estiver fora da referência, independentemente da tendência
+                        td.classList.add('tendencia-pior');
                     }
 
-                    // Passo 3: Definir a cor do ÍCONE com base apenas na tendência
-                    if (trendIs === 'pior') {
-                        iconColorClass = 'tendencia-pior';
-                    } else if (trendIs === 'melhor') {
-                        iconColorClass = 'tendencia-melhor';
-                    }
+                    if (trendIs === 'pior') iconColorClass = 'tendencia-pior';
+                    else if (trendIs === 'melhor') iconColorClass = 'tendencia-melhor';
                     
-                    // Passo 4: Adicionar o ícone com sua cor independente
                     if (icone) {
                         displayHTML += `<span class="tendencia-icone ${iconColorClass}">${icone}</span>`;
                     }
