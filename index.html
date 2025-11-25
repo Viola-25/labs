@@ -2064,7 +2064,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
         resultadosRecentes.push(novoResultado);
         
         // Ordena para garantir que laudos do mesmo dia fiquem juntos e por horário
-        resultadosRecentes.sort((a, b) => b.id.localeCompare(a.id));
+        resultadosRecentes.sort((a, b) => String(b.id).localeCompare(String(a.id)));
 
         localStorage.setItem(CONSTS.LOCAL_STORAGE_KEY, JSON.stringify(resultadosRecentes.slice(-50)));
         renderizarResultadosRecentes();
