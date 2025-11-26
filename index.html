@@ -480,12 +480,10 @@
         #evolution-modal .modal-actions button { flex-grow: 0; } /* Botão não estica */
 
         /* --- Estilos Visuais da Tabela de Evolução --- */
-        /* Colore o TEXTO da célula apenas se o valor estiver fora da referência */
-        #evolution-modal td.tendencia-pior { color: #e74c3c; font-weight: bold; }
+        /* Colore o NÚMERO apenas se o valor estiver fora da referência */
+        #evolution-modal .tendencia-pior { color: #e74c3c; font-weight: bold; }
 
-        /* Colore o ÍCONE da tendência independentemente da referência */
-        #evolution-modal .tendencia-icone.tendencia-pior { color: #e74c3c; }
-        #evolution-modal .tendencia-icone.tendencia-melhor { color: #27ae60; }
+        /* As setas de tendência não são mais coloridas por solicitação */
 
         #evolution-modal .valor-alterado-tabela { font-weight: bold; color: #e74c3c; position: relative; }
         #evolution-modal .valor-alterado-tabela::before {
@@ -1961,7 +1959,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
                     }
 
                     if (exameNesteLaudo.status === CONSTS.STATUS.ALTERADO) {
-                        td.classList.add('tendencia-pior');
+                        displayHTML = `<span class="tendencia-pior">${valorAtualStr}</span>`;
                     }
 
                     if (trendIs === 'pior') iconColorClass = 'tendencia-pior';
