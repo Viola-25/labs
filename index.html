@@ -987,8 +987,8 @@
 
         const config = [
     // --- HEMOGRAMA ---
-        { id: 'hb', label: 'Hb', nomesBusca: ["Hemoglobina"], ref: { M: { min: 13.5, max: 17.5 }, F: { min: 12.0, max: 15.5 } }, trendMeaning: 'higher_is_better' },
-        { id: 'ht', label: 'Ht', nomesBusca: ["Hematocrito"], ref: { M: { min: 40, max: 50 }, F: { min: 36, max: 46 } }, trendMeaning: 'higher_is_better' },
+        { id: 'hb', label: 'Hb', nomesBusca: ["Dosagem de Hemoglobina", "Hemoglobina"], ref: { min: 13.0, max: 17.0 }, trendMeaning: 'higher_is_better' },
+        { id: 'ht', label: 'Ht', nomesBusca: ["Dosagem de Hematócrito", "Hematocrito"], ref: { min: 40.0, max: 50.0 }, trendMeaning: 'higher_is_better' },
         { id: 'leuco', label: 'Leuco', nomesBusca: ["Leucocitos"], ref: { min: 4.0, max: 11.0 } }, // Neutro
         { id: 'n', label: 'N', nomesBusca: ["Neutrofilos"], ref: { min: 1.8, max: 7.7 } }, // Neutro
         { id: 'plaq', label: 'PLAQ', nomesBusca: ["Plaquetas"], ref: { min: 150, max: 450 } }, // Neutro
