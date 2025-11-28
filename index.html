@@ -857,15 +857,8 @@
             valorSidebar = exame.value;
         }
             
-            // [DEBUG] Monta o texto do tooltip de depuração
-            const debugInfo = exame.debug || {};
-            const blocoAnalisado = (debugInfo.textoBlocoAnalisado || 'N/A').replace(/\n/g, '\\n').substring(0, 200);
-            const refUtilizada = JSON.stringify(debugInfo.referenciaUtilizada || 'N/A');
-            const origemRef = debugInfo.origemReferencia || 'N/A';
-            const debugTitle = `[DEBUG INFO]\n- Origem Ref.: ${origemRef}\n- Ref. Usada: ${refUtilizada}\n- Bloco Analisado: "${blocoAnalisado}..."`;
-
             return `
-            <li title="${debugTitle}">
+            <li>
                 <input type="checkbox" id="${exame.id}" data-exame-id="${exame.id}" ${exame.selected ? 'checked' : ''}>
                 <label for="${exame.id}">${exame.label}</label>
                 <span class="exame-valor ${exame.status === CONSTS.STATUS.ALTERADO ? 'valor-alterado' : ''}">${valorSidebar}</span>
@@ -1007,6 +1000,13 @@
         { id: 'r', label: 'R', nomesBusca: ["Relacao paciente/normal"], ref: { min: 0.85, max: 1.20 } },
         { id: 'dimd', label: 'D-Dim', nomesBusca: ["D-Dimero", "D-Dimer"], ref: { min: -Infinity, max: 500 }, trendMeaning: 'higher_is_worse' },
 
+        // --- PERFIL DE ANEMIA E FERRO ---
+        { id: 'reti', label: 'Retic', nomesBusca: ["Contagem de Reticulócitos", "Reticulocitos", "RETI"], ref: { min: 0.5, max: 2.0 } },
+        { id: 'ferro', label: 'Ferro', nomesBusca: ["Ferro", "FER"], ref: { M: { min: 65, max: 175 }, F: { min: 50, max: 170 } } },
+        { id: 'ferritina', label: 'Ferritina', nomesBusca: ["Ferritina", "FERRI"], ref: { M: { min: 22.0, max: 322.0 }, F: { min: 10.0, max: 291.0 } } },
+        { id: 'transferrina', label: 'Transferrina', nomesBusca: ["Transferrina", "TRA"], ref: { M: { min: 215, max: 365 }, F: { min: 250, max: 380 } } },
+        { id: 'tibc', label: 'TIBC', nomesBusca: ["Capacidade total de ligação do ferro", "TIBC", "CAPFER"], ref: { min: 250, max: 425 } },
+
         // --- FUNÇÃO RENAL E ELETRÓLITOS ---
         { id: 'u', label: 'U', nomesBusca: ["Ureia", "Ureia, serica"], ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } }, trendMeaning: 'higher_is_worse' },
         { id: 'cr', label: 'Cr', nomesBusca: ["Creatinina", "Dosagem serica de Creatinina"], ref: { M: { min: 0.66, max: 1.25 }, F: { min: 0.52, max: 1.04 } }, trendMeaning: 'higher_is_worse' },
@@ -1072,14 +1072,23 @@
         { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase", "Gama Glutamil Transferase - GGT"], ref: { M: { min: 15, max: 73 }, F: { min: 12, max: 43 } }, trendMeaning: 'higher_is_worse' },
 
         // --- ENZIMAS CARDÍACAS ---
-        { id: 'trop', label: 'Trop', nomesBusca: ["Troponina I", "Troponina T", "Troponina Ultrassensivel"], ref: { min: -Infinity, max: 0.014 }, trendMeaning: 'higher_is_worse' },
-        { id: 'ckmb', label: 'CKMB', nomesBusca: ["CK-MB"], ref: { min: -Infinity, max: 25 }, trendMeaning: 'higher_is_worse' },
-        { id: 'ck', label: 'CK', nomesBusca: ["CK Total", "Creatinoquinase"], ref: { M: { min: 35, max: 200 }, F: { min: 30, max: 150 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'trop', label: 'Trop', nomesBusca: ["Troponina I de Alta Sensibilidade – hs TnI", "Troponina I", "Troponina T", "Troponina Ultrassensivel"], ref: { min: -Infinity, max: 19 }, trendMeaning: 'higher_is_worse' },
+        { id: 'ck', label: 'CK', nomesBusca: ["CK - Creatinofosfoquinase", "CK Total", "Creatinoquinase"], ref: { M: { min: 55, max: 170 }, F: { min: 30, max: 135 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'ckmb', label: 'CKMB', nomesBusca: ["Dosagem sérica de CKMB - Creatino Fosfoquinase", "CK-MB"], ref: { min: -Infinity, max: 16 }, trendMeaning: 'higher_is_worse' },
         { id: 'bnp', label: 'BNP', nomesBusca: ["BNP", "NT-proBNP", "Peptideo Natriuretico"], ref: { min: -Infinity, max: 100 }, trendMeaning: 'higher_is_worse' },
 
         // --- ENZIMAS PANCREÁTICAS ---
         { id: 'amil', label: 'Amil', nomesBusca: ["Amilase"], ref: { min: 25, max: 125 }, trendMeaning: 'higher_is_worse' },
         { id: 'lip', label: 'Lip', nomesBusca: ["Lipase"], ref: { min: 10, max: 140 }, trendMeaning: 'higher_is_worse' },
+
+        // --- SOROLOGIAS E CULTURAS ---
+        { id: 'hiv', label: 'HIV', nomesBusca: ["Anticorpos Anti-HIV", "HIV"], tipo: 'texto', template: v => 'HIV ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
+        { id: 'vdrl', label: 'VDRL', nomesBusca: ["Reação de VDRL", "VDRL"], tipo: 'texto', template: v => 'VDRL ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
+        { id: 'hcv', label: 'Anti-HCV', nomesBusca: ["Hepatite C, anticorpos", "HEPC"], tipo: 'texto', template: v => 'Anti-HCV ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
+        { id: 'hbsag', label: 'HBsAg', nomesBusca: ["Hepatite B, antígeno HBs (HBsAg)", "HBSG"], tipo: 'texto', template: v => 'HBsAg ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
+        { id: 'hbc_igm', label: 'Anti-HBc IgM', nomesBusca: ["Hepatite B, anticorpos anti-HBc IgM", "HBCM"], tipo: 'texto', template: v => 'Anti-HBc IgM ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
+        { id: 'hbs', label: 'Anti-HBs', nomesBusca: ["Hepatite B, anticorpos anti-HBs", "AHBS"], ref: { min: 10, max: Infinity } },
+        { id: 'cult_vig', label: 'Cultura Vig.', nomesBusca: ["Cultura de Vigilância", "CVIG", "CVIG2", "CVIG3"], tipo: 'texto', template: v => 'Cult Vig: ' + (v.toLowerCase().includes('nao houve crescimento') ? 'Neg / ' : `Pos (${v}) / `) },
 
         // --- MICROBIOLOGIA ---
         { 
@@ -1127,8 +1136,10 @@
         { id: 't3t', label: 'T3T', nomesBusca: ["T3 Total"], ref: { min: 80, max: 200 } },
         { id: 'atpo', label: 'Anti-TPO', nomesBusca: ["Anti-TPO"], ref: { min: -Infinity, max: 35 } },
         { id: 'atg', label: 'Anti-TG', nomesBusca: ["Anti-Tireoglobulina"], ref: { min: -Infinity, max: 40 } },
-        { id: 'vitd', label: 'Vit.D', nomesBusca: ["Vitamina D", "25-hidroxivitamina D", "Vitamina D3"], ref: { min: 20, max: 50 }, trendMeaning: 'higher_is_better' },
-        { id: 'pth', label: 'PTH', nomesBusca: ["PTH", "Paratormonio"], ref: { min: 15, max: 65 } },
+        { id: 'vitd', label: 'Vit.D', nomesBusca: ["Vitamina D Total 25 OH", "Vitamina D", "25-hidroxivitamina D", "Vitamina D3", "VD325OH"], ref: { min: 20, max: 50 }, trendMeaning: 'higher_is_better' },
+        { id: 'pth', label: 'PTH', nomesBusca: ["Dosagem sérica de PTH - Paratormônio", "PTH", "Paratormonio"], ref: { min: 18.5, max: 88.0 } },
+        { id: 'vitb12', label: 'Vit.B12', nomesBusca: ["Vitamina B12", "VB12"], ref: { min: 211, max: 911 } },
+        { id: 'afol', label: 'Ac.Fólico', nomesBusca: ["Ácido Fólico", "AFOL"], ref: { min: 5.38, max: Infinity } },
 
         // --- MARCADORES TUMORAIS ---
         { id: 'psa', label: 'PSA', nomesBusca: ["PSA", "Antigeno Prostatico Especifico"], ref: { min: -Infinity, max: 4.0 }, trendMeaning: 'higher_is_worse' },
@@ -1164,12 +1175,16 @@
             nomesBusca: ["Urina I", "Urina tipo I", "EAS"],
             tipo: 'agrupador',
             subExames: [
-                { id: 'u1ph', label: 'pH', nomesBusca: ["pH"], ref: { min: 5.0, max: 6.0 } },
                 { id: 'u1dens', label: 'Densidade', nomesBusca: ["Densidade"], ref: { min: 1005, max: 1030 } },
+                { id: 'u1ph', label: 'pH', nomesBusca: ["pH"], ref: { min: 5.0, max: 6.0 } },
+                { id: 'u1proteina', label: 'Proteína', nomesBusca: ["Proteina"], tipo: 'texto', ref: { normal: "Negativo" } },
+                { id: 'u1glicose', label: 'Glicose', nomesBusca: ["Glicose"], tipo: 'texto', ref: { normal: "Negativo" } },
+                { id: 'u1sangue', label: 'Sangue', nomesBusca: ["Sangue"], tipo: 'texto', ref: { normal: "Negativo" } },
+                { id: 'u1nitrito', label: 'Nitrito', nomesBusca: ["Nitrito"], tipo: 'texto', ref: { normal: "Negativo" } },
                 { id: 'u1leuco', label: 'Leucócitos', nomesBusca: ["Leucocitos"], ref: { min: -Infinity, max: 20000 } },
                 { id: 'u1hemacias', label: 'Hemácias', nomesBusca: ["Hemacias"], ref: { min: -Infinity, max: 20000 } },
-                { id: 'u1nitrito', label: 'Nitrito', nomesBusca: ["Nitrito"], tipo: 'texto', ref: { normal: "Negativo" } },
-                { id: 'u1proteina', label: 'Proteína', nomesBusca: ["Proteina"], tipo: 'texto', ref: { normal: "Negativo" } },
+                { id: 'u1cel_epi', label: 'Cél. Epiteliais', nomesBusca: ["Celulas epiteliais"], tipo: 'texto', ref: { normal: "Raras" } },
+                { id: 'u1bacterias', label: 'Bactérias', nomesBusca: ["Bacterias"], tipo: 'texto', ref: { normal: "Inferior a 1,0" } },
             ],
             template: (v, exame) => {
                 const alterados = exame.subExames.filter(sub => sub.status === 'alterado');
@@ -1272,7 +1287,7 @@
             const nomeBusca = sub.nomesBusca.map(n => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
             
             // [CORREÇÃO] Regex mais robusta: aceita quebras de linha (\r\n), espaços e dois pontos (:) antes do número
-            const regex = new RegExp(`(?:^|[\\n\\r])\\s*(${nomeBusca})[\\s:]+([\\d.,]+)`, "im");
+            const regex = new RegExp(`(?:^|[\\n\\r])\\s*(${nomeBusca})[\\s:]+([^\\n\\r<]+)`, "im");
             
             const match = textoParaAnalisar.match(regex);
 
@@ -1319,13 +1334,54 @@
 
         if (tipo === 'texto') {
             let valorTexto;
-            if (id === 'uroc' || id === 'hmc') { // Adiciona HMC à mesma lógica de extração de texto
-                valorTexto = (textoBloco.match(/(?:Resultado:|Microrganismo:)\s*([^\n]+)/i) || [])[1];
-            } else {
-                valorTexto = (textoBloco.match(/(?:Microrganismo:|Identificação[\s\S]*?Microrganismo:)\s*([^\n]+)/i) || [])[1] || (textoBloco.match(/(-?\d[\d,.-]*)/) || [])[1];
+
+            // Specific logic for uroculture partial results
+            if (id === 'uroc') {
+                const parcialMatch = textoBloco.match(/Resultado Parcial\s+([\s\S]+)/i);
+                if (parcialMatch) {
+                    let lines = parcialMatch[1].trim().split(/[\n\r]+/).filter(l => l.trim());
+                    // Filter out the unwanted note
+                    lines = lines.filter(l => !l.toLowerCase().includes('amostra coletada'));
+                    // Get the last two relevant pieces of information
+                    const info = lines.map(l => l.replace(/[\d\/]+\s*[\d:]+/, '').trim());
+                    valorTexto = info.slice(-2).join('; ');
+                }
             }
+
+            // If not a partial uroculture, or if the above failed, proceed with general logic
+            if (!valorTexto) {
+                // 1. Prioritize Microrganismo, as it's the most specific result
+                let match = textoBloco.match(/Microrganismo:\s+([^\n\r]+)/i);
+                valorTexto = match ? match[1] : null;
+
+                // 2. If no microrganism, check for serology/culture keywords
+                if (!valorTexto) {
+                    const naoReagenteMatch = textoBloco.match(/(N[aã]o Reagente)/i);
+                    const reagenteMatch = textoBloco.match(/(?<!N[aã]o\s)\b(Reagente)\b/i);
+                    const crescimentoMatch = textoBloco.match(/(?:Resultado:|Microrganismo:)\s*(N[aã]o houve crescimento)/i);
+
+                    if (naoReagenteMatch) {
+                        valorTexto = naoReagenteMatch[0];
+                    } else if (reagenteMatch) {
+                        valorTexto = reagenteMatch[0];
+                    } else if (crescimentoMatch) {
+                        valorTexto = crescimentoMatch[1]; // Use group 1 to get just the text
+                    }
+                }
+            }
+
             if (!valorTexto) return { ...exameConfig, value: null, status: CONSTS.STATUS.NAO_ENCONTRADO };
-            if (id === 'uroc' && (valorTexto.toLowerCase().includes("nao houve crescimento"))) return { ...exameConfig, value: 'SCB', status: CONSTS.STATUS.NORMAL };
+
+            // For HMC, the template handles 'SCB'
+            if (id === 'hmc' && valorTexto.toLowerCase().includes('coagulase negative staphylococcus')) {
+                return { ...exameConfig, value: 'Staphylo Coag Neg', status: CONSTS.STATUS.ALTERADO };
+            }
+            
+            // Handle special cases for uroculture
+            if (id === 'uroc' && (valorTexto.toLowerCase().includes("nao houve crescimento"))) {
+                return { ...exameConfig, value: 'SCB', status: CONSTS.STATUS.NORMAL };
+            }
+
             return { ...exameConfig, value: valorTexto.trim().replace(/\.$/, ''), status: CONSTS.STATUS.NORMAL };
         }
         function extrairReferenciaDoBloco(textoBloco, sexoPaciente) { // REFATORADO
@@ -1418,8 +1474,9 @@
 
         // Tenta diferentes padrões de regex sequencialmente
         const patterns = [
+            /Valor relativo\s+([\d,.-]+)/im,
             // Padrão para "Superior a 90" (TFG)
-            /Resultado\s+(Superior a\s+[\d,.-]+)/im,
+            /Resultado[\s\n\r]+(Superior a\s+[\d,.-]+)/im,
             // [BUG FIX] Padrão "Resultado 123" mais específico e priorizado
             /Resultado\s+([\d,.-]+)/im,
             // Regra especial para Neutrófilos e outros do leucograma: pegar o segundo valor numérico na linha
@@ -1499,7 +1556,7 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
             if (nome.toLowerCase() === 'lactato') regexStr = 'Lactato(?! Arterial)';
 
             // [BUG FIX FINAL] Regex ajustada para capturar o bloco inteiro corretamente, parando apenas em um novo título de exame ou na assinatura.
-            const re = new RegExp(`(^|\\n)(${regexStr}(?:\\s|\\n|\\r)*[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|$)`, "i");
+            const re = new RegExp(`(^|\\n)(${regexStr}(?:\\s|\\n|\\r)*[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|Problema ao visualizar|$)`, "i");
             const blocoMatch = textoParaAnalisar.match(re);
             if (blocoMatch && blocoMatch[2]) return blocoMatch[2];
         }
@@ -1611,11 +1668,18 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
         }
         const textoSemAcentos = removerAcentos(texto);
         const sexoPaciente = pegarSexoPaciente(texto);
+
+        // Extract specialized blocks
         const blocoUrina = (textoSemAcentos.match(/(Urina I|Urina tipo I|\bEAS\b)([\s\S]*?)(?=Cultura de Urina|Liberado por|$)/i) || [])[0] || "";
-        
         const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
         const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
 
+        // Create a general text block by removing the specialized ones to avoid context leakage
+        let textoPrincipal = textoSemAcentos;
+        if (blocoUrina) textoPrincipal = textoPrincipal.replace(blocoUrina, '');
+        if (blocoGasometriaArterial) textoPrincipal = textoPrincipal.replace(blocoGasometriaArterial, '');
+        if (blocoGasometriaVenosa) textoPrincipal = textoPrincipal.replace(blocoGasometriaVenosa, '');
+        
         const configExames = getConfigExames();
         
         // Otimização: Pré-calcular strings de regex para evitar trabalho repetido nas funções internas.
@@ -1632,7 +1696,10 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
 
         const todosExames = configExames.map(exame => {
             if (exame.nomesBusca) {
-                let textoParaAnalisar = textoSemAcentos;
+                // Default to the main text block, which has specialized sections removed
+                let textoParaAnalisar = textoPrincipal;
+
+                // Assign the full, un-redacted block for specialized parsers
                 if (exame.usaTextoArterial) textoParaAnalisar = blocoGasometriaArterial;
                 else if (exame.usaTextoVenoso) textoParaAnalisar = blocoGasometriaVenosa;
                 else if (exame.id === 'urina1') textoParaAnalisar = blocoUrina;
