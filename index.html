@@ -979,58 +979,27 @@
         if (cachedConfigExames) return cachedConfigExames;
 
         const config = [
+    // Ordem preferencial: HB/HT/LEUCO/PQT/UR/CR/PTF/NA/K/MG/BT(BD/BI)/TGO/TGP/GGT/FA/DHL/AMIL/PCR
     // --- HEMOGRAMA ---
-        { id: 'hb', label: 'Hb', nomesBusca: ["Dosagem de Hemoglobina", "Hemoglobina"], ref: { min: 13.0, max: 17.0 }, trendMeaning: 'higher_is_better' },
-        { id: 'ht', label: 'Ht', nomesBusca: ["Dosagem de Hematócrito", "Hematocrito"], ref: { min: 40.0, max: 50.0 }, trendMeaning: 'higher_is_better' },
-        { id: 'leuco', label: 'Leuco', nomesBusca: ["Leucocitos"], ref: { min: 4.0, max: 11.0 } }, // Neutro
-        { id: 'n', label: 'N', nomesBusca: ["Neutrofilos"], ref: { min: 1.8, max: 7.7 } }, // Neutro
-        { id: 'plaq', label: 'PLAQ', nomesBusca: ["Plaquetas"], ref: { min: 150, max: 450 } }, // Neutro
-        // --- HEMOGRAMA (OPCIONAIS) ---
+        { id: 'hb', label: 'HB', nomesBusca: ["Dosagem de Hemoglobina", "Hemoglobina"], ref: { min: 13.0, max: 17.0 }, trendMeaning: 'higher_is_better' },
+        { id: 'ht', label: 'HT', nomesBusca: ["Dosagem de Hematócrito", "Hematocrito"], ref: { min: 40.0, max: 50.0 }, trendMeaning: 'higher_is_better' },
         { id: 'vcm', label: 'VCM', nomesBusca: ["VCM"], optional: true, ref: { min: 80.0, max: 100.0 } },
         { id: 'hcm', label: 'HCM', nomesBusca: ["HCM"], optional: true, ref: { min: 27.0, max: 32.0 } },
         { id: 'chcm', label: 'CHCM', nomesBusca: ["CHCM"], optional: true, ref: { min: 31.5, max: 36.0 } },
         { id: 'rdw', label: 'RDW', nomesBusca: ["RDW"], optional: true, ref: { min: 11.9, max: 15.4 } },
-        { id: 'linf', label: 'Linf', nomesBusca: ["Linfocitos totais"], optional: true, ref: { min: 1.0, max: 4.0 } },
+        { id: 'leuco', label: 'LEUCO', nomesBusca: ["Leucocitos"], ref: { min: 4.0, max: 11.0 } },
+        { id: 'n', label: 'N', nomesBusca: ["Neutrofilos"], optional: true, ref: { min: 1.8, max: 7.7 } },
+        { id: 'linf', label: 'Linf', nomesBusca: ["Linfocitos totais", "Linfocitos"], optional: true, ref: { min: 1.0, max: 4.0 } },
         { id: 'mono', label: 'Mono', nomesBusca: ["Monocitos"], optional: true, ref: { min: 0.0, max: 0.8 } },
         { id: 'eos', label: 'Eos', nomesBusca: ["Eosinofilos"], optional: true, ref: { min: 0.0, max: 0.45 } },
         { id: 'baso', label: 'Baso', nomesBusca: ["Basofilos"], optional: true, ref: { min: 0.0, max: 0.2 } },
+        { id: 'plaq', label: 'PQT', nomesBusca: ["Plaquetas"], ref: { min: 150, max: 450 } },
         
-        // --- COAGULAÇÃO ---
-        { id: 'inr', label: 'INR', nomesBusca: ["RNI", "INR"], ref: { min: 1.0, max: 1.2 }, trendMeaning: 'higher_is_worse' },
-        { id: 'r', label: 'R', nomesBusca: ["Relacao paciente/normal"], ref: { min: 0.85, max: 1.20 } },
-        { id: 'dimd', label: 'D-Dim', nomesBusca: ["D-Dimero", "D-Dimer"], ref: { min: -Infinity, max: 500 }, trendMeaning: 'higher_is_worse' },
+    // --- FUNÇÃO RENAL E ELETRÓLITOS ---
+        { id: 'u', label: 'UR', nomesBusca: ["Ureia", "Ureia, serica"], ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'cr', label: 'CR', nomesBusca: ["Creatinina", "Dosagem serica de Creatinina"], ref: { M: { min: 0.66, max: 1.25 }, F: { min: 0.52, max: 1.04 } }, trendMeaning: 'higher_is_worse' },
 
-        // --- PERFIL DE ANEMIA E FERRO ---
-        { id: 'reti', label: 'Retic', nomesBusca: ["Contagem de Reticulócitos", "Reticulocitos", "RETI"], ref: { min: 0.5, max: 2.0 } },
-        { id: 'ferro', label: 'Ferro', nomesBusca: ["Ferro", "FER"], ref: { M: { min: 65, max: 175 }, F: { min: 50, max: 170 } } },
-        { id: 'ferritina', label: 'Ferritina', nomesBusca: ["Ferritina", "FERRI"], ref: { M: { min: 22.0, max: 322.0 }, F: { min: 10.0, max: 291.0 } } },
-        { id: 'transferrina', label: 'Transferrina', nomesBusca: ["Transferrina", "TRA"], ref: { M: { min: 215, max: 365 }, F: { min: 250, max: 380 } } },
-        { id: 'tibc', label: 'TIBC', nomesBusca: ["Capacidade total de ligação do ferro", "TIBC", "CAPFER"], ref: { min: 250, max: 425 } },
-
-        // --- FUNÇÃO RENAL E ELETRÓLITOS ---
-        { id: 'u', label: 'U', nomesBusca: ["Ureia", "Ureia, serica"], ref: { M: { min: 19, max: 43 }, F: { min: 15, max: 36 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'cr', label: 'Cr', nomesBusca: ["Creatinina", "Dosagem serica de Creatinina"], ref: { M: { min: 0.66, max: 1.25 }, F: { min: 0.52, max: 1.04 } }, trendMeaning: 'higher_is_worse' },
-	    { id: 'tfg', label: 'TFG', nomesBusca: ["TFG", "TFG - Taxa de Filtração Glomerular", "Ritmo de Filtracao Glomerular", "RFG"], optional: true, ref: { min: 90, max: Infinity }, trendMeaning: 'higher_is_better' },
-        { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], optional: true, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'na', label: 'Na', nomesBusca: ["Sódio"], ref: { min: 137, max: 145 } },
-        { id: 'k', label: 'K', nomesBusca: ["Potassio"], ref: { min: 3.5, max: 5.1 } },
-        { id: 'cl', label: 'Cl', nomesBusca: ["Cloro"], ref: { min: 98, max: 107 } },
-        { id: 'mg', label: 'Mg', nomesBusca: ["Magnésio"], ref: { min: 1.8, max: 2.4 } },
-        { id: 'cai', label: 'Cai', nomesBusca: ["Calcio Ionizado"], ref: { min: 1.12, max: 1.30 } },
-        { id: 'ca', label: 'Ca', nomesBusca: ["Calcio"], ref: { min: 8.4, max: 11.0 } },
-        { id: 'p', label: 'P', nomesBusca: ["Fosforo"], ref: { min: 2.5, max: 4.5 } },
-        
-        // --- PERFIL LIPÍDICO ---
-        { id: 'ct', label: 'CT', nomesBusca: ["Colesterol Total"], ref: { min: -Infinity, max: 190 }, trendMeaning: 'higher_is_worse' },
-        { id: 'hdl', label: 'HDL', nomesBusca: ["Colesterol HDL"], ref: { M: { min: 40, max: Infinity }, F: { min: 50, max: Infinity } }, trendMeaning: 'higher_is_better' },
-        { id: 'ldl', label: 'LDL', nomesBusca: ["Colesterol LDL"], ref: { min: -Infinity, max: 130 }, trendMeaning: 'higher_is_worse' },
-        { id: 'tg', label: 'TGL', nomesBusca: ["Triglicerides", "TGL"], ref: { min: -Infinity, max: 175 }, trendMeaning: 'higher_is_worse' },
-        { id: 'vldl', label: 'VLDL', nomesBusca: ["Colesterol VLDL"], ref: { min: -Infinity, max: 30 }, trendMeaning: 'higher_is_worse' },
- 
-        // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
-        { id: 'glic', label: 'Glic', nomesBusca: ["Glicose", "Glicemia"], ref: { min: 70, max: 99 }, trendMeaning: 'higher_is_worse' },
-        { id: 'pcr', label: 'PCR', nomesBusca: ["Proteína C Reativa - PCR"], ref: { min: -Infinity, max: 0.5 }, trendMeaning: 'higher_is_worse' },
-        { id: 'lact', label: 'Lact', nomesBusca: ["Lactato"], ref: { min: 0.5, max: 2.2 }, trendMeaning: 'higher_is_worse' },        
+    // --- BIOQUÍMICA GERAL / INFLAMATÓRIOS ---
         {
             id: 'ptf',
             label: 'PTF',
@@ -1060,28 +1029,84 @@
             }
         },
 
-        // --- FUNÇÃO HEPÁTICA / BILI ---
-        { id: 'bt', label: 'BT', nomesBusca: ["Bilirrubina Total"], ref: { min: 0.2, max: 1.2 }, ignorarBaixo: true, trendMeaning: 'higher_is_worse' },
-        { id: 'bd', label: 'BD', nomesBusca: ["Bilirrubina Direta"], optional: true, ref: { min: 0.0, max: 0.3 }, trendMeaning: 'higher_is_worse' },
-        { id: 'bi', label: 'BI', nomesBusca: ["Bilirrubina Indireta"], optional: true, ref: { min: 0.1, max: 0.8 }, trendMeaning: 'higher_is_worse' },
+    // --- ELETRÓLITOS ---
+        { id: 'na', label: 'NA', nomesBusca: ["Sódio"], ref: { min: 137, max: 145 } },
+        { id: 'k', label: 'K', nomesBusca: ["Potassio"], ref: { min: 3.5, max: 5.1 } },
+        { id: 'mg', label: 'MG', nomesBusca: ["Magnésio"], ref: { min: 1.8, max: 2.4 } },
+
+    // --- FUNÇÃO HEPÁTICA / BILI ---
+        {
+            id: 'bilirrubinas',
+            label: 'Bilirrubinas',
+            nomesBusca: ["Bilirrubina Total e Frações", "Bilirrubinas", "Bilirrubina Total"],
+            tipo: 'agrupador',
+            subExames: [
+                { id: 'bt', label: 'BT', nomesBusca: ["Bilirrubina Total"], ref: { min: 0.2, max: 1.2 }, ignorarBaixo: true, trendMeaning: 'higher_is_worse' },
+                { id: 'bd', label: 'BD', nomesBusca: ["Bilirrubina Direta"], ref: { min: 0.0, max: 0.3 }, trendMeaning: 'higher_is_worse' },
+                { id: 'bi', label: 'BI', nomesBusca: ["Bilirrubina Indireta"], ref: { min: 0.1, max: 0.8 }, trendMeaning: 'higher_is_worse' }
+            ],
+            template: (v, exame) => {
+                const bt = exame.subExames.find(sub => sub.id === 'bt')?.value || '?';
+                const bd = exame.subExames.find(sub => sub.id === 'bd')?.value || '?';
+                const bi = exame.subExames.find(sub => sub.id === 'bi')?.value || '?';
+                return `BT ${bt} (BD ${bd}, BI ${bi}) / `;
+            }
+        },
         { id: 'tgo', label: 'TGO', nomesBusca: ["TGO/AST", "AST", "TGO"], ref: { M: { min: 17, max: 59 }, F: { min: 14, max: 36 } }, trendMeaning: 'higher_is_worse' },
         { id: 'tgp', label: 'TGP', nomesBusca: ["TGP/ALT", "ALT", "TGP"], ref: { M: { min: -Infinity, max: 50 }, F: { min: -Infinity, max: 35 } }, trendMeaning: 'higher_is_worse' },
-        { id: 'fal', label: 'FAL', nomesBusca: ["Fosfatase Alcalina"], ref: { min: 30, max: 120 }, trendMeaning: 'higher_is_worse' },
-        { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lactica"], ref: { min: 120, max: 246 }, trendMeaning: 'higher_is_worse' },
-        { id: 'hba1c', label: 'HbA1c', nomesBusca: ["Hemoglobina Glicada", "HbA1c"], ref: { min: -Infinity, max: 5.7 }, trendMeaning: 'higher_is_worse' },
         { id: 'ggt', label: 'GGT', nomesBusca: ["Gama Glutamil Transferase", "Gama Glutamil Transferase - GGT"], ref: { M: { min: 15, max: 73 }, F: { min: 12, max: 43 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'fal', label: 'FA', nomesBusca: ["Fosfatase Alcalina"], ref: { min: 30, max: 120 }, trendMeaning: 'higher_is_worse' },
+        { id: 'dhl', label: 'DHL', nomesBusca: ["DHL", "Desidrogenase Lactica"], ref: { min: 120, max: 246 }, trendMeaning: 'higher_is_worse' },
+        
+    // --- ENZIMAS PANCREÁTICAS ---
+        { id: 'amil', label: 'AMIL', nomesBusca: ["Amilase"], ref: { min: 25, max: 125 }, trendMeaning: 'higher_is_worse' },
 
-        // --- ENZIMAS CARDÍACAS ---
+    // --- MARCADOR INFLAMATÓRIO ---
+        { id: 'pcr', label: 'PCR', nomesBusca: ["Proteína C Reativa - PCR"], ref: { min: -Infinity, max: 0.5 }, trendMeaning: 'higher_is_worse' },
+    
+    // --- RESTANTE (Mantido da lista original em ordem) ---
+    // --- COAGULAÇÃO ---
+        { id: 'inr', label: 'INR', nomesBusca: ["RNI", "INR"], ref: { min: 1.0, max: 1.2 }, trendMeaning: 'higher_is_worse' },
+        { id: 'r', label: 'R', nomesBusca: ["Relacao paciente/normal"], ref: { min: 0.85, max: 1.20 } },
+        { id: 'dimd', label: 'D-Dim', nomesBusca: ["D-Dimero", "D-Dimer"], ref: { min: -Infinity, max: 500 }, trendMeaning: 'higher_is_worse' },
+
+    // --- PERFIL DE ANEMIA E FERRO ---
+        { id: 'reti', label: 'Retic', nomesBusca: ["Contagem de Reticulócitos", "Reticulocitos", "RETI"], ref: { min: 0.5, max: 2.0 } },
+        { id: 'ferro', label: 'Ferro', nomesBusca: ["Ferro", "FER"], ref: { M: { min: 65, max: 175 }, F: { min: 50, max: 170 } } },
+        { id: 'ferritina', label: 'Ferritina', nomesBusca: ["Ferritina", "FERRI"], ref: { M: { min: 22.0, max: 322.0 }, F: { min: 10.0, max: 291.0 } } },
+        { id: 'transferrina', label: 'Transferrina', nomesBusca: ["Transferrina", "TRA"], ref: { M: { min: 215, max: 365 }, F: { min: 250, max: 380 } } },
+        { id: 'tibc', label: 'TIBC', nomesBusca: ["Capacidade total de ligação do ferro", "TIBC", "CAPFER"], ref: { min: 250, max: 425 } },
+
+    // --- OUTROS RENAL/ELETRÓLITOS ---
+	    { id: 'tfg', label: 'TFG', nomesBusca: ["TFG", "TFG - Taxa de Filtração Glomerular", "Ritmo de Filtracao Glomerular", "RFG"], optional: true, ref: { min: 90, max: Infinity }, trendMeaning: 'higher_is_better' },
+        { id: 'au', label: 'AU', nomesBusca: ["Acido Urico"], optional: true, ref: { M: { min: 3.5, max: 7.2 }, F: { min: 2.6, max: 6.0 } }, trendMeaning: 'higher_is_worse' },
+        { id: 'cl', label: 'Cl', nomesBusca: ["Cloro"], ref: { min: 98, max: 107 } },
+        { id: 'cai', label: 'Cai', nomesBusca: ["Calcio Ionizado"], ref: { min: 1.12, max: 1.30 } },
+        { id: 'ca', label: 'Ca', nomesBusca: ["Calcio"], ref: { min: 8.4, max: 11.0 } },
+        { id: 'p', label: 'P', nomesBusca: ["Fosforo"], ref: { min: 2.5, max: 4.5 } },
+        
+    // --- PERFIL LIPÍDICO ---
+        { id: 'ct', label: 'CT', nomesBusca: ["Colesterol Total"], ref: { min: -Infinity, max: 190 }, trendMeaning: 'higher_is_worse' },
+        { id: 'hdl', label: 'HDL', nomesBusca: ["Colesterol HDL"], ref: { M: { min: 40, max: Infinity }, F: { min: 50, max: Infinity } }, trendMeaning: 'higher_is_better' },
+        { id: 'ldl', label: 'LDL', nomesBusca: ["Colesterol LDL"], ref: { min: -Infinity, max: 130 }, trendMeaning: 'higher_is_worse' },
+        { id: 'tg', label: 'TGL', nomesBusca: ["Triglicerides", "TGL"], ref: { min: -Infinity, max: 175 }, trendMeaning: 'higher_is_worse' },
+        { id: 'vldl', label: 'VLDL', nomesBusca: ["Colesterol VLDL"], ref: { min: -Infinity, max: 30 }, trendMeaning: 'higher_is_worse' },
+ 
+    // --- OUTROS BIOQUÍMICA ---
+        { id: 'glic', label: 'Glic', nomesBusca: ["Glicose", "Glicemia"], ref: { min: 70, max: 99 }, trendMeaning: 'higher_is_worse' },
+        { id: 'lact', label: 'Lact', nomesBusca: ["Lactato"], ref: { min: 0.5, max: 2.2 }, trendMeaning: 'higher_is_worse' },        
+        { id: 'hba1c', label: 'HbA1c', nomesBusca: ["Hemoglobina Glicada", "HbA1c"], ref: { min: -Infinity, max: 5.7 }, trendMeaning: 'higher_is_worse' },
+
+    // --- ENZIMAS CARDÍACAS ---
         { id: 'trop', label: 'Trop', nomesBusca: ["Troponina I de Alta Sensibilidade – hs TnI", "Troponina I", "Troponina T", "Troponina Ultrassensivel"], ref: { min: -Infinity, max: 19 }, trendMeaning: 'higher_is_worse' },
         { id: 'ck', label: 'CK', nomesBusca: ["CK - Creatinofosfoquinase", "CK Total", "Creatinoquinase"], ref: { M: { min: 55, max: 170 }, F: { min: 30, max: 135 } }, trendMeaning: 'higher_is_worse' },
         { id: 'ckmb', label: 'CKMB', nomesBusca: ["Dosagem sérica de CKMB - Creatino Fosfoquinase", "CK-MB"], ref: { min: -Infinity, max: 16 }, trendMeaning: 'higher_is_worse' },
         { id: 'bnp', label: 'BNP', nomesBusca: ["BNP", "NT-proBNP", "Peptideo Natriuretico"], ref: { min: -Infinity, max: 100 }, trendMeaning: 'higher_is_worse' },
 
-        // --- ENZIMAS PANCREÁTICAS ---
-        { id: 'amil', label: 'Amil', nomesBusca: ["Amilase"], ref: { min: 25, max: 125 }, trendMeaning: 'higher_is_worse' },
+    // --- OUTRAS ENZIMAS ---
         { id: 'lip', label: 'Lip', nomesBusca: ["Lipase"], ref: { min: 10, max: 140 }, trendMeaning: 'higher_is_worse' },
 
-        // --- SOROLOGIAS E CULTURAS ---
+    // --- SOROLOGIAS E CULTURAS ---
         { id: 'hiv', label: 'HIV', nomesBusca: ["Anticorpos Anti-HIV", "HIV"], tipo: 'texto', template: v => 'HIV ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
         { id: 'vdrl', label: 'VDRL', nomesBusca: ["Reação de VDRL", "VDRL"], tipo: 'texto', template: v => 'VDRL ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
         { id: 'hcv', label: 'Anti-HCV', nomesBusca: ["Hepatite C, anticorpos", "HEPC"], tipo: 'texto', template: v => 'Anti-HCV ' + (v.toLowerCase().includes('nao reagente') ? 'NR / ' : `Reagente (${v}) / `) },
@@ -1090,7 +1115,7 @@
         { id: 'hbs', label: 'Anti-HBs', nomesBusca: ["Hepatite B, anticorpos anti-HBs", "AHBS"], ref: { min: 10, max: Infinity } },
         { id: 'cult_vig', label: 'Cultura Vig.', nomesBusca: ["Cultura de Vigilância", "CVIG", "CVIG2", "CVIG3"], tipo: 'texto', template: v => 'Cult Vig: ' + (v.toLowerCase().includes('nao houve crescimento') ? 'Neg / ' : `Pos (${v}) / `) },
 
-        // --- MICROBIOLOGIA ---
+    // --- MICROBIOLOGIA ---
         { 
             id: 'hmc', 
             label: 'HMC',
@@ -1130,7 +1155,8 @@
                     }
                 },
         
-                // --- ENDOCRINOLOGIA ---        { id: 'tsh', label: 'TSH', nomesBusca: ["TSH"], ref: { min: 0.4, max: 4.5 }, trendMeaning: 'higher_is_worse' }, // Simplificado
+    // --- ENDOCRINOLOGIA ---
+        { id: 'tsh', label: 'TSH', nomesBusca: ["TSH"], ref: { min: 0.4, max: 4.5 }, trendMeaning: 'higher_is_worse' }, // Simplificado
         { id: 't4l', label: 'T4L', nomesBusca: ["T4 Livre"], ref: { min: 0.8, max: 1.8 } },
         { id: 't3l', label: 'T3L', nomesBusca: ["T3 Livre"], ref: { min: 2.0, max: 4.4 } },
         { id: 't3t', label: 'T3T', nomesBusca: ["T3 Total"], ref: { min: 80, max: 200 } },
@@ -1141,7 +1167,7 @@
         { id: 'vitb12', label: 'Vit.B12', nomesBusca: ["Vitamina B12", "VB12"], ref: { min: 211, max: 911 } },
         { id: 'afol', label: 'Ac.Fólico', nomesBusca: ["Ácido Fólico", "AFOL"], ref: { min: 5.38, max: Infinity } },
 
-        // --- MARCADORES TUMORAIS ---
+    // --- MARCADORES TUMORAIS ---
         { id: 'psa', label: 'PSA', nomesBusca: ["PSA", "Antigeno Prostatico Especifico"], ref: { min: -Infinity, max: 4.0 }, trendMeaning: 'higher_is_worse' },
         { id: 'cea', label: 'CEA', nomesBusca: ["CEA", "Antigeno Carcinoembrionario"], ref: { min: -Infinity, max: 5.0 }, trendMeaning: 'higher_is_worse' },
         { id: 'afp', label: 'AFP', nomesBusca: ["Alfa-fetoproteína"], ref: { min: -Infinity, max: 10 }, trendMeaning: 'higher_is_worse' },
@@ -1150,7 +1176,7 @@
         { id: 'ca153', label: 'CA15-3', nomesBusca: ["CA 15-3"], ref: { min: -Infinity, max: 30 }, trendMeaning: 'higher_is_worse' },
         { id: 'bhcg', label: 'Beta-HCG', nomesBusca: ["Beta-HCG"], ref: { min: -Infinity, max: 5 }, trendMeaning: 'higher_is_worse' },
 
-        // --- GASOMETRIA ARTERIAL ---
+    // --- GASOMETRIA ARTERIAL ---
         { id: 'phart', label: 'pHart', nomesBusca: ["PH"], usaTextoArterial: true, ref: { min: 7.35, max: 7.45 } },
         { id: 'po2art', label: 'pO2art', nomesBusca: ["PO2"], usaTextoArterial: true, ref: { min: 80, max: 100 } },
         { id: 'pco2art', label: 'pCO2art', nomesBusca: ["PCO2"], usaTextoArterial: true, ref: { min: 35, max: 40 } },
@@ -1159,7 +1185,7 @@
         { id: 'beart', label: 'BEart', nomesBusca: ["Base Exces"], usaTextoArterial: true, ref: { min: -2, max: 2 } },
         { id: 'lactart', label: 'Lactart', nomesBusca: ["Lactato Arterial"], ref: { min: 0.5, max: 1.6 }, trendMeaning: 'higher_is_worse' },
         
-        // --- GASOMETRIA VENOSA ---
+    // --- GASOMETRIA VENOSA ---
         { id: 'phven', label: 'pHven', nomesBusca: ["PH"], usaTextoVenoso: true, ref: { min: 7.31, max: 7.41 } },
         { id: 'po2ven', label: 'pO2ven', nomesBusca: ["PO2"], usaTextoVenoso: true, ref: { min: 30, max: 40 } },
         { id: 'pco2ven', label: 'pCO2ven', nomesBusca: ["PCO2"], usaTextoVenoso: true, ref: { min: 41, max: 51 } },
@@ -1168,7 +1194,7 @@
         { id: 'beven', label: 'BEven', nomesBusca: ["Base Exces"], usaTextoVenoso: true, ref: { min: -2, max: 2 } },
         { id: 'lactven', label: 'Lactven', nomesBusca: ["Lactato"], usaTextoVenoso: true, ref: { min: 0.5, max: 2.2 }, trendMeaning: 'higher_is_worse' },
 
-        // --- URINA I (AGRUPADOR) ---
+    // --- URINA I (AGRUPADOR) ---
         {
             id: 'urina1',
             label: 'Urina I',
@@ -2101,38 +2127,33 @@ function extrairBlocoExame(textoParaAnalisar, exameConfig, todosNomesBuscaFiltra
             return; // Não salva se faltar dados essenciais
         }
 
-        const getSignature = (exames) => exames.map(e => `${e.id}:${e.value}`).sort().join('|');
-        const novaAssinatura = getSignature(novosExames);
-
         const resultadosRecentes = JSON.parse(localStorage.getItem(CONSTS.LOCAL_STORAGE_KEY) || '[]');
         
-        // Verifica se já existe um laudo idêntico (mesmo paciente, data e CONTEÚDO de exames)
-        const laudoDuplicado = resultadosRecentes.some(
-            laudo => laudo.paciente === nomePaciente &&
-                    laudo.dataCompleta.startsWith(dataHora.substring(0, 10)) && // Compara apenas a parte da data
-                    getSignature(laudo.exames) === novaAssinatura
-        );
-
-        if (laudoDuplicado) {
-            // Laudo com o mesmo conteúdo de exames já existe para este dia.
-            return;
-        }
-        
         const novoResultado = {
-            id: dataHora, // Usa a data/hora como ID para ordenação
+            id: dataHora, // Usa a data/hora como ID único
             paciente: nomePaciente,
-            dataCompleta: dataHora, // Salva a data e hora completas
+            dataCompleta: dataHora,
             resultado: resultadoFinal,
             originalInput: texto,
             exames: novosExames
         };
 
-        resultadosRecentes.push(novoResultado);
+        // Procura por um laudo com o mesmo ID (data e hora)
+        const existingIndex = resultadosRecentes.findIndex(laudo => laudo.id === dataHora);
+
+        if (existingIndex > -1) {
+            // Se encontrou, substitui o laudo antigo pelo novo
+            resultadosRecentes[existingIndex] = novoResultado;
+        } else {
+            // Se não encontrou, adiciona o novo laudo
+            resultadosRecentes.push(novoResultado);
+        }
         
-        // Ordena para garantir que laudos do mesmo dia fiquem juntos e por horário
+        // Ordena para garantir que os mais recentes fiquem no topo
         resultadosRecentes.sort((a, b) => String(b.id).localeCompare(String(a.id)));
 
-        localStorage.setItem(CONSTS.LOCAL_STORAGE_KEY, JSON.stringify(resultadosRecentes.slice(-50)));
+        // Limita o histórico aos 50 laudos mais recentes
+        localStorage.setItem(CONSTS.LOCAL_STORAGE_KEY, JSON.stringify(resultadosRecentes.slice(0, 50)));
         renderizarResultadosRecentes();
     }
 
