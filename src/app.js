@@ -5,11 +5,15 @@ import { removerAcentos, limparNumero, parseNum, areValuesEqual } from './utils/
 import { getJson, setJson, safeDeepClone } from './utils/storage.js';
 import { showToast } from './ui/toast.js';
 import { loadTheme } from './ui/theme.js';
-import { showConfirmationModal, hideConfirmationModal, showEvolutionModal } from './ui/modals.js';
+import { showConfirmationModal, hideConfirmationModal, showEvolutionModal, showDebugModal, hideDebugModal } from './ui/modals.js';
 import { renderizarSidebar, filtrarExames } from './ui/sidebar.js';
 import { renderizarResultadosRecentes, handleHistoricoClick, createElement } from './ui/history.js';
+import { createSession, setInput, setOutput, setProfile, setExams, buildReport } from './utils/debug.js';
 
 const LOCAL_STORAGE_KEY = 'resultadosRecentes';
+
+let ultimoDebug = null;
+window.__ultimoDebug = ultimoDebug;
 
 const $ = (id) => document.getElementById(id);
 
@@ -80,6 +84,30 @@ function copiarTexto(texto) {
   }
 }
 
+function gerarDebugTexto() {
+  if (!ultimoDebug) {
+    showToast('Execute uma análise primeiro.');
+    return;
+  }
+  if ($('debug-report-inline')) {
+    $('debug-report-inline').textContent = buildReport(ultimoDebug);
+    $('debug-report-inline').style.display = 'block';
+  }
+  if ($('debug-output')) {
+    $('debug-output').textContent = buildReport(ultimoDebug);
+  }
+}
+
+function copiarDebug() {
+  if (!ultimoDebug) {
+    showToast('Execute uma análise primeiro.');
+    return;
+  }
+  copiarTexto(buildReport(ultimoDebug))
+    .then(() => showToast('Debug copiado!'))
+    .catch(() => showToast('Falha ao copiar.'));
+}
+
 function processar() {
   const texto = el.inputArea.value;
   if (!texto.trim()) {
@@ -91,10 +119,14 @@ function processar() {
   setProcessarLoading();
   state.lastInput = texto;
 
+  const session = createSession();
+  setInput(session, texto);
+  session.ultimoParserId = null;
+
   try {
     const textoSemAcentos = removerAcentos(texto);
-
     let parser;
+
     if (el.selectParser && el.selectParser.value !== 'auto') {
       parser = getParserById(el.selectParser.value);
     } else {
@@ -107,6 +139,8 @@ function processar() {
     }
 
     state.ultimoParser = parser;
+    session.ultimoParserId = parser.id;
+    setProfile(session, { id: parser.id, nome: parser.nome, estrategia: 'auto' });
 
     const result = parser.processar(texto, configExames);
 
@@ -122,12 +156,26 @@ function processar() {
     gerarTextoFinal();
     el.btnVerHistoricoCompleto.disabled = false;
     salvarNoHistorico();
+
+    setExams(session, state.examesEncontrados);
+    setOutput(session, el.resultadoDiv.textContent);
+    session.resultado = 'sucesso';
   } catch (err) {
-    showToast('Erro ao processar o laudo. Verifique o texto e tente novamente.');
+    session.resultado = 'erro';
+    session.erroMensagem = err.message;
+    session.erroStack = err.stack;
+
+    ultimoDebug = session;
+    window.__ultimoDebug = session;
+    gerarDebugTexto();
+
+    showToast('Erro ao processar. Abra "Painel de Diagnóstico" e clique em "Copiar Debug" para reportar.');
     state.examesEncontrados = [];
     renderizarSidebar([]);
     el.resultadoDiv.textContent = '';
   } finally {
+    ultimoDebug = session;
+    window.__ultimoDebug = session;
     resetProcessarButton();
   }
 }
@@ -426,13 +474,6 @@ function baixarScript() {
   showToast('Download iniciado!');
 }
 
-function toggleTestSection() {
-  const testSection = document.querySelector('.dev-section details');
-  if (testSection) {
-    testSection.open = !testSection.open;
-  }
-}
-
 function generateStaticTestCases() {
   const staticCases = [];
   configExames.forEach(exame => {
@@ -566,7 +607,7 @@ export function init() {
   el.btnProcessar.addEventListener('click', processar);
   el.btnCopiarResultado.addEventListener('click', copiarResultado);
   el.btnLimparCampos.addEventListener('click', limparTudo);
-  document.getElementById('btn-baixar')?.addEventListener('click', baixarScript);
+  $('btn-baixar')?.addEventListener('click', baixarScript);
   el.filtroExamesInput.addEventListener('input', filtrarExamesUI);
   el.marcarAlteradosToggle.addEventListener('change', gerarTextoFinal);
   if (el.compararHistoricoToggle) {
@@ -584,6 +625,9 @@ export function init() {
   $('btn-close-evolution-modal')?.addEventListener('click', () => {
     $('evolution-modal-overlay')?.classList.remove('show');
   });
+  $('btn-close-debug-modal')?.addEventListener('click', () => {
+    $('debug-modal-overlay')?.classList.remove('show');
+  });
 
   if (el.selectParser) {
     el.selectParser.addEventListener('change', () => {
@@ -591,6 +635,18 @@ export function init() {
     });
   }
 
+  ['confirmation-modal-overlay', 'evolution-modal-overlay', 'debug-modal-overlay'].forEach(id => {
+    $(id)?.addEventListener('click', (e) => {
+      if (e.target === $(id)) $(id).classList.remove('show');
+    });
+  });
+
   $('btn-run-tests')?.addEventListener('click', runTests);
-  $('btn-toggle-tests')?.addEventListener('click', toggleTestSection);
+  $('btn-refresh-debug')?.addEventListener('click', gerarDebugTexto);
+  $('btn-copy-debug')?.addEventListener('click', copiarDebug);
+  $('btn-copy-debug-inline')?.addEventListener('click', copiarDebug);
+  $('btn-open-debug-modal')?.addEventListener('click', () => {
+    gerarDebugTexto();
+    showDebugModal();
+  });
 }

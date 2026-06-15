@@ -146,7 +146,7 @@ export class BaseParser {
         }
       }
     }
-    match = textoReferencia.match(/(?:refer[êe]ncia:?)[\s\S]{0,100}?(-?\d[\d,.]+)\s*(?:a|ate|-)\s*(-?\d[\d,.]+)/i);
+    match = textoReferencia.match(/(?:refer[êe]ncia:?)[\s\S]{0,100}?(-?\d[\d,.]*)\s*(?:a|ate|-)\s*(-?\d[\d,.]*)/i);
     if (match && match[1] && match[2]) {
       return { min: parseNum(match[1]), max: parseNum(match[2]) };
     }
@@ -364,7 +364,13 @@ export class BaseParser {
   }
 
   extrairBlocosEspecializados(texto, textoSemAcentos) {
-    const blocoUrina = (textoSemAcentos.match(/(Urina I|Urina tipo I|\bEAS\b)([\s\S]*?)(?=Cultura de Urina|Liberado por|$)/i) || [])[0] || "";
+    const reBlocoUrina = new RegExp(
+      `(?:^|\\n)\\s*(Urina I|Urina tipo I|\\bEAS\\b)\\s*:?\\s*` +
+      `((?:[^\\n]*\\n?){0,50}?)` +
+      `(?=Cultura de Urina|Liberado por|\\n\\s*\\w[^\\n]*[:.]|$)`,
+      "i"
+    );
+    const blocoUrina = ((textoSemAcentos.match(reBlocoUrina) || [])[0] || "").trim();
     const blocoGasometriaArterial = (texto.match(/Gasometria Arterial([\s\S]*?)(?=Gasometria Venosa|Liberado por|$)/i) || [])[0] || "";
     const blocoGasometriaVenosa = (texto.match(/Gasometria Venosa([\s\S]*?)(?=Gasometria Arterial|Liberado por|$)/i) || [])[0] || "";
     return { blocoUrina, blocoGasometriaArterial, blocoGasometriaVenosa };

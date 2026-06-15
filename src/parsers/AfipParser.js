@@ -11,7 +11,10 @@ export class AfipParser extends BaseParser {
   }
 
   processar(texto, configExames) {
-    const configClone = structuredClone(configExames);
+    const configClone = configExames.map(e => ({
+      ...e,
+      ...(e.subExames ? { subExames: e.subExames.map(s => ({ ...s })) } : {})
+    }));
     const textoSemAcentos = removerAcentos(texto);
     const sexoPaciente = this.pegarSexoPaciente(texto);
     const blocos = this.extrairBlocosEspecializados(texto, textoSemAcentos);
