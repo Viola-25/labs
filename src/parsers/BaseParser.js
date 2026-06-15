@@ -79,11 +79,23 @@ export class BaseParser {
     for (const nome of exameConfig.nomesBusca) {
       const lblSemAcentos = removerAcentos(nome);
       let regexStr = lblSemAcentos.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s/g, '\\s+');
-      if (exameConfig.id === 'cea') {
+      if (exameConfig.lineStartOnly) {
         regexStr = `(?:^|\\n\\s*)${regexStr}`;
       }
-      if (nome.toLowerCase() === 'lactato') regexStr = 'Lactato(?! Arterial)';
-      const re = new RegExp(`(^|\\n)(${regexStr}(?:\\s|\\n|\\r)*[\\s\\S]*?)(?=(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|\\nLiberado por|Problema ao visualizar|$)`, "i");
+      if (exameConfig.regexExclude) {
+        const exclude = removerAcentos(exameConfig.regexExclude).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        regexStr = `${regexStr}(?!\\s*${exclude.replace(/\s/g, '\\s+')})`;
+      }
+      if (exameConfig.regexOverride) {
+        regexStr = exameConfig.regexOverride;
+      }
+      const lookahead = todosNomesBuscaFiltrado
+        ? `(?:\\n\\s*|\\s{2,})(?:${todosNomesBuscaFiltrado})|`
+        : '';
+      const re = new RegExp(
+        `(^|\\n)(${regexStr}(?:\\s|\\n|\\r)*[\\s\\S]*?)(?=${lookahead}\\nLiberado por|Problema ao visualizar|$)`,
+        "i"
+      );
       const blocoMatch = textoParaAnalisar.match(re);
       if (blocoMatch && blocoMatch[2]) return blocoMatch[2];
     }
@@ -186,14 +198,17 @@ export class BaseParser {
     }
 
     let valorMatch = null;
+    const eDiferencial = nomesBusca.some(n =>
+      ["neutrofilos", "linfocitos totais", "monocitos", "eosinofilos", "basofilos"].includes(n.toLowerCase())
+    );
     const patterns = [
       /Valor relativo\s+([\d,.-]+)/im,
       /Resultado[\s\n\r]+(Superior a\s+[\d,.-]+)/im,
       /Resultado\s+([\d,.-]+)/im,
-      nomesBusca.some(n => ["neutrofilos", "linfocitos totais", "monocitos", "eosinofilos", "basofilos"].includes(n.toLowerCase())) ? /[\d,.]+\s+([\d,.]+)/ : null,
+      eDiferencial && /[\d,.]+\s+([\d,.]+)/,
       ...nomesBusca.map(nome => new RegExp(`^${removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s+(-?\\d[\\d,.-]*)`, "im")),
       /(?:\s|\n)(-?\d[\d,.-]*)/
-    ].filter(p => p);
+    ].filter(Boolean);
 
     for (const pattern of patterns) {
       valorMatch = textoBloco.match(pattern);
@@ -272,7 +287,7 @@ export class BaseParser {
       return { ...exameConfig, value: null, status: STATUS.NAO_ENCONTRADO };
     }
 
-    const alterados = resultadosSubExames.filter(sub => sub.status === 'alterado');
+    const alterados = resultadosSubExames.filter(sub => sub.status === STATUS.ALTERADO);
     const valorDisplay = alterados.length > 0
       ? alterados.map(sub => `${sub.label}: ${sub.value}`).join(', ')
       : 'Normal';

@@ -1,39 +1,39 @@
 import { STATUS } from '../parsers/BaseParser.js';
 
 export function renderizarSidebar(exames) {
-  const listaExamesUl = document.getElementById('lista-exames');
-  if (!listaExamesUl) return;
+  const container = document.getElementById('lista-exames');
+  if (!container) return;
 
   if (!exames || exames.length === 0) {
-    listaExamesUl.innerHTML = '<li class="instructions">Nenhum exame conhecido foi encontrado.</li>';
+    container.innerHTML = '<li class="empty-state">Nenhum exame conhecido foi encontrado.</li>';
     return;
   }
 
-  listaExamesUl.innerHTML = exames.map(exame => {
-    let valorSidebar;
-    if (exame.tipo === 'agrupador' || exame.tipo === 'microbiologia') {
-      valorSidebar = (exame.status === STATUS.ALTERADO ? 'Alterado' : 'Normal');
-    } else {
-      valorSidebar = exame.value;
-    }
-    return `
-      <li>
-        <input type="checkbox" id="${exame.id}" data-exame-id="${exame.id}" ${exame.selected ? 'checked' : ''}>
-        <label for="${exame.id}">${exame.label}</label>
-        <span class="exame-valor ${exame.status === STATUS.ALTERADO ? 'valor-alterado' : ''}">${valorSidebar}</span>
-      </li>
+  const fragment = document.createDocumentFragment();
+  for (const exame of exames) {
+    const valor = exame.tipo === 'agrupador' || exame.tipo === 'microbiologia'
+      ? (exame.status === STATUS.ALTERADO ? 'Alterado' : 'Normal')
+      : exame.value;
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <input type="checkbox" id="${exame.id}" data-exame-id="${exame.id}" ${exame.selected ? 'checked' : ''}>
+      <label for="${exame.id}">${exame.label}</label>
+      <span class="exam-value ${exame.status === STATUS.ALTERADO ? 'alterado' : ''}">${valor}</span>
     `;
-  }).join('');
+    fragment.appendChild(li);
+  }
+  container.innerHTML = '';
+  container.appendChild(fragment);
 }
 
 export function filtrarExames(examesEncontrados, termoBusca) {
   if (!termoBusca) return examesEncontrados;
-  const termoNormalizado = termoBusca.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const termo = termoBusca.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   return examesEncontrados.filter(exame => {
-    const label = exame.label.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    return label.includes(termoNormalizado) ||
-      (exame.nomesBusca && exame.nomesBusca.some(nome =>
-        nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(termoNormalizado)
-      ));
+    const label = exame.label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (label.includes(termo)) return true;
+    return exame.nomesBusca?.some(nome =>
+      nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(termo)
+    );
   });
 }

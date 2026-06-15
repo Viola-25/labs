@@ -15,8 +15,7 @@ export class IbccParser extends AfipParser {
 
   pegarData(texto) {
     const m = texto.match(/Coletado\s+em\s*:\s*([\d\/]{8,10})/i);
-    if (m) return m[1].replace(/\/\d{4}$/, '');
-    return super.pegarData(texto);
+    return m ? m[1].replace(/\/\d{4}$/, '') : super.pegarData(texto);
   }
 
   pegarDataComHora(texto) {
@@ -24,8 +23,7 @@ export class IbccParser extends AfipParser {
     if (!dataMatch) return super.pegarDataComHora(texto);
     const data = dataMatch[1].replace(/\/\d{4}$/, '');
     const horaMatch = texto.match(/Coletado\s+em\s*:\s*[\d\/]{8,10}\s*-\s*(\d{1,2}):(\d{2})/i);
-    if (horaMatch) return `${data} ${horaMatch[1]}:${horaMatch[2]}`;
-    return data;
+    return horaMatch ? `${data} ${horaMatch[1]}:${horaMatch[2]}` : data;
   }
 
   pegarDataCompleta(texto) {
@@ -46,18 +44,5 @@ export class IbccParser extends AfipParser {
       minuto = horaMatch[2].padStart(2, '0');
     }
     return `${ano}-${mes}-${dia}T${hora}:${minuto}`;
-  }
-
-  pegarNomePaciente(texto) {
-    const m = texto.match(/Paciente:\s*([^\n]+)/i);
-    return m ? m[1].trim() : "Paciente Desconhecido";
-  }
-
-  pegarSexoPaciente(texto) {
-    const m = texto.match(/Sexo:\s*(Masculino|Feminino)/i);
-    if (m && m[1]) {
-      return m[1].toUpperCase().startsWith('M') ? 'M' : 'F';
-    }
-    return null;
   }
 }

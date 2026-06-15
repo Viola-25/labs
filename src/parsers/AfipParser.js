@@ -11,36 +11,44 @@ export class AfipParser extends BaseParser {
   }
 
   processar(texto, configExames) {
-    const configClone = configExames.map(e => ({ ...e }));
+    const configClone = structuredClone(configExames);
     const textoSemAcentos = removerAcentos(texto);
     const sexoPaciente = this.pegarSexoPaciente(texto);
-    const { blocoUrina, blocoGasometriaArterial, blocoGasometriaVenosa } = this.extrairBlocosEspecializados(texto, textoSemAcentos);
+    const blocos = this.extrairBlocosEspecializados(texto, textoSemAcentos);
 
     let textoPrincipal = textoSemAcentos;
-    if (blocoUrina) textoPrincipal = textoPrincipal.replace(blocoUrina, '');
-    if (blocoGasometriaArterial) textoPrincipal = textoPrincipal.replace(blocoGasometriaArterial, '');
-    if (blocoGasometriaVenosa) textoPrincipal = textoPrincipal.replace(blocoGasometriaVenosa, '');
+    if (blocos.blocoUrina) textoPrincipal = textoPrincipal.replace(blocos.blocoUrina, '');
+    if (blocos.blocoGasometriaArterial) textoPrincipal = textoPrincipal.replace(blocos.blocoGasometriaArterial, '');
+    if (blocos.blocoGasometriaVenosa) textoPrincipal = textoPrincipal.replace(blocos.blocoGasometriaVenosa, '');
 
-    const todosNomesBuscaRegexStrings = configClone
+    const todosNomes = configClone
       .flatMap(e => e.nomesBusca || [])
       .map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
 
     configClone.forEach(exame => {
       if (!exame.nomesBusca) return;
-      const nomesBuscaAtuais = exame.nomesBusca.map(nome => removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-      exame.lookaheadRegexStr = todosNomesBuscaRegexStrings.filter(nome => !nomesBuscaAtuais.includes(nome)).join('|') + '|Leucograma';
+      const nomesAtuais = exame.nomesBusca.map(nome =>
+        removerAcentos(nome).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+      );
+      exame.lookaheadRegexStr = todosNomes
+        .filter(nome => !nomesAtuais.includes(nome))
+        .join('|') + '|Leucograma';
     });
 
     const todosExames = configClone.map(exame => {
       if (!exame.nomesBusca) return exame;
-      let textoParaAnalisar = textoPrincipal;
-      if (exame.usaTextoArterial) textoParaAnalisar = blocoGasometriaArterial;
-      else if (exame.usaTextoVenoso) textoParaAnalisar = blocoGasometriaVenosa;
-      else if (exame.id === 'urina1') textoParaAnalisar = blocoUrina;
-      if (!textoParaAnalisar) {
+      try {
+        let textoParaAnalisar = textoPrincipal;
+        if (exame.usaTextoArterial) textoParaAnalisar = blocos.blocoGasometriaArterial;
+        else if (exame.usaTextoVenoso) textoParaAnalisar = blocos.blocoGasometriaVenosa;
+        else if (exame.id === 'urina1') textoParaAnalisar = blocos.blocoUrina;
+        if (!textoParaAnalisar) {
+          return { ...exame, value: null, status: STATUS.NAO_ENCONTRADO };
+        }
+        return this.analisarExame(exame, textoParaAnalisar, sexoPaciente, exame.lookaheadRegexStr);
+      } catch (err) {
         return { ...exame, value: null, status: STATUS.NAO_ENCONTRADO };
       }
-      return this.analisarExame(exame, textoParaAnalisar, sexoPaciente, exame.lookaheadRegexStr);
     });
 
     return {

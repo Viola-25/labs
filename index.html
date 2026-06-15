@@ -9,181 +9,158 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9966361899750512" crossorigin="anonymous"></script>
 </head>
 <body>
-  <main class="page-wrapper">
-    <div class="container">
-      <div class="header header-main">
-        <h1>Processador de Laudos</h1>
-        <div class="theme-switch-wrapper">
-          <span>Modo Escuro</span>
-          <label class="theme-switch" for="theme-toggle" title="Alternar tema">
-            <input type="checkbox" id="theme-toggle">
-            <div class="slider round"></div>
-          </label>
-        </div>
-      </div>
-      <div class="signature">Feito por Enzo Viola - Turma XXVIII - MEDSC</div>
-      <div class="instructions">
-        <p><strong>Como usar:</strong><br>
-        1. Na página do laudo, aperte <strong>CTRL+A</strong> (para selecionar tudo) e depois <strong>CTRL+C</strong> (para copiar).<br>
-        2. Cole na caixa abaixo e clique em <strong>Analisar Laudo</strong>. Selecione os exames na barra lateral para gerar o resultado formatado, pronto para colar no prontuário.<br>
-        <small><strong>Atenção:</strong> O script identifica automaticamente o perfil do laudo e ajusta a leitura para o modo genérico ou para hospitais com leitura dirigida, como o <strong>IBCC</strong>.</small></p>
-      </div>
-      <div id="perfil-deteccao" class="profile-indicator" aria-live="polite">Perfil detectado: aguardando análise</div>
-      <div class="parser-selector-wrapper">
-        <select id="select-parser" aria-label="Selecionar modelo de laboratório">
-          <option value="auto">Auto-detecção</option>
-        </select>
-      </div>
-      <section class="about-section" aria-labelledby="about-title">
-        <h2 id="about-title">Sobre esta ferramenta</h2>
-        <p>
-          O Processador de Laudos é uma ferramenta desenvolvida para acelerar a extração e a formatação
-          de resultados laboratoriais a partir de laudos clínicos. Destina-se a médicos e equipe
-          de enfermagem que precisam transcrever com segurança os resultados para prontuários eletrônicos.
-          Esta página combina uma interface interativa com documentação concisa e exemplos de saída para
-          garantir que revisores humanos e sistemas automáticos encontrem conteúdo editorial visível e
-          permanente na página inicial.
-        </p>
-        <p>
-          Exemplo de uso: cole o texto completo do laudo no campo principal, selecione os exames desejados
-          na barra lateral e clique em "Analisar Laudo". Sempre verifique os valores e referências antes
-          de incluir no prontuário. Abaixo há um exemplo de resultado gerado pela ferramenta, que ilustra
-          o formato final apresentado ao profissional de saúde.
-        </p>
-        <div class="sample-result" aria-hidden="false">
->> 27/04: HB 14.2 / HT 42 / LEUCO 7.3 / CR 0.90 / TGO 22 / TGP 25 / PCR 0.3 / Glic 95
-        </div>
-        <div class="ad-slot" aria-hidden="true">
-          <ins class="adsbygoogle"
-               style="display:block"
-               data-ad-client="ca-pub-9966361899750512"
-               data-ad-slot="8549337801"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-        </div>
-      </section>
-      <div class="disclaimer">
-        <strong>Atenção (BETA):</strong> Esta ferramenta é um auxílio e está em fase de testes. Sempre confira os resultados e os valores de referência com o laudo original antes de tomar qualquer decisão clínica.
-      </div>
-      <textarea id="input" placeholder="Aguardando dados do laudo..."></textarea>
-      <div class="actions">
-        <button id="btn-processar" class="btn-primary">Analisar Laudo</button>
-        <button id="btn-copiar" class="btn-secondary">Copiar Resultado</button>
-        <button id="btn-limpar-campos" class="btn-secondary">Limpar Campos</button>
-      </div>
-      <div class="resultado-wrapper">
-        <div class="header header-no-border">
-          <p class="header-title"><strong>Resultado Final:</strong></p>
-          <div class="result-actions">
-            <div class="theme-switch-wrapper">
-              <span>Marcar alterados</span>
-              <label class="theme-switch" for="marcar-alterados-toggle" title="Adicionar '*' aos resultados alterados">
-                <input type="checkbox" id="marcar-alterados-toggle">
-                <div class="slider round"></div>
-              </label>
-            </div>
-            <div class="theme-switch-wrapper">
-              <span>Comparar Evolução</span>
-              <label class="theme-switch" for="comparar-historico-toggle" title="Mostra setas (↑/↓) comparando com o último laudo deste paciente">
-                <input type="checkbox" id="comparar-historico-toggle">
-                <div class="slider round"></div>
-              </label>
-            </div>
-            <button id="btn-ver-historico-completo" class="btn-secondary btn-small-action" disabled>Analisar tendências do paciente</button>
+  <div class="app-layout">
+    <main class="main-content">
+      <header class="app-header">
+        <div class="header-row">
+          <h1 class="app-title">Processador de Laudos</h1>
+          <div class="theme-switch-wrapper">
+            <span id="theme-label">Modo Escuro</span>
+            <label class="theme-switch" for="theme-toggle" title="Alternar tema claro/escuro">
+              <input type="checkbox" id="theme-toggle" aria-labelledby="theme-label">
+              <span class="slider round"></span>
+            </label>
           </div>
         </div>
-        <div id="resultado"></div>
-      </div>
-      <div class="download-section">
-        <button id="btn-baixar" class="btn-secondary">Baixar para Uso Offline</button>
-        <p class="download-disclaimer">
-          <strong>Atenção:</strong> O script baixado não recebe atualizações automáticas. A versão mais recente, com correções e novos exames, está sempre disponível em <a href="https://bit.ly/labsfacil" target="_blank" rel="noopener noreferrer">bit.ly/labsfacil</a>. Recomendamos baixar uma nova versão periodicamente.
-        </p>
-      </div>
-      <div id="recentes-container">
-        <div class="header-recentes">
+        <p class="app-subtitle">Extraia e formate resultados de exames laboratoriais para prontuário</p>
+      </header>
+
+      <section class="workflow-section" aria-label="Ferramenta principal">
+        <div class="profile-indicator" id="perfil-deteccao" aria-live="polite">Perfil detectado: aguardando análise</div>
+
+        <div class="parser-selector-wrapper">
+          <label for="select-parser" class="label">Modelo do laboratório</label>
+          <select id="select-parser" aria-label="Selecionar modelo de laboratório">
+            <option value="auto">Auto-detecção</option>
+          </select>
+        </div>
+
+        <details class="help-section" id="help-section">
+          <summary class="help-summary">Como usar</summary>
+          <div class="help-content">
+            <ol>
+              <li>No laudo, aperte <strong>CTRL+A</strong> (selecionar tudo) e depois <strong>CTRL+C</strong> (copiar).</li>
+              <li>Cole o texto na caixa abaixo e clique em <strong>Analisar Laudo</strong>.</li>
+              <li>Selecione os exames desejados na barra lateral e copie o resultado formatado.</li>
+            </ol>
+            <small><strong>Atenção:</strong> O script identifica automaticamente o perfil do laudo e ajusta a leitura para o modo genérico ou para hospitais com leitura dirigida, como o <strong>IBCC</strong>.</small>
+          </div>
+        </details>
+
+        <textarea id="input" class="input-area" placeholder="Cole aqui o texto do laudo clínico..." aria-label="Texto do laudo clínico" spellcheck="false"></textarea>
+
+        <div class="action-bar">
+          <button id="btn-processar" class="btn btn-primary">Analisar Laudo</button>
+          <button id="btn-copiar" class="btn btn-secondary">Copiar Resultado</button>
+          <button id="btn-limpar-campos" class="btn btn-ghost">Limpar</button>
+        </div>
+
+        <section class="result-section" aria-label="Resultado final">
+          <div class="result-header">
+            <h2 class="result-title">Resultado Final</h2>
+            <div class="result-options">
+              <div class="toggle-field">
+                <input type="checkbox" id="marcar-alterados-toggle" class="toggle-input">
+                <label for="marcar-alterados-toggle" class="toggle-label">Marcar alterados</label>
+              </div>
+              <div class="toggle-field">
+                <input type="checkbox" id="comparar-historico-toggle" class="toggle-input">
+                <label for="comparar-historico-toggle" class="toggle-label">Comparar evolução</label>
+              </div>
+              <button id="btn-ver-historico-completo" class="btn btn-small btn-outline" disabled>Ver tendências</button>
+            </div>
+          </div>
+          <div id="resultado" class="result-output" aria-label="Texto do resultado formatado" role="textbox" aria-readonly="true"></div>
+        </section>
+      </section>
+
+      <section class="recentes-section" aria-label="Resultados recentes">
+        <div class="section-header">
           <h2>Resultados Recentes</h2>
-          <button id="btn-limpar-historico" aria-label="Limpar histórico de resultados">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"></path>
-              <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"></path>
+          <button id="btn-limpar-historico" class="btn btn-icon" aria-label="Limpar histórico de resultados">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+              <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
             </svg>
-            Limpar Histórico
+            Limpar
           </button>
         </div>
         <div id="lista-recentes"></div>
-      </div>
-      <div id="toast" aria-live="polite" role="status"></div>
-    </div>
-    <aside class="sidebar">
-      <h2>Exames Encontrados</h2>
-      <input type="text" id="filtro-exames" class="search-input" placeholder="Buscar exame...">
+      </section>
+
+      <footer class="app-footer">
+        <p class="disclaimer">
+          <strong>Atenção (BETA):</strong> Esta ferramenta é um auxílio e está em fase de testes. Sempre confira os resultados e os valores de referência com o laudo original antes de tomar qualquer decisão clínica.
+        </p>
+        <button id="btn-baixar" class="btn btn-ghost" style="margin-bottom:12px">Baixar para uso offline</button>
+        <p class="footer-meta">Feito por Enzo Viola &mdash; Turma XXVIII &mdash; MEDSC</p>
+      </footer>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <aside class="sidebar" aria-label="Lista de exames encontrados">
+      <h2 class="sidebar-title">Exames Encontrados</h2>
+      <input type="text" id="filtro-exames" class="search-input" placeholder="Buscar exame..." aria-label="Filtrar exames">
       <div class="sidebar-actions">
-        <button id="btn-selecionar-todos">Selecionar Todos</button>
-        <button id="btn-limpar-selecao">Limpar Seleção</button>
+        <button id="btn-selecionar-todos" class="btn btn-small btn-outline">Selecionar Todos</button>
+        <button id="btn-limpar-selecao" class="btn btn-small btn-outline">Limpar Seleção</button>
       </div>
-      <ul id="lista-exames">
-        <li class="instructions">Analise um laudo para ver os exames aqui.</li>
+      <ul id="lista-exames" class="exam-list" role="group" aria-label="Lista de exames">
+        <li class="empty-state">Analise um laudo para ver os exames aqui.</li>
       </ul>
     </aside>
-  </main>
+  </div>
 
-  <div id="confirmation-modal-overlay">
-    <div id="confirmation-modal">
-      <h3>Confirmar Ação</h3>
+  <div id="confirmation-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-delete">
+    <div class="modal">
+      <h3 id="modal-title-delete">Confirmar Ação</h3>
       <p>Tem certeza que deseja apagar todo o histórico de resultados? Esta ação não pode ser desfeita.</p>
       <div class="modal-actions">
-        <button type="button" id="btn-confirm-delete" class="btn-primary">Sim, apagar</button>
-        <button type="button" id="btn-cancel-delete" class="btn-secondary">Cancelar</button>
+        <button type="button" id="btn-confirm-delete" class="btn btn-danger">Sim, apagar</button>
+        <button type="button" id="btn-cancel-delete" class="btn btn-secondary">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <div id="evolution-modal-overlay">
-    <div id="evolution-modal">
+  <div id="evolution-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="evolution-modal-title">
+    <div class="modal modal-wide">
       <h3 id="evolution-modal-title">Histórico de Evolução</h3>
-      <div id="evolution-modal-content"></div>
+      <div id="evolution-modal-content" class="modal-scroll"></div>
       <div class="modal-actions">
-        <button id="btn-close-evolution-modal" class="btn-secondary">Fechar</button>
+        <button id="btn-close-evolution-modal" class="btn btn-secondary">Fechar</button>
       </div>
     </div>
   </div>
 
-  <div id="debug-modal-overlay">
-    <div id="debug-modal">
-      <h3>Painel de Debug da Análise</h3>
-      <p class="instructions">Mostra o texto enviado, o resultado final e o passo a passo de processamento dos exames.</p>
-      <pre id="debug-output">Execute uma análise para gerar o relatório de debug.</pre>
+  <div id="debug-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="debug-modal-title">
+    <div class="modal modal-wide">
+      <h3 id="debug-modal-title">Painel de Debug da Análise</h3>
+      <p class="help-text">Mostra o texto enviado, o resultado final e o passo a passo de processamento dos exames.</p>
+      <pre id="debug-output" class="debug-output">Execute uma análise para gerar o relatório de debug.</pre>
       <div class="modal-actions">
-        <button id="btn-copy-debug" class="btn-secondary">Copiar Debug</button>
-        <button id="btn-close-debug-modal" class="btn-secondary">Fechar</button>
+        <button id="btn-copy-debug" class="btn btn-secondary">Copiar Debug</button>
+        <button id="btn-close-debug-modal" class="btn btn-secondary">Fechar</button>
       </div>
     </div>
   </div>
 
-  <div id="test-section-wrapper" style="display: none;">
-    <div class="container" style="margin-top: 24px; border: 1px solid var(--primary-color);">
-      <h2>Painel de Diagnóstico (Admin)</h2>
-      <p class="instructions">Esta seção é para desenvolvedores. Use para verificar a integridade da lógica de extração e para inspecionar o debug completo da última análise (entrada, saída e processamento dos exames).</p>
-      <div class="actions">
-        <button type="button" id="btn-run-tests" class="btn-secondary">Rodar Testes de Integridade</button>
-        <button type="button" id="btn-refresh-debug" class="btn-secondary">Gerar Debug da Última Análise</button>
-        <button type="button" id="btn-copy-debug-inline" class="btn-secondary">Copiar Debug</button>
-        <button type="button" id="btn-open-debug-modal" class="btn-secondary">Abrir em Tela Cheia</button>
+  <div class="dev-section">
+    <details>
+      <summary class="dev-toggle">Painel de Diagnóstico</summary>
+      <div class="dev-content">
+        <div class="action-bar">
+          <button type="button" id="btn-run-tests" class="btn btn-secondary">Rodar Testes de Integridade</button>
+          <button type="button" id="btn-refresh-debug" class="btn btn-secondary">Gerar Debug</button>
+          <button type="button" id="btn-copy-debug-inline" class="btn btn-secondary">Copiar Debug</button>
+          <button type="button" id="btn-open-debug-modal" class="btn btn-secondary">Abrir em Tela Cheia</button>
+        </div>
+        <pre id="test-results" class="dev-output"></pre>
+        <pre id="debug-report-inline" class="dev-output">Execute uma análise e clique em "Gerar Debug da Última Análise".</pre>
       </div>
-      <pre id="test-results" style="background-color: var(--bg-color); border-radius: 8px; padding: 16px; margin-top: 16px; display: none; white-space: pre-wrap; word-wrap: break-word;"></pre>
-      <pre id="debug-report-inline" style="background-color: var(--bg-color); border-radius: 8px; padding: 16px; margin-top: 16px; display: none; white-space: pre-wrap; word-wrap: break-word; max-height: 420px; overflow: auto;">Execute uma análise e clique em "Gerar Debug da Última Análise".</pre>
-    </div>
-  </div>
-
-  <div style="text-align: center; margin-top: 32px;">
-    <button type="button" id="btn-toggle-tests" style="background: none; border: none; color: var(--secondary-color); cursor: pointer; font-size: 12px; padding: 8px;">
-      Painel de Diagnóstico
-    </button>
+    </details>
   </div>
 
   <script type="module" src="/src/main.js"></script>

@@ -2,7 +2,7 @@ import configExames from './config/exames.js';
 import { detectParser, getAvailableParsers, getParserById } from './parsers/index.js';
 import { STATUS } from './parsers/BaseParser.js';
 import { removerAcentos, limparNumero, parseNum, areValuesEqual } from './utils/text.js';
-import { getJson, setJson } from './utils/storage.js';
+import { getJson, setJson, safeDeepClone } from './utils/storage.js';
 import { showToast } from './ui/toast.js';
 import { loadTheme } from './ui/theme.js';
 import { showConfirmationModal, hideConfirmationModal, showEvolutionModal } from './ui/modals.js';
@@ -11,82 +11,41 @@ import { renderizarResultadosRecentes, handleHistoricoClick, createElement } fro
 
 const LOCAL_STORAGE_KEY = 'resultadosRecentes';
 
+const $ = (id) => document.getElementById(id);
+
 const el = {
-  inputArea: document.getElementById('input'),
-  resultadoDiv: document.getElementById('resultado'),
-  listaExamesUl: document.getElementById('lista-exames'),
-  filtroExamesInput: document.getElementById('filtro-exames'),
-  listaRecentesDiv: document.getElementById('lista-recentes'),
-  marcarAlteradosToggle: document.getElementById('marcar-alterados-toggle'),
-  btnProcessar: document.getElementById('btn-processar'),
-  btnCopiarResultado: document.getElementById('btn-copiar'),
-  btnLimparCampos: document.getElementById('btn-limpar-campos'),
-  btnBaixarScript: document.getElementById('btn-baixar'),
-  btnLimparHistorico: document.getElementById('btn-limpar-historico'),
-  btnConfirmDelete: document.getElementById('btn-confirm-delete'),
-  btnCancelDelete: document.getElementById('btn-cancel-delete'),
-  btnSelecionarTodos: document.getElementById('btn-selecionar-todos'),
-  btnLimparSelecao: document.getElementById('btn-limpar-selecao'),
-  btnVerHistoricoCompleto: document.getElementById('btn-ver-historico-completo'),
-  perfilDeteccao: document.getElementById('perfil-deteccao'),
-  selectParser: document.getElementById('select-parser'),
+  inputArea: $('input'),
+  resultadoDiv: $('resultado'),
+  listaExamesUl: $('lista-exames'),
+  filtroExamesInput: $('filtro-exames'),
+  listaRecentesDiv: $('lista-recentes'),
+  marcarAlteradosToggle: $('marcar-alterados-toggle'),
+  compararHistoricoToggle: $('comparar-historico-toggle'),
+  btnProcessar: $('btn-processar'),
+  btnCopiarResultado: $('btn-copiar'),
+  btnLimparCampos: $('btn-limpar-campos'),
+  btnLimparHistorico: $('btn-limpar-historico'),
+  btnConfirmDelete: $('btn-confirm-delete'),
+  btnCancelDelete: $('btn-cancel-delete'),
+  btnSelecionarTodos: $('btn-selecionar-todos'),
+  btnLimparSelecao: $('btn-limpar-selecao'),
+  btnVerHistoricoCompleto: $('btn-ver-historico-completo'),
+  perfilDeteccao: $('perfil-deteccao'),
+  selectParser: $('select-parser'),
 };
 
-let examesEncontradosGlobal = [];
-let ultimoParser = null;
+const state = {
+  examesEncontrados: [],
+  ultimoParser: null,
+  lastInput: '',
+};
 
 function atualizarSelecao(id, isSelected) {
-  const exame = examesEncontradosGlobal.find(e => e.id === id);
+  const exame = state.examesEncontrados.find(e => e.id === id);
   if (exame) {
     exame.selected = isSelected;
     gerarTextoFinal();
   }
-}
-
-function processar() {
-  el.btnProcessar.disabled = true;
-  el.btnProcessar.classList.add('btn-loading');
-  el.btnProcessar.textContent = 'Analisando';
-
-  const texto = el.inputArea.value;
-  if (!texto.trim()) {
-    showToast("A área de texto está vazia.");
-    el.btnVerHistoricoCompleto.disabled = true;
-    resetProcessarButton();
-    return;
-  }
-
-  const textoSemAcentos = removerAcentos(texto);
-
-  let parser;
-  const selectEl = el.selectParser;
-  if (selectEl && selectEl.value !== 'auto') {
-    parser = getParserById(selectEl.value);
-  } else {
-    const detection = detectParser(texto);
-    parser = detection.parser;
-    if (el.perfilDeteccao) {
-      el.perfilDeteccao.textContent = `Perfil detectado: ${parser.nome} (confiança: ${(detection.confidence * 100).toFixed(0)}%)`;
-    }
-  }
-
-  ultimoParser = parser;
-
-  const result = parser.processar(texto, [...configExames]);
-
-  examesEncontradosGlobal = result.exames
-    .filter(exame => exame.value !== null && exame.value !== undefined)
-    .map(exame => {
-      exame.selected = exame.selected !== undefined ? exame.selected : !exame.optional;
-      return exame;
-    });
-
-  calcularTendenciaExames(result.paciente);
-  renderizarSidebar(examesEncontradosGlobal);
-  gerarTextoFinal();
-  el.btnVerHistoricoCompleto.disabled = false;
-  salvarNoHistorico();
-  resetProcessarButton();
 }
 
 function resetProcessarButton() {
@@ -95,47 +54,122 @@ function resetProcessarButton() {
   el.btnProcessar.textContent = 'Analisar Laudo';
 }
 
+function setProcessarLoading() {
+  el.btnProcessar.disabled = true;
+  el.btnProcessar.classList.add('btn-loading');
+  el.btnProcessar.textContent = 'Analisando';
+}
+
+function copiarTexto(texto) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(texto);
+  }
+  const ta = document.createElement('textarea');
+  ta.value = texto;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  } catch {
+    document.body.removeChild(ta);
+    return Promise.reject();
+  }
+}
+
+function processar() {
+  const texto = el.inputArea.value;
+  if (!texto.trim()) {
+    showToast('A área de texto está vazia.');
+    el.btnVerHistoricoCompleto.disabled = true;
+    return;
+  }
+
+  setProcessarLoading();
+  state.lastInput = texto;
+
+  try {
+    const textoSemAcentos = removerAcentos(texto);
+
+    let parser;
+    if (el.selectParser && el.selectParser.value !== 'auto') {
+      parser = getParserById(el.selectParser.value);
+    } else {
+      const detection = detectParser(texto);
+      parser = detection.parser;
+      if (el.perfilDeteccao) {
+        el.perfilDeteccao.textContent =
+          `Perfil detectado: ${parser.nome} (confiança: ${(detection.confidence * 100).toFixed(0)}%)`;
+      }
+    }
+
+    state.ultimoParser = parser;
+
+    const result = parser.processar(texto, configExames);
+
+    state.examesEncontrados = result.exames
+      .filter(exame => exame.value !== null && exame.value !== undefined)
+      .map(exame => ({
+        ...exame,
+        selected: exame.selected !== undefined ? exame.selected : !exame.optional,
+      }));
+
+    calcularTendenciaExames(result.paciente);
+    renderizarSidebar(state.examesEncontrados);
+    gerarTextoFinal();
+    el.btnVerHistoricoCompleto.disabled = false;
+    salvarNoHistorico();
+  } catch (err) {
+    showToast('Erro ao processar o laudo. Verifique o texto e tente novamente.');
+    state.examesEncontrados = [];
+    renderizarSidebar([]);
+    el.resultadoDiv.textContent = '';
+  } finally {
+    resetProcessarButton();
+  }
+}
+
 function copiarResultado() {
   const textoResultado = el.resultadoDiv.textContent;
-  if (textoResultado) {
-    navigator.clipboard.writeText(textoResultado)
-      .then(() => showToast('Resultado copiado!'))
-      .catch(() => showToast('Falha ao copiar.'));
-  } else {
+  if (!textoResultado) {
     showToast('Nada para copiar.');
+    return;
   }
+  copiarTexto(textoResultado)
+    .then(() => showToast('Resultado copiado!'))
+    .catch(() => showToast('Falha ao copiar.'));
 }
 
 function limparTudo() {
   el.inputArea.value = '';
-  el.listaExamesUl.innerHTML = '<li class="instructions">Analise um laudo para ver os exames aqui.</li>';
+  state.examesEncontrados = [];
+  state.ultimoParser = null;
+  el.listaExamesUl.innerHTML = '<li class="empty-state">Analise um laudo para ver os exames aqui.</li>';
   el.resultadoDiv.textContent = '';
   el.btnVerHistoricoCompleto.disabled = true;
 }
 
 function handleConfirmDelete() {
-  localStorage.removeItem(LOCAL_STORAGE_KEY);
+  setJson(LOCAL_STORAGE_KEY, []);
   renderizarResultadosRecentes();
   hideConfirmationModal();
   showToast('Histórico limpo com sucesso!');
 }
 
 function selecionarTodosExames(selecionar) {
-  examesEncontradosGlobal.forEach(exame => exame.selected = selecionar);
+  state.examesEncontrados.forEach(exame => { exame.selected = selecionar; });
   const termoBusca = el.filtroExamesInput.value;
-  if (termoBusca) {
-    const filtrados = filtrarExames(examesEncontradosGlobal, termoBusca);
-    renderizarSidebar(filtrados);
-  } else {
-    renderizarSidebar(examesEncontradosGlobal);
-  }
+  const lista = termoBusca ? filtrarExames(state.examesEncontrados, termoBusca) : state.examesEncontrados;
+  renderizarSidebar(lista);
   gerarTextoFinal();
 }
 
 function filtrarExamesUI() {
   const termoBusca = el.filtroExamesInput.value;
-  const filtrados = filtrarExames(examesEncontradosGlobal, termoBusca);
-  renderizarSidebar(filtrados);
+  renderizarSidebar(filtrarExames(state.examesEncontrados, termoBusca));
 }
 
 function handleSelecaoExame(event) {
@@ -146,67 +180,61 @@ function handleSelecaoExame(event) {
 
 function handleRecarregarLaudo(laudoId) {
   const resultados = getJson(LOCAL_STORAGE_KEY, []);
-  const laudoParaRecarregar = resultados.find(r => r.id === laudoId);
-  if (laudoParaRecarregar && laudoParaRecarregar.originalInput) {
-    el.inputArea.value = laudoParaRecarregar.originalInput;
+  const laudo = resultados.find(r => r.id === laudoId);
+  if (laudo && laudo.originalInput) {
+    el.inputArea.value = laudo.originalInput;
     processar();
     showToast('Laudo recarregado e analisado!');
   }
 }
 
 function calcularTendenciaExames(nomePaciente) {
-  const textoAtual = el.inputArea.value;
   const resultados = getJson(LOCAL_STORAGE_KEY, []);
   const historicoPaciente = resultados
-    .filter(r => r.paciente === nomePaciente && r.exames && r.originalInput !== textoAtual)
+    .filter(r => r.paciente === nomePaciente && r.exames && r.originalInput !== state.lastInput)
     .sort((a, b) => b.dataCompleta.localeCompare(a.dataCompleta));
 
-  if (historicoPaciente.length === 0) {
-    examesEncontradosGlobal.forEach(exame => delete exame.tendencia);
-    return;
-  }
+  state.examesEncontrados.forEach(exame => { delete exame.tendencia; });
 
-  examesEncontradosGlobal.forEach(exameAtual => {
-    delete exameAtual.tendencia;
-    const laudoAnteriorComExame = historicoPaciente.find(laudo =>
+  if (historicoPaciente.length === 0) return;
+
+  state.examesEncontrados.forEach(exameAtual => {
+    if (exameAtual.tipo === 'texto') return;
+    const laudoAnterior = historicoPaciente.find(laudo =>
       laudo.exames && laudo.exames.some(e => e.id === exameAtual.id && e.value !== null)
     );
-    if (!laudoAnteriorComExame || exameAtual.tipo === 'texto') return;
-    if (exameAtual.tipo === 'agrupador' && exameAtual.id !== 'ptf') return;
-    const exameAnterior = laudoAnteriorComExame.exames.find(e => e.id === exameAtual.id);
-    if (!exameAnterior) return;
+    if (!laudoAnterior) return;
+
     if (exameAtual.id === 'ptf') {
-      const ptfTendencias = {};
-      for (const subExamId of ['ptf_pt', 'ptf_alb', 'ptf_glob']) {
-        const subExameAtual = exameAtual.subExames?.find(sub => sub.id === subExamId);
-        const subExameAnterior = exameAnterior.subExames?.find(sub => sub.id === subExamId);
-        if (subExameAtual?.value && subExameAnterior?.value) {
-          const vAtual = parseNum(subExameAtual.value);
-          const vAnterior = parseNum(subExameAnterior.value);
-          if (!isNaN(vAtual) && !isNaN(vAnterior)) {
-            let icone = '=';
-            if (vAtual > vAnterior) icone = '↑';
-            if (vAtual < vAnterior) icone = '↓';
-            if (icone !== '=') {
-              ptfTendencias[subExamId] = { icone, valorAntigo: subExameAnterior.value };
-            }
+      const tendencias = {};
+      for (const subId of ['ptf_pt', 'ptf_alb', 'ptf_glob']) {
+        const subAtual = exameAtual.subExames?.find(s => s.id === subId);
+        const subAnt = laudoAnterior.exames.find(e => e.id === 'ptf')?.subExames?.find(s => s.id === subId);
+        if (subAtual?.value && subAnt?.value) {
+          const vAtual = parseNum(subAtual.value);
+          const vAnt = parseNum(subAnt.value);
+          if (!isNaN(vAtual) && !isNaN(vAnt) && vAtual !== vAnt) {
+            tendencias[subId] = { icone: vAtual > vAnt ? '↑' : '↓', valorAntigo: subAnt.value };
           }
         }
       }
-      if (Object.keys(ptfTendencias).length > 0) {
-        exameAtual.tendencia = ptfTendencias;
+      if (Object.keys(tendencias).length > 0) {
+        exameAtual.tendencia = tendencias;
       }
       return;
     }
-    const valorAtualNum = parseNum(exameAtual.value);
-    const valorAntigoNum = parseNum(exameAnterior.value);
-    if (isNaN(valorAtualNum) || isNaN(valorAntigoNum)) return;
-    let icone = '=';
-    if (valorAtualNum > valorAntigoNum) icone = '↑';
-    if (valorAtualNum < valorAntigoNum) icone = '↓';
-    if (icone !== '=') {
-      exameAtual.tendencia = { icone, valorAntigo: exameAnterior.value };
-    }
+
+    const exameAnt = laudoAnterior.exames.find(e => e.id === exameAtual.id);
+    if (!exameAnt || exameAnt.value == null) return;
+
+    const vAtual = parseNum(exameAtual.value);
+    const vAnt = parseNum(exameAnt.value);
+    if (isNaN(vAtual) || isNaN(vAnt) || vAtual === vAnt) return;
+
+    exameAtual.tendencia = {
+      icone: vAtual > vAnt ? '↑' : '↓',
+      valorAntigo: exameAnt.value,
+    };
   });
 }
 
@@ -215,35 +243,30 @@ function criarSparkline(valores) {
   const numeros = valores.map(v => {
     if (v == null) return null;
     return parseNum(limparNumero(v));
-  });
-  const numerosValidos = numeros.filter(n => !isNaN(n));
-  if (numerosValidos.length < 2) return '';
+  }).filter(n => !isNaN(n));
+  if (numeros.length < 2) return '';
   const LARGURA = 100, ALTURA = 22, PADDING = 2;
-  const max = Math.max(...numerosValidos);
-  const min = Math.min(...numerosValidos);
-  let range = max - min;
+  const max = Math.max(...numeros);
+  const min = Math.min(...numeros);
+  const range = max - min;
   if (range === 0) {
     const y = ALTURA / 2;
-    return `<svg width="${LARGURA}" height="${ALTURA}" viewbox="0 0 ${LARGURA} ${ALTURA}" class="sparkline-svg"><path d="M ${PADDING} ${y} L ${LARGURA - PADDING} ${y}" class="sparkline" /></svg>`;
+    return `<svg width="${LARGURA}" height="${ALTURA}" viewBox="0 0 ${LARGURA} ${ALTURA}" class="sparkline-svg"><path d="M ${PADDING} ${y} L ${LARGURA - PADDING} ${y}" class="sparkline" /></svg>`;
   }
   let pathData = '';
-  let primeiroPonto = true;
   numeros.forEach((n, i) => {
-    if (n === null || isNaN(n)) return;
     const x = (i / (numeros.length - 1)) * (LARGURA - PADDING * 2) + PADDING;
     const y = ALTURA - PADDING - ((n - min) / range) * (ALTURA - PADDING * 2);
-    pathData += `${primeiroPonto ? 'M' : 'L'} ${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100} `;
-    primeiroPonto = false;
+    pathData += `${i === 0 ? 'M' : 'L'} ${Math.round(x * 100) / 100} ${Math.round(y * 100) / 100} `;
   });
-  if (!pathData) return '';
-  return `<svg width="${LARGURA}" height="${ALTURA}" viewbox="0 0 ${LARGURA} ${ALTURA}" class="sparkline-svg"><path d="${pathData}" class="sparkline" /></svg>`;
+  return `<svg width="${LARGURA}" height="${ALTURA}" viewBox="0 0 ${LARGURA} ${ALTURA}" class="sparkline-svg"><path d="${pathData}" class="sparkline" /></svg>`;
 }
 
 function mostrarHistoricoCompleto() {
-  if (!ultimoParser) return;
-  const nomePaciente = ultimoParser.pegarNomePaciente(el.inputArea.value);
-  if (!nomePaciente || nomePaciente === "Paciente Desconhecido") {
-    showToast("Para ver as tendências, primeiro analise um laudo para identificar o paciente.");
+  if (!state.ultimoParser) return;
+  const nomePaciente = state.ultimoParser.pegarNomePaciente(el.inputArea.value);
+  if (!nomePaciente || nomePaciente === 'Paciente Desconhecido') {
+    showToast('Para ver as tendências, primeiro analise um laudo para identificar o paciente.');
     return;
   }
   const resultados = getJson(LOCAL_STORAGE_KEY, []);
@@ -254,25 +277,30 @@ function mostrarHistoricoCompleto() {
     showToast(`Nenhum histórico encontrado para ${nomePaciente}.`);
     return;
   }
-  const todosExamesIds = new Set(historicoPaciente.flatMap(laudo => laudo.exames.map(ex => ex.id)));
-  const modalContent = document.getElementById('evolution-modal-content');
-  document.getElementById('evolution-modal-title').textContent = `Histórico de Evolução: ${nomePaciente}`;
+
+  const todosExamesIds = [...new Set(historicoPaciente.flatMap(laudo => laudo.exames.map(ex => ex.id)))];
+  const modalContent = $('evolution-modal-content');
+  $('evolution-modal-title').textContent = `Histórico de Evolução: ${nomePaciente}`;
+
   const table = createElement('table');
   const thead = createElement('thead');
   const tbody = createElement('tbody');
   const headerRow = createElement('tr');
   headerRow.appendChild(createElement('th', {}, ['Exame']));
   historicoPaciente.forEach(laudo => {
-    headerRow.appendChild(createElement('th', {}, [ultimoParser.pegarDataComHora(laudo.originalInput)]));
+    headerRow.appendChild(createElement('th', {}, [state.ultimoParser.pegarDataComHora(laudo.originalInput)]));
   });
-  headerRow.appendChild(createElement('th', { style: 'text-align: center;' }, ['Tendência']));
+  headerRow.appendChild(createElement('th', { style: 'text-align:center' }, ['Tendência']));
   thead.appendChild(headerRow);
+
   todosExamesIds.forEach(examId => {
     const examConfig = configExames.find(e => e.id === examId);
     if (!examConfig || (examConfig.tipo === 'agrupador' && examConfig.id !== 'ptf')) return;
+
     const dataRow = createElement('tr');
     dataRow.appendChild(createElement('td', {}, [examConfig.label]));
     const valoresParaSparkline = [];
+
     historicoPaciente.forEach((laudo, index) => {
       const exameNesteLaudo = laudo.exames.find(e => e.id === examId);
       const valorAtualStr = exameNesteLaudo ? exameNesteLaudo.value : null;
@@ -289,21 +317,18 @@ function mostrarHistoricoCompleto() {
         valoresParaSparkline.push(valorAtualStr);
         const valorAtualNum = parseNum(limparNumero(valorAtualStr));
         let displayHTML = valorAtualStr;
-        let icone = '', trendIs = 'neutral', iconColorClass = '';
+        let icone = '', trendIs = 'neutral';
         const laudoAnterior = historicoPaciente[index + 1];
         if (laudoAnterior) {
           const exameAnterior = laudoAnterior.exames.find(e => e.id === examId);
           if (exameAnterior && exameAnterior.value !== null) {
             const valorAnteriorNum = parseNum(limparNumero(exameAnterior.value));
-            if (!isNaN(valorAtualNum) && !isNaN(valorAnteriorNum)) {
-              if (valorAtualNum > valorAnteriorNum) {
-                icone = '↑';
-                if (examConfig.trendMeaning === 'higher_is_worse') trendIs = 'pior';
-                else if (examConfig.trendMeaning === 'higher_is_better') trendIs = 'melhor';
-              } else if (valorAtualNum < valorAnteriorNum) {
-                icone = '↓';
-                if (examConfig.trendMeaning === 'higher_is_worse') trendIs = 'melhor';
-                else if (examConfig.trendMeaning === 'higher_is_better') trendIs = 'pior';
+            if (!isNaN(valorAtualNum) && !isNaN(valorAnteriorNum) && valorAtualNum !== valorAnteriorNum) {
+              icone = valorAtualNum > valorAnteriorNum ? '↑' : '↓';
+              if (examConfig.trendMeaning === 'higher_is_worse') {
+                trendIs = icone === '↑' ? 'pior' : 'melhor';
+              } else if (examConfig.trendMeaning === 'higher_is_better') {
+                trendIs = icone === '↑' ? 'melhor' : 'pior';
               }
             }
           }
@@ -311,18 +336,20 @@ function mostrarHistoricoCompleto() {
         if (exameNesteLaudo.status === STATUS.ALTERADO) {
           displayHTML = `<span class="tendencia-pior">${valorAtualStr}</span>`;
         }
-        if (trendIs === 'pior') iconColorClass = 'tendencia-pior';
-        else if (trendIs === 'melhor') iconColorClass = 'tendencia-melhor';
-        if (icone) displayHTML += `<span class="tendencia-icone ${iconColorClass}">${icone}</span>`;
+        if (icone) {
+          displayHTML += `<span class="tendencia-icone ${trendIs === 'pior' ? 'tendencia-pior' : trendIs === 'melhor' ? 'tendencia-melhor' : ''}">${icone}</span>`;
+        }
         td.innerHTML = displayHTML;
       }
       dataRow.appendChild(td);
     });
+
     const sparklineCell = createElement('td', { className: 'sparkline-cell' });
     sparklineCell.innerHTML = criarSparkline(valoresParaSparkline.reverse());
     dataRow.appendChild(sparklineCell);
     tbody.appendChild(dataRow);
   });
+
   table.appendChild(thead);
   table.appendChild(tbody);
   modalContent.innerHTML = '';
@@ -331,36 +358,40 @@ function mostrarHistoricoCompleto() {
 }
 
 function gerarTextoFinal() {
-  if (!ultimoParser) return;
-  const dataLaudo = ultimoParser.pegarData(el.inputArea.value);
+  if (!state.ultimoParser) return;
+  const dataLaudo = state.ultimoParser.pegarData(el.inputArea.value);
   const marcarAlterados = el.marcarAlteradosToggle.checked;
-  const mostrarTendencia = document.getElementById('comparar-historico-toggle').checked;
-  const partesResultado = examesEncontradosGlobal
+  const mostrarTendencia = el.compararHistoricoToggle.checked;
+
+  const partesResultado = state.examesEncontrados
     .filter(exame => exame.selected)
     .map(exame => {
       let parte = exame.template(exame.value, exame);
       if (marcarAlterados && exame.status === STATUS.ALTERADO) {
         parte = parte.replace(/ \/ $/, '* / ');
       }
-      if (mostrarTendencia && exame.tendencia && exame.tendencia.icone !== '=' && exame.id !== 'ptf') {
-        const textoTendencia = ` (${exame.tendencia.icone} ${exame.tendencia.valorAntigo})`;
-        parte = parte.replace(/(\*? \/ )$/, `${textoTendencia}$1`);
+      if (mostrarTendencia && exame.tendencia && exame.id !== 'ptf') {
+        const t = exame.tendencia;
+        if (t.icone && t.valorAntigo) {
+          parte = parte.replace(/(\*? \/ )$/, ` (${t.icone} ${t.valorAntigo})$1`);
+        }
       }
       return parte;
     });
+
   let resultado = `>> ${dataLaudo ? dataLaudo + ': ' : ''}${partesResultado.join('')}`;
   resultado = resultado.trim().replace(/\/$/, '').trim();
   el.resultadoDiv.textContent = resultado.toUpperCase();
 }
 
 function salvarNoHistorico() {
-  if (!ultimoParser) return;
+  if (!state.ultimoParser) return;
   const texto = el.inputArea.value;
-  const nomePaciente = ultimoParser.pegarNomePaciente(texto);
-  const dataHora = ultimoParser.pegarDataHoraCompleta(texto);
+  const nomePaciente = state.ultimoParser.pegarNomePaciente(texto);
+  const dataHora = state.ultimoParser.pegarDataHoraCompleta(texto);
   const resultadoFinal = el.resultadoDiv.textContent;
-  const novosExames = examesEncontradosGlobal;
   if (!dataHora || !resultadoFinal || !texto) return;
+
   const resultadosRecentes = getJson(LOCAL_STORAGE_KEY, []);
   const novoResultado = {
     id: dataHora,
@@ -368,7 +399,7 @@ function salvarNoHistorico() {
     dataCompleta: dataHora,
     resultado: resultadoFinal,
     originalInput: texto,
-    exames: novosExames
+    exames: safeDeepClone(state.examesEncontrados),
   };
   const existingIndex = resultadosRecentes.findIndex(laudo => laudo.id === dataHora);
   if (existingIndex > -1) {
@@ -396,9 +427,9 @@ function baixarScript() {
 }
 
 function toggleTestSection() {
-  const testSection = document.getElementById('test-section-wrapper');
+  const testSection = document.querySelector('.dev-section details');
   if (testSection) {
-    testSection.style.display = testSection.style.display === 'block' ? 'none' : 'block';
+    testSection.open = !testSection.open;
   }
 }
 
@@ -409,20 +440,20 @@ function generateStaticTestCases() {
     const nomeBusca = exame.nomesBusca[0];
     staticCases.push({
       description: `[Estático] ${exame.label}: Deve retornar 'nao_encontrado'`,
-      input: `ExameNaoRelacionado 123`,
+      input: 'ExameNaoRelacionado 123',
       examId: exame.id,
       expected: { value: null, status: STATUS.NAO_ENCONTRADO }
     });
     if (exame.id === 'urina1') {
       staticCases.push({
         description: `[Estático] ${exame.label}: Deve extrair Urina I normal`,
-        input: `Urina I\npH 5.5\nDensidade 1020\nNitrito Negativo`,
+        input: 'Urina I\npH 5.5\nDensidade 1020\nNitrito Negativo',
         examId: exame.id,
         expected: { status: STATUS.NORMAL }
       });
       staticCases.push({
         description: `[Estático] ${exame.label}: Deve extrair Urina I alterada`,
-        input: `Urina I\npH 8.0\nDensidade 1020\nNitrito Positivo`,
+        input: 'Urina I\npH 8.0\nDensidade 1020\nNitrito Positivo',
         examId: exame.id,
         expected: { status: STATUS.ALTERADO }
       });
@@ -443,7 +474,7 @@ function generateStaticTestCases() {
       } else if (exame.id === 'hmc') {
         staticCases.push({
           description: `[Estático] ${exame.label}: Deve extrair 'HMC SCB'`,
-          input: `Hemocultura\nResultado: Nao houve crescimento de microrganismos.`,
+          input: 'Hemocultura\nResultado: Nao houve crescimento de microrganismos.',
           examId: exame.id,
           expected: { value: 'não houve crescimento de microrganismos.', status: STATUS.NORMAL }
         });
@@ -460,7 +491,7 @@ function generateStaticTestCases() {
         });
       }
       if (ref.max !== Infinity) {
-        const highValue = (exame.id === 'inr') ? '3.50' : (ref.max + 1).toFixed(2);
+        const highValue = exame.id === 'inr' ? '3.50' : (ref.max + 1).toFixed(2);
         staticCases.push({
           description: `[Estático] ${exame.label}: Deve extrair valor ALTERADO (alto)`,
           input: `${nomeBusca}\nResultado ${highValue}\nValores de referência: ${ref.min} a ${ref.max}`,
@@ -491,7 +522,7 @@ function generateStaticTestCases() {
 }
 
 function runTests() {
-  const testResultsEl = document.getElementById('test-results');
+  const testResultsEl = $('test-results');
   if (!testResultsEl) return;
   testResultsEl.style.display = 'block';
   testResultsEl.textContent = 'Rodando testes...\n\n';
@@ -499,7 +530,6 @@ function runTests() {
   testResultsEl.textContent += `${staticTestCases.length} testes estáticos encontrados.\n\n`;
   let successes = 0, failures = 0;
   const parser = getParserById('afip');
-
   staticTestCases.forEach(test => {
     const examConfig = configExames.find(e => e.id === test.examId);
     if (!examConfig) {
@@ -527,20 +557,21 @@ export function init() {
   renderizarResultadosRecentes();
 
   const parserOptions = getAvailableParsers();
-  const selectEl = el.selectParser;
-  if (selectEl) {
-    selectEl.innerHTML = '<option value="auto">Auto-detecção</option>' +
+  if (el.selectParser) {
+    el.selectParser.innerHTML =
+      '<option value="auto">Auto-detecção</option>' +
       parserOptions.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
   }
 
   el.btnProcessar.addEventListener('click', processar);
   el.btnCopiarResultado.addEventListener('click', copiarResultado);
   el.btnLimparCampos.addEventListener('click', limparTudo);
-  el.btnBaixarScript.addEventListener('click', baixarScript);
+  document.getElementById('btn-baixar')?.addEventListener('click', baixarScript);
   el.filtroExamesInput.addEventListener('input', filtrarExamesUI);
   el.marcarAlteradosToggle.addEventListener('change', gerarTextoFinal);
-  const compararHistoricoToggle = document.getElementById('comparar-historico-toggle');
-  if (compararHistoricoToggle) compararHistoricoToggle.addEventListener('change', gerarTextoFinal);
+  if (el.compararHistoricoToggle) {
+    el.compararHistoricoToggle.addEventListener('change', gerarTextoFinal);
+  }
   el.btnLimparHistorico.addEventListener('click', showConfirmationModal);
   el.btnConfirmDelete.addEventListener('click', handleConfirmDelete);
   el.btnCancelDelete.addEventListener('click', hideConfirmationModal);
@@ -549,17 +580,17 @@ export function init() {
   el.btnSelecionarTodos.addEventListener('click', () => selecionarTodosExames(true));
   el.btnLimparSelecao.addEventListener('click', () => selecionarTodosExames(false));
   el.btnVerHistoricoCompleto.addEventListener('click', mostrarHistoricoCompleto);
-  document.getElementById('btn-close-evolution-modal').addEventListener('click', () => {
-    document.getElementById('evolution-modal-overlay').classList.remove('show');
+
+  $('btn-close-evolution-modal')?.addEventListener('click', () => {
+    $('evolution-modal-overlay')?.classList.remove('show');
   });
-  const btnRunTests = document.getElementById('btn-run-tests');
-  if (btnRunTests) btnRunTests.addEventListener('click', runTests);
-  const btnToggleTests = document.getElementById('btn-toggle-tests');
-  if (btnToggleTests) btnToggleTests.addEventListener('click', toggleTestSection);
 
   if (el.selectParser) {
     el.selectParser.addEventListener('change', () => {
-      if (examesEncontradosGlobal.length > 0) processar();
+      if (state.examesEncontrados.length > 0) processar();
     });
   }
+
+  $('btn-run-tests')?.addEventListener('click', runTests);
+  $('btn-toggle-tests')?.addEventListener('click', toggleTestSection);
 }
