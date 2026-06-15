@@ -1,0 +1,1384 @@
+
+	
+ProcedimentosFontes pagadorasUnidade de coletaResultados
+ Hospital IBCC (Mooca)
+Resultados
+Paciente:	
+TEREZA DOS SANTOS ABREU
+Código:	
+64847
+Dt.Nascimento:
+09/04/1951
+Sexo:
+Feminino
+Paciente externo:
+RG:
+CPF:
+11661673805
+Exibir filtros Ordens de serviço
+194-67689-919	29/04/2026 - 11:30:04	CRE-GASV-MG-K-PCR-NA-URE-COAG-HEM-T4L-TSH-URO-URI	RAFAEL GALVAO DE DONO TAVARES
+194-67688-1461	28/04/2026 - 14:43:00	CAI-CRE-GASV-MG-K-NA-URE-HEM	MARINA MOUSINHO DE PONTES DAMACENO
+194-67687-1154	27/04/2026 - 13:11:39	TGP-TGO-BILTF-CAI-CRE-FAL-FOS-GGT-GASV-MG-K-PCR-NA-URE-COAG-HEM-T4L-URI	RAFAEL GALVAO DE DONO TAVARES
+194-67687-803	27/04/2026 - 10:51:43	PROBNP-PTF	LEONARDO PATRICIO VIEIRA
+194-67686-735	26/04/2026 - 13:29:23	GASV	MARIAH GUIMARAES BELLUOMINI SILVA
+194-67686-385	26/04/2026 - 10:08:04	CAI-CRE-MG-K-PCR-NA-URE-HEM	MARIAH GUIMARAES BELLUOMINI SILVA
+183-67685-821	25/04/2026 - 12:23:41	CAI-CRE-MG-K-PCR-NA-URE-HEM	MARIAH GUIMARAES BELLUOMINI SILVA
+183-67684-1804	24/04/2026 - 23:14:38	K	GISELE DE MOURA GUIMARAES FERRAZ DO AMARAL
+150-67684-856	24/04/2026 - 11:10:52	TGP-TGO-BILTF-CAI-CRE-GGT-MG-K-PCR-NA-URE-HEM	MARINA BARBOSA MESQUITA
+176-67641-390	12/03/2026 - 09:08:17	CA-HDL-LDL-COL-CRE-FERRI-FE-FOS-GLI-HBG-MG-K-NA-TRI-URE-HEM-VITB12-VITD	TANIA LAZZERI CORTEZ
+176-67397-322	11/07/2025 - 08:43:58	HDL-LDL-COL-CRE-FERRI-FE-FOS-GLI-HBG-MG-K-NA-TRI-HEM-VITB12-VITD-TRANSF	CHARLLES HELDAN DE MOURA CASTRO
+176-67240-695	04/02/2025 - 10:41:15	TGP-TGO-BILTF-CAI-CRE-FAL-MG-K-NA-URE-HEM-CA153-CEA-VITD	DANIEL AGUSTIN VASQUEZ QUISPE
+176-67116-441	03/10/2024 - 09:45:09	CRE-MG-K-NA-URE-HEM	DANIEL AGUSTIN VASQUEZ QUISPE
+Informações da ordem de serviço
+Padrão 
+Comparativo 
+Imprimir laudo
+Paciente:
+TEREZA DOS SANTOS ABREU
+Sexo:
+Feminino
+Dt. nascimento:
+09/04/1951
+O.S.:
+194-67687-1154
+-
+27/04/2026 - 13:11:39
+Fonte pagadora:
+Hospital IBCC
+Solicitante:
+RAFAEL GALVAO DE DONO TAVARES
+Unidade de coleta:
+(MO) 2o Andar - Clinica Medica SUS
+HEMOGRAMA
+ 
+SÉRIE VERMELHA
+Valor de referência
+ 
+Eritrócitos...........:
+3,3
+ 
+milhões/mm³
+    4,0 a   5,9 milhões/mm³
+Hemoglobina...........:
+10,7
+ 
+g/dL
+   12,0 a  16,0 g/dL
+Hematócrito...........:
+30,8
+ 
+%
+   35,0 a 47,0 %
+V.C.M.................:
+93,1
+ 
+fL
+   80,0 a 100,0 fL
+H.C.M.................:
+32,3
+ 
+pg
+   27,0 a  32,0 pg
+C.H.C.M...............:
+34,7
+ 
+g/dL
+   32,0 a  37,0 g/dL
+RDW-CV................:
+13,0
+ 
+%
+    9,5 a  16,0 %
+RDW-SD................:
+44,6
+ 
+fL
+   34,0 a  54,0 fL
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+SÉRIE BRANCA
+ 
+ 
+Valor de referência
+ 
+ 
+Leucócitos............:
+7.050
+ 
+/mm³
+   4.000 a 11.000 /mm³
+ 
+Neutrófilos...........:
+62,0
+ 
+%
+4.371
+ 
+/mm³
+  40,0 a 67,0 %
+   1.300 a  7.000 /mm³
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Segmentados.......:
+62,0
+ 
+%
+4.371
+ 
+/mm³
+  40,0 a 67,0 %
+   1.300 a  7.000 /mm³
+Eosinófilos...........:
+6,1
+ 
+%
+430
+ 
+/mm³
+   0,0 a  5,0 %
+      50 a    500 /mm³
+Basófilos.............:
+1,0
+ 
+%
+71
+ 
+/mm³
+   0,0 a  2,0 %
+       0 a    200 /mm³
+Linfócitos Típicos....:
+18,4
+ 
+%
+1.297
+ 
+/mm³
+  20,0 a 40,0 %
+     900 a  3.400 /mm³
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Monócitos.............:
+12,5
+ 
+%
+881
+ 
+/mm³
+   2,0 a 10,0 %
+     200 a    900 /mm³
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+SÉRIE PLAQUETÁRIA
+Valor de referência
+Plaquetas.............:
+183.000
+ 
+/mm³
+140.000 a 450.000 /mm³
+VPM...................:
+12,4
+ 
+fL
+    6,5 a 12,5 fL
+ 
+ 
+ 
+ 
+ 
+Material:
+Sangue total com EDTA
+Método  :
+Automação por citometria de fluxo, impedância, microscopia ótica.
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberação:
+28/04/2026 - 01:19:40
+ 
+Os resultados anteriores deste exame são apresentados no laudo comparativo no final do documento.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+__________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+COAGULOGRAMA
+ 
+Valor de Referência
+CONTAGEM DE PLAQUETAS
+Plaquetas
+ 
+183.000
+/mm³
+140.000 a 450.000 /mm³
+ 
+ 
+ 
+TP - TEMPO DE PROTROMBINA
+Tempo de Protrombina
+ 
+14,7
+segundos
+11,7 a 15,7 segundos
+ 
+ 
+Atividade de Protrombina
+ 
+88
+%
+70 % a 100 %
+ 
+ 
+I.N.R
+ 
+1,09
+ 
+0,86 a 1,14
+ 
+ 
+ 
+TTPA - TEMPO DE TROMBOPLASTINA PARCIAL ATIVADA
+Tempo
+ 
+37,3
+segundos
+28,9 a 38,1 segundos
+ 
+ 
+Relação Paciente /Controle
+ 
+1,11
+ 
+0,86 a 1,14
+ 
+ 
+ 
+Nota: Novos valores de referência e mudança de metodologia a partir de 10/08/2021
+ 
+ 
+Material:
+Sangue total com EDTA e plasma com citrato
+Método  :
+Coagulometria Mecânica
+ 
+Coletado em
+27/04/2026 - 13:11:39
+Liberado em:
+28/04/2026 - 01:19:39
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por Charlles Heldan de Moura Castro - CRM :76801-SP
+ 
+GASOMETRIA VENOSA
+ 
+ 
+Valor de Referência
+pH:
+7,27
+ 
+ 
+De 7,35 a 7,45
+Anteriores:
+26/04/2026 - 7,28
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+pCO2:
+44,0
+ 
+mmHg
+De 38,0 a 50,0 mmHg
+Anteriores:
+26/04/2026 - 46,0
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+pO2:
+54,0
+ 
+mmHg
+De 30,0 a 50,0 mmHg
+Anteriores:
+26/04/2026 - 34,0
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+CONTEÚDO DE CO2:
+21,6
+ 
+mmol/L
+De 22,0 a 28,0 mmol/L
+Anteriores:
+26/04/2026 - 23,0
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+HCO3:
+20,2
+ 
+mmol/L
+De 23,0 a 27,0 mmol/L
+Anteriores:
+26/04/2026 - 21,6
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+EXCESSO DE BASE:
+-6,4
+ 
+mmol/L
+De -3,0 a +3,0 mmol/L
+Anteriores:
+26/04/2026 - -5,2
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+SATURAÇÃO DE O2:
+83,0
+ 
+%
+De 60,0 a 85,0 %
+Anteriores:
+26/04/2026 - 56,0
+ 
+ 
+Material:
+Sangue total com heparina
+Método  :
+Potenciometria e Amperometria
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:24:05
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+UREIA
+ 
+ 
+Valor de Referência
+Resultado:
+152,5
+ 
+mg/dL
+De 16,6 a 48,5 mg/dL
+Anteriores:
+26/04/2026 - 130,9 | 25/04/2026 - 107,6 | 24/04/2026 - 103,9 | 12/03/2026 - 88,9 | 04/02/2025 - 63,4
+ 
+55,7
+63,4
+88,9
+103,9
+107,6
+130,9
+152,5
+03/10/2409:53:46
+04/02/2511:20:27
+12/03/2611:03:46
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+0
+50
+100
+150
+200
+ 
+ 
+Material:
+Soro
+Método  :
+Colorimétrico Enzimático
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:52
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+CREATININA
+ 
+Valores de Referência:
+Resultado:
+4,9
+mg/dL
+De 0,5 a 0,9 mg/dL
+Anteriores:
+26/04/2026 - 4,4
+25/04/2026 - 3,8
+24/04/2026 - 3,4
+12/03/2026 - 3,1
+11/07/2025 - 1,7
+1,6
+1,7
+1,7
+3,1
+3,4
+3,8
+4,4
+4,9
+03/10/2409:53:46
+04/02/2511:20:27
+11/07/2511:23:04
+12/03/2611:03:46
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+0
+2
+4
+6
+ 
+ESTIMATIVA DA TAXA DE FILTRAÇÃO GLOMERULAR:
+ 
+Afrodescendente:
+9
+mL/min/1.73 m2
+Superior a 60 mL/min/1.73 m2
+Anteriores:
+26/04/2026 - 11
+25/04/2026 - 13
+24/04/2026 - 15
+12/03/2026 - 16
+11/07/2025 - 34
+36
+33
+34
+16
+15
+13
+11
+9
+03/10/2409:53:46
+04/02/2511:20:27
+11/07/2511:23:04
+12/03/2611:03:46
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+0
+10
+20
+30
+40
+50
+ 
+Não Afrodescendente:
+8
+mL/min/1.73 m2
+Superior a 60 mL/min/1.73 m2
+Anteriores:
+26/04/2026 - 9
+25/04/2026 - 11
+24/04/2026 - 13
+12/03/2026 - 14
+11/07/2025 - 29
+31
+29
+29
+14
+13
+11
+9
+8
+03/10/2409:53:46
+04/02/2511:20:27
+11/07/2511:23:04
+12/03/2611:03:46
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+0
+10
+20
+30
+40
+ 
+A estimativa da taxa de filtração glomerular ajustada para etnia é calculada por meio equação CKD-EPI e pode variar em decorrência do nível sérico de creatinina, dieta e uso de medicamentos.
+O uso da estimativa da taxa de filtrações glomerular não é recomendado para cenários onde os níveis de creatinina sérica são instáveis, como na insuficiência renal aguda,para pacientes nos extremos da massa muscular (amputados, paraplégicos, desnutridos, fisiculturistas), e nas gestantes.
+Referência: Levey AS, et al. A new equation to estimate glomerular filtration rate. Ann Intern Med.2009 May 5150(9):604-12.
+ 
+ 
+ 
+ 
+Material:
+Soro
+Método  :
+Colorimétrico Cinético
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:55
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+SÓDIO
+ 
+ 
+Valor de Referência
+Resultado:
+136
+ 
+mmol/L
+De 136 a 145 mmol/L
+Anteriores:
+26/04/2026 - 133 | 25/04/2026 - 137 | 24/04/2026 - 141 | 12/03/2026 - 142 | 11/07/2025 - 141
+ 
+140
+140
+141
+142
+141
+137
+133
+136
+03/10/2409:53:46
+04/02/2511:20:27
+11/07/2511:23:04
+12/03/2611:03:46
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+100
+120
+140
+160
+180
+ 
+ 
+Material:
+Soro
+Método  :
+Eletrôdo de Íon Seletivo
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:32:28
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+POTÁSSIO
+ 
+ 
+Valor de Referência
+Resultado:
+4,88
+ 
+mmol/L
+De 3,5 a 5,1 mmol/L
+Anteriores:
+26/04/2026 - 5,25 | 25/04/2026 - 6,13 | 24/04/2026 - 5,65 | 24/04/2026 - 6,60 | 12/03/2026 - 6,68
+ 
+5,49
+5,20
+5,58
+6,68
+6,60
+5,65
+6,13
+5,25
+4,88
+03/10/2409:53:46
+04/02/2511:20:27
+11/07/2511:23:04
+12/03/2611:03:46
+24/04/2611:10:52
+24/04/2623:14:38
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+2
+4
+6
+8
+10
+ 
+ 
+Material:
+Soro
+Método  :
+Eletrôdo de Íon Seletivo
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:32:28
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+TRANSAMINASE GLUTÂMICO OXALACÉTICA - TGO
+ 
+ 
+Valor de Referência
+Resultado
+16
+ 
+U/L
+Inferior a 32 U/L
+Anteriores:
+24/04/2026 - 16 | 04/02/2025 - 19
+ 
+19
+16
+16
+04/02/2511:20:27
+24/04/2611:10:52
+27/04/2613:11:39
+0
+10
+20
+30
+40
+ 
+ 
+Material:
+Soro
+Método  :
+Cinético
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:53
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+TRANSAMINASE GLUTÂMICO PIRÚVICA - TGP
+ 
+ 
+Valor de Referência
+Resultado:
+13
+ 
+U/L
+Inferior a 33 U/L
+Anteriores:
+24/04/2026 - 13 | 04/02/2025 - 13
+ 
+13
+13
+13
+04/02/2511:20:27
+24/04/2611:10:52
+27/04/2613:11:39
+0
+20
+40
+60
+80
+ 
+ 
+Material:
+Soro
+Método  :
+Cinético
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:52
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+BILIRRUBINA TOTAL E FRAÇÕES
+ 
+ 
+Valor de Referência
+Bilirrubina Total
+0,38
+ 
+mg/dL
+Adultos e Crianças:
+De 0,2 a 1,0 mg/dL
+
+Recém Nascidos/Prematuros:
+24 horas: De 1,0 a 6,0 mg/dL
+48 horas: De 6,0 a 8,0 mg/dL
+De 3 a 5 dias: De 10,0 a 15,0 mg/dL
+
+Nascidos a Termo:
+24 horas: De 2,0 a 6,0 mg/dL
+48 horas: De 6,0 a 7,0 mg/dL
+De 3 a 5 dias: De 4,0 a 12,0 mg/dL
+Anteriores:
+24/04/2026 - 0,49 | 04/02/2025 - 0,51
+0,51
+0,49
+0,38
+04/02/2511:20:27
+24/04/2611:10:52
+27/04/2613:11:39
+0
+0,5
+1
+1,5
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Bilirrubina Direta
+0,12
+ 
+mg/dL
+Inferior a 0,3 mg/dL
+Anteriores:
+24/04/2026 - 0,16 | 04/02/2025 - 0,16
+0,16
+0,16
+0,12
+04/02/2511:20:27
+24/04/2611:10:52
+27/04/2613:11:39
+0
+0,1
+0,2
+0,3
+0,4
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Bilirrubina Indireta
+0,26
+ 
+mg/dL
+De 0,1 mg/dL a 0,6 mg/dL
+
+Anteriores:
+24/04/2026 - 0,33 | 04/02/2025 - 0,35
+0,35
+0,33
+0,26
+04/02/2511:20:27
+24/04/2611:10:52
+27/04/2613:11:39
+0
+0,2
+0,4
+0,6
+0,8
+ 
+ 
+Material:
+Soro
+Método  :
+Colorimétrico
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:55
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+CÁLCIO IÔNICO
+ 
+ 
+Valor de Referência
+Resultado:
+1,22
+ 
+mmol/L
+De 1,15 a 1,35 mmol/L
+Anteriores:
+26/04/2026 - 1,22 | 25/04/2026 - 1,22 | 24/04/2026 - 1,26 | 04/02/2025 - 1,30
+1,30
+1,26
+1,22
+1,22
+1,22
+04/02/2511:20:26
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+0,8
+1
+1,2
+1,4
+1,6
+1,8
+ 
+ 
+Material:
+Soro
+Método  :
+Eletrôdo de Íon Seletivo
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:35:58
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por Charlles Heldan de Moura Castro - CRM :76801-SP
+ 
+FÓSFORO
+ 
+ 
+Valor de Referência
+Resultado:
+5,3
+ 
+mg/dL
+De 2,5 a 4,5 mg/dL
+Anteriores:
+12/03/2026 - 4,0 | 11/07/2025 - 3,9
+3,9
+4,0
+5,3
+11/07/2511:23:04
+12/03/2611:03:46
+27/04/2613:11:39
+2
+3
+4
+5
+6
+7
+ 
+ 
+Material:
+Soro
+Método  :
+Colorimétrico
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:54
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+MAGNÉSIO
+ 
+ 
+Valor de Referência
+Resultado:
+1,7
+ 
+mg/dL
+De 1,6 a 2,4 mg/dL
+Anteriores:
+26/04/2026 - 1,7 | 25/04/2026 - 1,6 | 24/04/2026 - 1,8
+ 
+1,8
+1,6
+1,7
+1,7
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+1
+1,5
+2
+2,5
+3
+ 
+ 
+Material:
+Soro
+Método  :
+Colorimétrico Enzimático
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:54
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+PROTEÍNA C REATIVA
+ 
+ 
+Valor de Referência
+Resultado:
+1,4
+ 
+mg/L
+Inferior a 5,0 mg/L
+Anteriores:
+26/04/2026 - 1,9 | 25/04/2026 - 1,7 | 24/04/2026 - 1,1
+1,1
+1,7
+1,9
+1,4
+24/04/2611:10:52
+25/04/2612:23:41
+26/04/2619:34:14
+27/04/2613:11:39
+0
+2
+4
+6
+ 
+ 
+Material:
+Soro
+Método  :
+Turbidimétrico
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:53
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+FOSFATASE ALCALINA
+ 
+ 
+Valor de Referência
+Resultado:
+47
+ 
+U/L
+De 35 a 104 U/L
+Anteriores:
+04/02/2025 - 51
+51
+47
+04/02/2511:20:27
+27/04/2613:11:39
+20
+40
+60
+80
+100
+120
+140
+ 
+ 
+Material:
+Soro (protegido da luz)
+Método  :
+Colorimétrico
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:55
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+GAMA GLUTAMIL TRANSFERASE
+ 
+ 
+Valor de Referência
+Resultado:
+37
+ 
+U/L
+De 6 a 42 U/L
+Anteriores:
+24/04/2026 - 38
+ 
+38
+37
+24/04/2611:10:52
+27/04/2613:11:39
+0
+10
+20
+30
+40
+50
+60
+ 
+ 
+Material:
+Soro
+Método  :
+Colorimétrico Enzimático
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 00:46:54
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por: Jean Carlo do Amaral Santos - CRBM 69173/SP
+ 
+T4 LIVRE - TIROXINA LIVRE
+ 
+ 
+Valor de Referência
+Resultado:
+1,18
+ 
+ng/dL
+De 0,92 a 1,68 ng/dL
+ 
+ 
+Nota:
+*Atenção aos novos valores de referência a partir de 13/07/2023.
+
+ 
+ 
+Material:
+Soro
+Método  :
+Eletroquimioluminescência
+ 
+Coletado em :
+27/04/2026 - 13:11:39
+Liberado em :
+28/04/2026 - 14:45:13
+_________________________________________________________________________________________________
+Exame processado em unidade laboratorial - CNES: 3039420
+ 
+Liberado por Charlles Heldan de Moura Castro - CRM :76801-SP
+ 
+URINA TIPO I
+ 
+Análise Física
+Valores de Referência
+ 
+Cor:
+ 
+Amarelo Citrino
+Amarelo Citrino
+Aspecto:
+ 
+Límpido
+Límpido
+ 
+Análise Química
+pH:
+ 
+5,0
+5,0 a 6,0
+Densidade:
+ 
+1,005
+1,005 a 1,025
+Proteínas:
+ 
+Negativo
+Negativo
+Glicose:
+ 
+Negativo
+Negativo
+Corpos Cetônicos:
+ 
+Negativo
+Negativo
+Pigmentos Biliares:
+ 
+Negativo
+Negativo
+Urobilinogênio:
+ 
+< 1,0 mg/dL
+< 1,0 mg/dL
+Nitrito:
+ 
+Negativo
+Negativo
+Hemoglobina:
+ 
+Negativo
+Negativo
+ 
+Análise Microscópica
+Hemácias:
+ 
+1.000
+Até 10000/mL
+Leucócitos:
+ 
+20.000
+Até 10000/mL
+Células Epiteliais:
+ 
+Raras
+Ausentes ou Raras
+Cilindros:
+ 
+Ausentes
+Ausentes
+Cristais:
+ 
+Ausentes
+Ausentes
+Bactérias:
+ 
+Ausentes
+Ausentes
+Muco:
+ 
+Ausente
+Ausente
+ 
+ 
+ 
+ 
+ 
+Observações:	Amostra biológica encaminhada ao laboratório
+ 
+Material:
+Urina
+ 
+Método  :
+Fotometria por reflectância e microscopia óptica
+ 
+Microscopia óptica de campo claro.
+ 
+Coletao em :
+28/04/2026 - 15:37:10
+Liberado em :
+28/04/2026 - 15:54:32
+__________________________________________________________________________________________
+Exame processado em unidade laboratorial- CNES: 2077590
+ 
+Liberado por Rodrigo Yosuke Kojima - CRBM 71926/SP
+ 
+Laudo evolutivo
+ 	Resultado atual	Resultados anteriores	Valores de referência
+O.S/Data O.S.	194-67687-1154
+27/04/2026	194-67686-385
+26/04/2026	183-67685-821
+25/04/2026	150-67684-856
+24/04/2026
+Eritrócitos	3,3	3,9	3,7	3,9	4,0 a 5,9 milhões/mm³
+Hemoglobina	10,7	12,5	12,1	12,6	12,0 a 16,0 g/dL
+Hematócrito	30,8	36,7	35,1	37,5	35,0 a 47,0 %
+V.C.M	93,1	95,1	95,4	95,7	80,0 a 100,0 fL
+H.C.M	32,3	32,4	32,9	32,1	27,0 a 32,0 pg
+C.H.C.M	34,7	34,1	34,5	33,6	32,0 a 37,0 g/dL
+R.D.W	13,0	13,1	13,1	13,1	9,5 a 16,0 %
+Leucócitos	7.050	14.460	10.320	6.950	4.000 a 11.000 /mm³
+Segmentados	4.371	11.337	8.163	4.941	1.300 a 7.000 /mm³
+Eosinófilos	430	477	237	271	50 a 500 /mm³
+Basófilos	71	72	52	70	0 a 200 /mm³
+Linfócitos Típicos	1.297	1.489	1.063	1.049	900 a 3.400 /mm³
+Monócitos	881	1.085	805	619	200 a 900 /mm³
+Plaquetas	183.000	183.000	187.000	207.000	140.000 a 450.000 /mm³
+(*) Os intervalos de referência deste exame dependem da faixa etária do(a) paciente.
+Laudo evolutivo
+ 	Resultado atual	Resultados anteriores	Valores de referência
+O.S/Data O.S.	194-67687-1154
+27/04/2026	194-67686-735
+26/04/2026
+pH Gasometria Venosa	7,27	7,28	De 7,35 a 7,45
+pCO2 Gasometria Venosa	44,0	46,0	De 38,0 a 50,0 mmHg
+pO2 Gasometria Venosa	54,0	34,0	De 30,0 a 50,0 mmHg
+TCO2 Gasometria Venosa	21,6	23,0	De 22,0 a 28,0 mmol/L
+HCO3 Gasometria Venosa	20,2	21,6	De 23,0 a 27,0 mmol/L
+Bases Gasometria Venosa	-6,4	-5,2	De -3,0 a +3,0 mmol/L
+Saturação O2 Venosa	83,0	56,0	De 60,0 a 85,0 %
+  Tabela comparativa baseada em resultados anteriores do paciente.
+Laudo evolutivo
+ 	Resultado atual	Resultados anteriores	Valores de referência
+O.S/Data O.S.	194-67687-1154
+27/04/2026	194-67686-385
+26/04/2026	183-67685-821
+25/04/2026	183-67684-1804
+24/04/2026
+SÓDIO	136	133	137	--	136 a 145 mmol/L
+POTÁSSIO	4,88	5,25	6,13	5,65	3,5 a 5,1 mmol/L
+TGO	16	--	--	--	< 32 U/L
+TGP	13	--	--	--	< 33 U/L
+GAMA GT	37	--	--	--	6 a 42 U/L
+FOSFATASE ALCALINA	47	--	--	--	De 35 a 104 U/L
+BILIRRUBINA TOTAL	0,38	--	--	--	 
+BILIRRUBINA DIRETA	0,12	--	--	--	< 0,3 mg/dL
+BILIRRUBINA INDIRETA	0,26	--	--	--	0,1 mg/dL a 0,6 mg/dL
+CÁLCIO IÔNICO	1,22	1,22	1,22	--	1,15 a 1,35 mmol/L
+Fósforo	5,3	--	--	--	2,5 a 4,5 mg/dL
+PCR	1,4	1,9	1,7	--	Inferior a 5,0 mg/L
+Creatinina	4,9	4,4	3,8	--	De 0,5 a 0,9 mg/dL
+Creatinina Afrodescendente	9	11	13	--	Superior a 60 mL/min/1.73 m2
+Creatinina Não Afrodescendente	8	9	11	--	Superior a 60 mL/min/1.73 m2
+Uréia Soro	152,5	130,9	107,6	--	De 16,6 a 48,5 mg/dL
+ Tabela comparativa baseada em resultados anteriores do paciente.
+Laudo evolutivo
+ 	Resultado atual	Resultados anteriores	Valores de referência
+O.S/Data O.S.	194-67687-1154
+27/04/2026
+T4 Livre	1,18	--	0,92 a 1,68 ng/dL
+Tabela comparativa baseada em resultados anteriores do paciente.
+Problema ao visualizar o resultado? Clique aqui.
+Copyright © 2026 - www.shift.com.br
+Navegadores compatíveis
